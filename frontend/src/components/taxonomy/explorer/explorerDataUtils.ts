@@ -37,6 +37,7 @@ type SearchOptionsPayload = {
   balance?: string[];
   periodType?: string[];
   xbrlType?: string[];
+  isDimension?: boolean[];
   fullType?: string[];
   abstract?: boolean[];
   nillable?: boolean[];
@@ -50,6 +51,7 @@ export function mapSearchOptionsPayload(opts: SearchOptionsPayload): AdvancedSea
     balance: opts.balance ?? [],
     periodType: opts.periodType ?? [],
     xbrlType: opts.xbrlType ?? [],
+    isDimension: opts.isDimension ?? [true, false],
     fullType: opts.fullType ?? [],
     abstract: opts.abstract ?? [true, false],
     nillable: opts.nillable ?? [true, false],
@@ -67,6 +69,11 @@ export function mapSearchResultsPayload(
     qname: result.qname,
     localName: result.local_name,
     label: result.label,
+    balance: result.balance,
+    periodType: result.period_type,
+    xbrlType: result.xbrl_type,
+    substitutionGroup: result.substitution_group,
+    isDimension: result.is_dimension,
     score: result.score,
     matchedFields: result.matched_fields ?? [],
   }));

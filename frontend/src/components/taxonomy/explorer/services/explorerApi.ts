@@ -18,6 +18,7 @@ export interface SearchFilterOptionsResponse {
   balance?: string[];
   periodType?: string[];
   xbrlType?: string[];
+  isDimension?: boolean[];
   fullType?: string[];
   abstract?: boolean[];
   nillable?: boolean[];

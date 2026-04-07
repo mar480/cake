@@ -1,6 +1,7 @@
-import React from "react";
-import { Info } from "lucide-react";
+import React, { useRef } from "react";
+import { ChevronDown, Info } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Button } from "@/components/ui/button";
 import {
   Accordion,
   AccordionContent,
@@ -14,6 +15,12 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
   AdvancedSearchFilterOptions,
   AdvancedSearchFilters,
   AdvancedSearchState,
@@ -24,6 +31,7 @@ const EMPTY_FILTERS: AdvancedSearchFilters = {
   balance: [],
   periodType: [],
   xbrlType: [],
+  isDimension: [],
   fullType: [],
   abstract: [],
   nillable: [],
@@ -37,6 +45,7 @@ const EMPTY_FILTER_OPTIONS: AdvancedSearchFilterOptions = {
   balance: [],
   periodType: [],
   xbrlType: [],
+  isDimension: [true, false],
   fullType: [],
   abstract: [true, false],
   nillable: [true, false],
@@ -52,9 +61,20 @@ interface AdvancedSearchTabProps {
   onFiltersChange: (next: AdvancedSearchFilters) => void;
   onRunSearch: (nextOffset?: number) => void;
   onResetSearch: () => void;
-  onNavigateToNode?: (qname: string) => void;
+  onNavigateToSearchNode?: (qname: string, network?: string) => void;
+  networkLabels?: Record<string, string>;
+  resultNetworks?: Record<string, string[]>;
   year?: string | null;
 }
+
+const FACET_CHIP_PALETTE = [
+  "bg-sky-100 border-sky-300 text-sky-800",
+  "bg-violet-100 border-violet-300 text-violet-800",
+  "bg-emerald-100 border-emerald-300 text-emerald-800",
+  "bg-amber-100 border-amber-300 text-amber-800",
+  "bg-rose-100 border-rose-300 text-rose-800",
+  "bg-cyan-100 border-cyan-300 text-cyan-800",
+] as const;
 
 const FieldLabelWithHelp: React.FC<{ label: string; help: string }> = ({ label, help }) => (
   <div className="flex items-center gap-1">
@@ -167,7 +187,9 @@ const AdvancedSearchTab: React.FC<AdvancedSearchTabProps> = ({
   onFiltersChange,
   onRunSearch,
   onResetSearch,
-  onNavigateToNode,
+  onNavigateToSearchNode,
+  networkLabels,
+  resultNetworks,
   year,
 }) => {
 
@@ -224,6 +246,12 @@ const AdvancedSearchTab: React.FC<AdvancedSearchTabProps> = ({
       label: `XBRL type: ${value}`,
       remove: () => onFiltersChange({ ...filters, xbrlType: filters.xbrlType.filter((v) => v !== value) }),
     })),
+    ...filters.isDimension.map((value) => ({
+      key: `isDimension:${String(value)}`,
+      label: value ? "Dimension: yes" : "Dimension: no",
+      remove: () =>
+        onFiltersChange({ ...filters, isDimension: filters.isDimension.filter((v) => v !== value) }),
+    })),
     ...filters.fullType.map((value) => ({
       key: `fullType:${value}`,
       label: `Full type: ${value}`,
@@ -272,6 +300,15 @@ const AdvancedSearchTab: React.FC<AdvancedSearchTabProps> = ({
         }),
     })),
   ];
+
+  const facetColorMapRef = useRef(new Map<string, string>());
+  chips.forEach((chip) => {
+    if (!facetColorMapRef.current.has(chip.key)) {
+      const nextClass =
+        FACET_CHIP_PALETTE[facetColorMapRef.current.size % FACET_CHIP_PALETTE.length];
+      facetColorMapRef.current.set(chip.key, nextClass);
+    }
+  });
 
   const removeChipAndSearch = (chip: FilterChip) => {
     chip.remove();
@@ -342,7 +379,7 @@ const AdvancedSearchTab: React.FC<AdvancedSearchTabProps> = ({
                 <button
                   key={chip.key}
                   type="button"
-                  className="text-xs px-2 py-1 rounded-full bg-blue-50 border border-blue-200 hover:bg-blue-100"
+                  className={`text-xs px-2 py-1 rounded-full border hover:brightness-95 ${facetColorMapRef.current.get(chip.key) ?? "bg-gray-100 border-gray-300 text-gray-800"}`}
                   onClick={() => removeChipAndSearch(chip)}
                   title="Remove filter and search again"
                 >
@@ -351,72 +388,6 @@ const AdvancedSearchTab: React.FC<AdvancedSearchTabProps> = ({
               ))}
             </div>
           )}
-        </div>
-
-        <div className="border rounded">
-<div className="px-3 py-2 border-b bg-gray-50 text-xs text-gray-600">
-  <div className="flex items-center justify-between gap-3">
-    <div>
-      <div className="font-bold text-base text-gray-700">Search results</div>
-      <div className="mt-1">
-        {lastRunAt ? `Last run: ${new Date(lastRunAt).toLocaleString()}` : "No search run yet"}
-      </div>
-    </div>
-    <button
-      type="button"
-      className="px-2 py-1 rounded border bg-white text-xs hover:bg-gray-100"
-      onClick={() => {
-        onQueryChange("");
-        onResetSearch();
-      }}
-    >
-      Clear results
-    </button>
-  </div>
-</div>
-          {results.length === 0 ? (
-            <div className="p-4 text-sm text-gray-500">No results.</div>
-          ) : (
-            <ul className="divide-y">
-              {results.map((result) => (
-                <li key={result.id} className="p-3 flex items-start justify-between gap-3">
-                  <div className="min-w-0 flex-1">
-                    <div className="font-medium text-sm break-words">{result.label || result.qname}</div>
-                    <div className="text-xs text-gray-500 break-all">{result.qname}</div>
-                  </div>
-                  <button
-                    className="text-xs bg-gray-100 hover:bg-gray-200 px-2 py-1 rounded  flex-shrink-0 w-20"
-                    onClick={() => onNavigateToNode?.(result.qname)}
-                  >
-                    Go to node
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
-          <div className="px-3 py-2 border-t bg-gray-50 flex items-center justify-between text-xs text-gray-600">
-            <span>
-              Showing {from}-{to} of {total}
-            </span>
-            <div className="flex gap-2">
-              <button
-                type="button"
-                className="px-2 py-1 rounded border bg-white disabled:opacity-50"
-                disabled={loading || !hasPrev}
-                onClick={() => onRunSearch(Math.max(0, offset - limit))}
-              >
-                Previous
-              </button>
-              <button
-                type="button"
-                className="px-2 py-1 rounded border bg-white disabled:opacity-50"
-                disabled={loading || !hasNext}
-                onClick={() => onRunSearch(offset + limit)}
-              >
-                Next
-              </button>
-            </div>
-          </div>
         </div>
 
         <Accordion type="multiple" defaultValue={["search-filters", "references"]} className="w-full space-y-3">
@@ -448,6 +419,12 @@ const AdvancedSearchTab: React.FC<AdvancedSearchTabProps> = ({
                   options={safeFilterOptions.xbrlType}
                   selected={filters.xbrlType}
                   onChange={(next) => onFiltersChange({ ...filters, xbrlType: next })}
+                />
+                <BooleanCheckboxGroup
+                  label="Dimension"
+                  help="Filter concepts by substitution group xbrldt:dimensionItem."
+                  selected={filters.isDimension}
+                  onChange={(next) => onFiltersChange({ ...filters, isDimension: next })}
                 />
               </div>
             </AccordionContent>
@@ -562,6 +539,132 @@ const AdvancedSearchTab: React.FC<AdvancedSearchTabProps> = ({
             </AccordionContent>
           </AccordionItem>
         </Accordion>
+
+        <div className="border rounded">
+          <div className="px-3 py-2 border-b bg-gray-50 text-xs text-gray-600">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <div className="font-bold text-base text-gray-700">Search results</div>
+                <div className="mt-1">
+                  {lastRunAt ? `Last run: ${new Date(lastRunAt).toLocaleString()}` : "No search run yet"}
+                </div>
+              </div>
+              <button
+                type="button"
+                className="px-2 py-1 rounded border bg-white text-xs hover:bg-gray-100"
+                onClick={() => {
+                  onQueryChange("");
+                  onResetSearch();
+                }}
+              >
+                Clear results
+              </button>
+            </div>
+          </div>
+          {results.length === 0 ? (
+            <div className="p-4 text-sm text-gray-500">No results.</div>
+          ) : (
+            <ul className="divide-y">
+              {results.map((result) => {
+                const associatedNetworks = resultNetworks?.[result.qname] ?? [];
+                const goToNodeLabel = networkLabels?.presentation ?? "Presentation";
+                const matchingFacetKey = result.xbrlType ? `xbrlType:${result.xbrlType}` : "";
+                const matchingFacetClass = matchingFacetKey
+                  ? facetColorMapRef.current.get(matchingFacetKey)
+                  : undefined;
+
+                return (
+                  <li key={result.id} className="p-3 flex items-start justify-between gap-3">
+                    <div className="min-w-0 flex-1 space-y-1">
+                      <div className="font-medium text-sm break-words">{result.label || result.qname}</div>
+                      <div className="text-xs text-gray-500 break-all">{result.qname}</div>
+                      <div className="flex flex-wrap gap-1 pt-1">
+                        {result.balance && (
+                          <span className="text-xs px-2 py-0.5 rounded-full border bg-white">Balance: {result.balance}</span>
+                        )}
+                        {result.periodType && (
+                          <span className="text-xs px-2 py-0.5 rounded-full border bg-white">Period: {result.periodType}</span>
+                        )}
+                        {result.xbrlType && (
+                          <span
+                            className={`text-xs px-2 py-0.5 rounded-full border ${
+                              matchingFacetClass ?? "bg-gray-100 border-gray-300 text-gray-700"
+                            }`}
+                          >
+                            XBRL: {result.xbrlType}
+                          </span>
+                        )}
+                        <span className="text-xs px-2 py-0.5 rounded-full border bg-white">
+                          Dimension: {result.isDimension ? "yes" : "no"}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex items-center">
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        size="sm"
+                        className="rounded-r-none"
+                        onClick={() => onNavigateToSearchNode?.(result.qname, "presentation")}
+                      >
+                        Go to node
+                      </Button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button type="button" variant="secondary" size="sm" className="rounded-l-none px-2">
+                            <ChevronDown className="h-3.5 w-3.5" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          {associatedNetworks.length === 0 ? (
+                            <DropdownMenuItem disabled>No networks available</DropdownMenuItem>
+                          ) : (
+                            associatedNetworks.map((networkKey) => (
+                              <DropdownMenuItem
+                                key={`${result.id}-${networkKey}`}
+                                onClick={() => onNavigateToSearchNode?.(result.qname, networkKey)}
+                              >
+                                {networkLabels?.[networkKey] ?? networkKey}
+                              </DropdownMenuItem>
+                            ))
+                          )}
+                          {associatedNetworks.length > 0 && !associatedNetworks.includes("presentation") && (
+                            <DropdownMenuItem onClick={() => onNavigateToSearchNode?.(result.qname, "presentation")}>
+                              {goToNodeLabel}
+                            </DropdownMenuItem>
+                          )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+          <div className="px-3 py-2 border-t bg-gray-50 flex items-center justify-between text-xs text-gray-600">
+            <span>
+              Showing {from}-{to} of {total}
+            </span>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                className="px-2 py-1 rounded border bg-white disabled:opacity-50"
+                disabled={loading || !hasPrev}
+                onClick={() => onRunSearch(Math.max(0, offset - limit))}
+              >
+                Previous
+              </button>
+              <button
+                type="button"
+                className="px-2 py-1 rounded border bg-white disabled:opacity-50"
+                disabled={loading || !hasNext}
+                onClick={() => onRunSearch(offset + limit)}
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        </div>
 
 
 

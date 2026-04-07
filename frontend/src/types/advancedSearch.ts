@@ -3,6 +3,7 @@ export interface AdvancedSearchFilters {
   balance: string[];
   periodType: string[];
   xbrlType: string[];
+  isDimension: boolean[];
   fullType: string[];
   abstract: boolean[];
   nillable: boolean[];
@@ -16,6 +17,11 @@ export interface AdvancedSearchResult {
   qname: string;
   localName?: string;
   label?: string;
+  balance?: string;
+  periodType?: string;
+  xbrlType?: string;
+  substitutionGroup?: string;
+  isDimension?: boolean;
   score?: number;
   matchedFields?: string[];
 }
@@ -41,6 +47,7 @@ export interface AdvancedSearchFilterOptions {
   balance: string[];
   periodType: string[];
   xbrlType: string[];
+  isDimension: boolean[];
   fullType: string[];
   abstract: boolean[];
   nillable: boolean[];

@@ -30,6 +30,11 @@ export type SearchConceptApiResult = {
   qname: string;
   local_name?: string;
   label?: string;
+  balance?: string;
+  period_type?: string;
+  xbrl_type?: string;
+  substitution_group?: string;
+  is_dimension?: boolean;
   score?: number;
   matched_fields?: string[];
 };
@@ -39,6 +44,7 @@ export const EMPTY_ADVANCED_FILTERS: AdvancedSearchFilters = {
   balance: [],
   periodType: [],
   xbrlType: [],
+  isDimension: [],
   fullType: [],
   abstract: [],
   nillable: [],
@@ -52,6 +58,7 @@ export const EMPTY_ADVANCED_FILTER_OPTIONS: AdvancedSearchFilterOptions = {
   balance: [],
   periodType: [],
   xbrlType: [],
+  isDimension: [true, false],
   fullType: [],
   abstract: [true, false],
   nillable: [true, false],
