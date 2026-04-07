@@ -215,25 +215,63 @@ const SearchResultsTab: React.FC<SearchResultsTabProps> = ({
             <div>
               <div className="font-bold text-base text-gray-700">Search results</div>
               <div className="mt-1">
-                {lastRunAt ? `Last run: ${new Date(lastRunAt).toLocaleString()}` : "No search run yet"}
+                Showing {from}-{to} of {total}
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <button
+              <Button
                 type="button"
-                className="px-2 py-1 rounded border bg-white text-xs hover:bg-gray-100"
+                size="sm"
+                variant="outline"
+                className="
+                  min-w-[170px]
+                  justify-center
+                  border-2 border-slate-400
+                  bg-sky-200
+                  text-slate-800
+                  hover:bg-sky-300
+                  focus-visible:ring-1 focus-visible:ring-sky-300
+                "
+                onClick={onReturnToSearch}
+              >
+                Return to search query
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                className="
+                  min-w-[170px]
+                  justify-center
+                  border-2 border-slate-400
+                  bg-sky-50
+                  text-slate-800
+                  hover:bg-sky-100
+                  focus-visible:ring-1 focus-visible:ring-sky-300
+                "
                 onClick={clearAllFilters}
                 disabled={chips.length === 0}
               >
-                Clear filters
-              </button>
-              <button
+                Clear active facet filters
+              </Button>
+
+              <Button
                 type="button"
-                className="px-2 py-1 rounded border bg-white text-xs hover:bg-gray-100"
+                size="sm"
+                variant="outline"
+                className="
+                  min-w-[170px]
+                  justify-center
+                  border-2 border-slate-400
+                  bg-sky-50
+                  text-slate-800
+                  hover:bg-sky-100
+                  focus-visible:ring-1 focus-visible:ring-sky-300
+                "
                 onClick={onResetSearch}
               >
                 Clear results
-              </button>
+               </Button>
             </div>
           </div>
         </div>
@@ -331,20 +369,37 @@ const SearchResultsTab: React.FC<SearchResultsTabProps> = ({
                   <div className="flex items-center">
                     <Button
                       type="button"
-                      variant="outline"
                       size="sm"
-                      className="rounded-r-none border-r-4 border-r-gray-400"
+                      variant="outline"
+                      className="
+                        rounded-r-none
+                        border-2 border-slate-400
+                        border-r border-r-slate-300
+                        bg-sky-50
+                        text-slate-800
+                        hover:bg-sky-100
+                        focus-visible:ring-1 focus-visible:ring-sky-300
+                      "
                       onClick={() => onNavigateToSearchNode?.(result.qname, "presentation")}
                     >
                       Go to node
                     </Button>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
                           type="button"
-                          variant="outline"
                           size="sm"
-                          className="rounded-l-none px-2 border-l-4 border-l-gray-400 -ml-px"
+                          variant="outline"
+                          className="
+                            rounded-l-none
+                            -ml-px px-2
+                            border-2 border-slate-400
+                            border-l border-l-slate-300
+                            bg-sky-200
+                            text-slate-800
+                            hover:bg-sky-300
+                            focus-visible:ring-1 focus-visible:ring-sky-300
+                          "
                         >
                           <ChevronDown className="h-3.5 w-3.5" />
                         </Button>
@@ -376,9 +431,7 @@ const SearchResultsTab: React.FC<SearchResultsTabProps> = ({
           </ul>
         )}
         <div className="px-3 py-2 border-t bg-gray-50 flex items-center justify-between text-xs text-gray-600">
-          <span>
-            Showing {from}-{to} of {total}
-          </span>
+
           <div className="flex gap-2">
             <button
               type="button"
@@ -400,11 +453,7 @@ const SearchResultsTab: React.FC<SearchResultsTabProps> = ({
         </div>
       </div>
 
-      <div className="flex justify-end">
-        <Button type="button" variant="outline" onClick={onReturnToSearch}>
-          Return to search query
-        </Button>
-      </div>
+
 
       {error && <div className="text-sm text-red-600">{error}</div>}
     </div>
