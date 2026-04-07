@@ -188,6 +188,7 @@ def build_search_filter_options_from_concepts(concepts: dict) -> dict:
         "balance": sorted(balances, key=natural_sort_key),
         "periodType": sorted(periods, key=natural_sort_key),
         "xbrlType": sorted(xbrl_types, key=natural_sort_key),
+        "isDimension": [True, False],
         "fullType": sorted(full_types, key=natural_sort_key),
         "abstract": sorted(abstract_values),  # [False, True]
         "nillable": sorted(nillable_values),  # [False, True]

@@ -24,6 +24,7 @@ const EMPTY_FILTERS: AdvancedSearchFilters = {
   balance: [],
   periodType: [],
   xbrlType: [],
+  isDimension: [],
   fullType: [],
   abstract: [],
   nillable: [],
@@ -37,6 +38,7 @@ const EMPTY_FILTER_OPTIONS: AdvancedSearchFilterOptions = {
   balance: [],
   periodType: [],
   xbrlType: [],
+  isDimension: [true, false],
   fullType: [],
   abstract: [true, false],
   nillable: [true, false],
@@ -51,8 +53,8 @@ interface AdvancedSearchTabProps {
   onQueryChange: (query: string) => void;
   onFiltersChange: (next: AdvancedSearchFilters) => void;
   onRunSearch: (nextOffset?: number) => void;
+  onOpenResultsTab?: () => void;
   onResetSearch: () => void;
-  onNavigateToNode?: (qname: string) => void;
   year?: string | null;
 }
 
@@ -79,12 +81,6 @@ function toggleString(values: string[], value: string): string[] {
 function toggleBoolean(values: boolean[], value: boolean): boolean[] {
   return values.includes(value) ? values.filter((v) => v !== value) : [...values, value];
 }
-
-type FilterChip = {
-  key: string;
-  label: string;
-  remove: () => void;
-};
 
 function normalizeReferenceSource(value: unknown): string | null {
   if (typeof value !== "string") return null;
@@ -166,8 +162,8 @@ const AdvancedSearchTab: React.FC<AdvancedSearchTabProps> = ({
   onQueryChange,
   onFiltersChange,
   onRunSearch,
+  onOpenResultsTab,
   onResetSearch,
-  onNavigateToNode,
   year,
 }) => {
 
@@ -191,12 +187,7 @@ const AdvancedSearchTab: React.FC<AdvancedSearchTabProps> = ({
   const safeFilterOptions = filterOptions ?? EMPTY_FILTER_OPTIONS;
   const safeReferenceParagraphsBySource = referenceParagraphsBySource ?? {};
 
-  const { query, filters, results, loading, error, lastRunAt, pagination } = safeState;
-  const { limit, offset, total } = pagination;
-  const hasPrev = offset > 0;
-  const hasNext = offset + limit < total;
-  const from = total === 0 ? 0 : offset + 1;
-  const to = total === 0 ? 0 : Math.min(offset + limit, total);
+  const { query, filters, loading, error } = safeState;
 
   const paragraphOptions =
     filters.referenceSource
@@ -207,82 +198,6 @@ const AdvancedSearchTab: React.FC<AdvancedSearchTabProps> = ({
   const balanceHelpText = isLloydsTaxonomySelected
     ? "The concepts in the Lloyd’s taxonomy do not rely on the debit and credit types functionality from the standard taxonomy."
     : "Accounting balance type.";
-
-  const chips: FilterChip[] = [
-    ...filters.balance.map((value) => ({
-      key: `balance:${value}`,
-      label: `Balance: ${value}`,
-      remove: () => onFiltersChange({ ...filters, balance: filters.balance.filter((v) => v !== value) }),
-    })),
-    ...filters.periodType.map((value) => ({
-      key: `periodType:${value}`,
-      label: `Period type: ${value}`,
-      remove: () => onFiltersChange({ ...filters, periodType: filters.periodType.filter((v) => v !== value) }),
-    })),
-    ...filters.xbrlType.map((value) => ({
-      key: `xbrlType:${value}`,
-      label: `XBRL type: ${value}`,
-      remove: () => onFiltersChange({ ...filters, xbrlType: filters.xbrlType.filter((v) => v !== value) }),
-    })),
-    ...filters.fullType.map((value) => ({
-      key: `fullType:${value}`,
-      label: `Full type: ${value}`,
-      remove: () => onFiltersChange({ ...filters, fullType: filters.fullType.filter((v) => v !== value) }),
-    })),
-    ...filters.namespace.map((value) => ({
-      key: `namespace:${value}`,
-      label: `Namespace: ${value}`,
-      remove: () => onFiltersChange({ ...filters, namespace: filters.namespace.filter((v) => v !== value) }),
-    })),
-    ...filters.substitutionGroup.map((value) => ({
-      key: `substitutionGroup:${value}`,
-      label: `Substitution group: ${value}`,
-      remove: () =>
-        onFiltersChange({
-          ...filters,
-          substitutionGroup: filters.substitutionGroup.filter((v) => v !== value),
-        }),
-    })),
-    ...filters.abstract.map((value) => ({
-      key: `abstract:${String(value)}`,
-      label: `Abstract: ${String(value)}`,
-      remove: () => onFiltersChange({ ...filters, abstract: filters.abstract.filter((v) => v !== value) }),
-    })),
-    ...filters.nillable.map((value) => ({
-      key: `nillable:${String(value)}`,
-      label: `Nillable: ${String(value)}`,
-      remove: () => onFiltersChange({ ...filters, nillable: filters.nillable.filter((v) => v !== value) }),
-    })),
-    ...(filters.referenceSource
-      ? [
-          {
-            key: `referenceSource:${filters.referenceSource}`,
-            label: `Source: ${filters.referenceSource}`,
-            remove: () => onFiltersChange({ ...filters, referenceSource: null, referenceParagraph: [] }),
-          },
-        ]
-      : []),
-    ...filters.referenceParagraph.map((value) => ({
-      key: `referenceParagraph:${value}`,
-      label: `Paragraph: ${value}`,
-      remove: () =>
-        onFiltersChange({
-          ...filters,
-          referenceParagraph: filters.referenceParagraph.filter((v) => v !== value),
-        }),
-    })),
-  ];
-
-  const removeChipAndSearch = (chip: FilterChip) => {
-    chip.remove();
-    onRunSearch(0);
-  };
-
-  const clearAllFilters = () => {
-    onFiltersChange(EMPTY_FILTERS);
-    onRunSearch(0);
-  };
-
 
   return (
     <TooltipProvider delayDuration={150}>
@@ -303,6 +218,7 @@ const AdvancedSearchTab: React.FC<AdvancedSearchTabProps> = ({
                 if (e.key === "Enter") {
                   e.preventDefault();
                   onRunSearch(0);
+                  onOpenResultsTab?.();
                 }
               }}
             />
@@ -310,7 +226,10 @@ const AdvancedSearchTab: React.FC<AdvancedSearchTabProps> = ({
           <div className="flex gap-2 pb-[1px]">
             <button
               className="bg-blue-600 text-white text-sm px-3 py-1 rounded disabled:opacity-50"
-              onClick={() => onRunSearch(0)}
+              onClick={() => {
+                onRunSearch(0);
+                onOpenResultsTab?.();
+              }}
               disabled={loading}
             >
               {loading ? "Searching..." : "Search"}
@@ -320,105 +239,6 @@ const AdvancedSearchTab: React.FC<AdvancedSearchTabProps> = ({
             </button>
           </div>
         </div>
-        
-        
-               <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <div className="text-sm font-medium">Active facet filters</div>
-            <button
-              type="button"
-              className="text-xs px-2 py-1 rounded border bg-white disabled:opacity-50"
-              onClick={clearAllFilters}
-              disabled={chips.length === 0}
-            >
-              Clear all filters
-            </button>
-          </div>
-          {chips.length === 0 ? (
-            <div className="text-xs text-gray-500">No facet filters selected.</div>
-          ) : (
-            <div className="flex flex-wrap gap-2">
-              {chips.map((chip) => (
-                <button
-                  key={chip.key}
-                  type="button"
-                  className="text-xs px-2 py-1 rounded-full bg-blue-50 border border-blue-200 hover:bg-blue-100"
-                  onClick={() => removeChipAndSearch(chip)}
-                  title="Remove filter and search again"
-                >
-                  {chip.label} ×
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-
-        <div className="border rounded">
-<div className="px-3 py-2 border-b bg-gray-50 text-xs text-gray-600">
-  <div className="flex items-center justify-between gap-3">
-    <div>
-      <div className="font-bold text-base text-gray-700">Search results</div>
-      <div className="mt-1">
-        {lastRunAt ? `Last run: ${new Date(lastRunAt).toLocaleString()}` : "No search run yet"}
-      </div>
-    </div>
-    <button
-      type="button"
-      className="px-2 py-1 rounded border bg-white text-xs hover:bg-gray-100"
-      onClick={() => {
-        onQueryChange("");
-        onResetSearch();
-      }}
-    >
-      Clear results
-    </button>
-  </div>
-</div>
-          {results.length === 0 ? (
-            <div className="p-4 text-sm text-gray-500">No results.</div>
-          ) : (
-            <ul className="divide-y">
-              {results.map((result) => (
-                <li key={result.id} className="p-3 flex items-start justify-between gap-3">
-                  <div className="min-w-0 flex-1">
-                    <div className="font-medium text-sm break-words">{result.label || result.qname}</div>
-                    <div className="text-xs text-gray-500 break-all">{result.qname}</div>
-                  </div>
-                  <button
-                    className="text-xs bg-gray-100 hover:bg-gray-200 px-2 py-1 rounded  flex-shrink-0 w-20"
-                    onClick={() => onNavigateToNode?.(result.qname)}
-                  >
-                    Go to node
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
-          <div className="px-3 py-2 border-t bg-gray-50 flex items-center justify-between text-xs text-gray-600">
-            <span>
-              Showing {from}-{to} of {total}
-            </span>
-            <div className="flex gap-2">
-              <button
-                type="button"
-                className="px-2 py-1 rounded border bg-white disabled:opacity-50"
-                disabled={loading || !hasPrev}
-                onClick={() => onRunSearch(Math.max(0, offset - limit))}
-              >
-                Previous
-              </button>
-              <button
-                type="button"
-                className="px-2 py-1 rounded border bg-white disabled:opacity-50"
-                disabled={loading || !hasNext}
-                onClick={() => onRunSearch(offset + limit)}
-              >
-                Next
-              </button>
-            </div>
-          </div>
-        </div>
-
         <Accordion type="multiple" defaultValue={["search-filters", "references"]} className="w-full space-y-3">
           <AccordionItem value="search-filters" className="border rounded-md overflow-hidden">
             <AccordionTrigger className="py-2 px-2 text-sm font-semibold bg-blue-100 rounded">
@@ -448,6 +268,12 @@ const AdvancedSearchTab: React.FC<AdvancedSearchTabProps> = ({
                   options={safeFilterOptions.xbrlType}
                   selected={filters.xbrlType}
                   onChange={(next) => onFiltersChange({ ...filters, xbrlType: next })}
+                />
+                <BooleanCheckboxGroup
+                  label="Dimension"
+                  help="Filter concepts by substitution group xbrldt:dimensionItem."
+                  selected={filters.isDimension}
+                  onChange={(next) => onFiltersChange({ ...filters, isDimension: next })}
                 />
               </div>
             </AccordionContent>
@@ -562,8 +388,6 @@ const AdvancedSearchTab: React.FC<AdvancedSearchTabProps> = ({
             </AccordionContent>
           </AccordionItem>
         </Accordion>
-
-
 
         {error && <div className="text-sm text-red-600">{error}</div>}
 

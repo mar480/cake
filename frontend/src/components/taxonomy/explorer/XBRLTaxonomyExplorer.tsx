@@ -19,6 +19,7 @@ interface Props {
   onSelectNode: (node: TreeNode) => void;
   onExpandedKeysChange: (keys: { [key: string]: boolean }) => void;
   onNavigateToNode: (qname: string, options?: { preserveDetails?: boolean }) => void;
+  onNavigateToSearchNode: (qname: string, network?: string) => void;
   onNavigateToLocation: (target: TreeLocationTarget) => void;
   onLanguageChange: (lang: "en" | "cy") => void;
   network: string;
@@ -38,6 +39,8 @@ interface Props {
   onAdvancedSearchFiltersChange: (next: AdvancedSearchFilters) => void;
   onRunAdvancedSearch: (nextOffset?: number) => void;
   onResetAdvancedSearch: () => void;
+  networkLabels: Record<string, string>;
+  resultNetworks: Record<string, string[]>;
 }
 
 const XBRLTaxonomyExplorer: React.FC<Props> = ({
@@ -50,6 +53,7 @@ const XBRLTaxonomyExplorer: React.FC<Props> = ({
   detailNode,
   onExpandedKeysChange,
   onNavigateToNode,
+  onNavigateToSearchNode,
   onNavigateToLocation,
   onNetworkChange,
   onLanguageChange,
@@ -68,6 +72,8 @@ const XBRLTaxonomyExplorer: React.FC<Props> = ({
   onAdvancedSearchFiltersChange,
   onRunAdvancedSearch,
   onResetAdvancedSearch,
+  networkLabels,
+  resultNetworks,
 }) => {
   return (
     <div className="flex flex-col h-screen bg-white">
@@ -151,6 +157,7 @@ const XBRLTaxonomyExplorer: React.FC<Props> = ({
           <DetailsPanelContainer
             selectedNode={detailNode}
             onNavigateToNode={onNavigateToNode}
+            onNavigateToSearchNode={onNavigateToSearchNode}
             year={year}
             onNavigateToCrossReference={(qname) => onNavigateToNode(qname, { preserveDetails: true })}
             onNavigateToLocation={onNavigateToLocation}
@@ -164,6 +171,8 @@ const XBRLTaxonomyExplorer: React.FC<Props> = ({
             onAdvancedSearchFiltersChange={onAdvancedSearchFiltersChange}
             onRunAdvancedSearch={onRunAdvancedSearch}
             onResetAdvancedSearch={onResetAdvancedSearch}
+            networkLabels={networkLabels}
+            resultNetworks={resultNetworks}
           />
         </div>
 
