@@ -1,6 +1,11 @@
 import { useCallback, useMemo, useRef, useState } from "react";
 
-import { AdvancedSearchFilters, AdvancedSearchResult } from "@/types/advancedSearch";
+import {
+  AdvancedSearchFilters,
+  AdvancedSearchPagination,
+  AdvancedSearchResult,
+  AdvancedSearchState,
+} from "@/types/advancedSearch";
 
 import {
   mapSearchResultsPayload,
@@ -9,14 +14,25 @@ import {
 import { EMPTY_ADVANCED_FILTERS } from "../explorerTypes";
 import { searchConcepts } from "../services/explorerApi";
 
-export function useAdvancedSearch(year: string | null, entrypoint: string | null) {
+interface UseAdvancedSearchResult {
+  advancedSearchState: AdvancedSearchState;
+  resetAdvancedSearch: () => void;
+  updateAdvancedSearchQuery: (next: string) => void;
+  updateAdvancedSearchFilters: (next: AdvancedSearchFilters) => void;
+  runAdvancedSearch: (nextOffset?: number) => Promise<void>;
+}
+
+export function useAdvancedSearch(
+  year: string | null,
+  entrypoint: string | null
+): UseAdvancedSearchResult {
   const [advancedSearchQuery, setAdvancedSearchQuery] = useState("");
   const [advancedSearchFilters, setAdvancedSearchFilters] =
     useState<AdvancedSearchFilters>(EMPTY_ADVANCED_FILTERS);
   const [advancedSearchResults, setAdvancedSearchResults] = useState<AdvancedSearchResult[]>([]);
   const [advancedSearchLoading, setAdvancedSearchLoading] = useState(false);
   const [advancedSearchError, setAdvancedSearchError] = useState<string | null>(null);
-  const [advancedSearchPagination, setAdvancedSearchPagination] = useState({
+  const [advancedSearchPagination, setAdvancedSearchPagination] = useState<AdvancedSearchPagination>({
     limit: 25,
     offset: 0,
     total: 0,
@@ -107,7 +123,7 @@ export function useAdvancedSearch(year: string | null, entrypoint: string | null
     [advancedSearchPagination.limit, advancedSearchPagination.offset, entrypoint, year]
   );
 
-  const advancedSearchState = useMemo(
+  const advancedSearchState = useMemo<AdvancedSearchState>(
     () => ({
       query: advancedSearchQuery,
       filters: advancedSearchFilters,

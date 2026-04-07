@@ -1,6 +1,6 @@
 import { AdvancedSearchFilters } from "@/types/advancedSearch";
 
-import { SearchConceptApiResult } from "../explorerTypes";
+import { RawElrGroup, SearchConceptApiResult } from "../explorerTypes";
 
 export interface EntrypointOption {
   name: string;
@@ -10,7 +10,7 @@ export interface EntrypointOption {
 export interface LoadEntrypointResponse {
   status?: string;
   error?: string;
-  trees?: Record<string, unknown>;
+  trees?: Record<string, RawElrGroup[] | unknown>;
 }
 
 export interface SearchFilterOptionsResponse {

@@ -15,8 +15,8 @@ import {
   EntrypointOption,
   fetchEntrypoints,
   fetchSearchFilterOptions,
+  LoadEntrypointResponse,
   loadEntrypoint,
-  SearchFilterOptionsResponse,
   warmConceptDetails,
 } from "../services/explorerApi";
 
@@ -78,17 +78,16 @@ export function useEntrypointData(
     setReferenceParagraphsBySource({});
 
     loadEntrypoint(year, entrypoint)
-      .then((data) => {
+      .then((data: LoadEntrypointResponse) => {
         if (data.status !== "loaded") {
           console.error("Load error:", data.error);
-          setLoadingEntrypoint(false);
           return;
         }
 
         setRawTreeData(mapTreesPayloadToNetworkMap(data.trees || {}, EXCLUDED_TREE_KEYS));
 
         fetchSearchFilterOptions(year, entrypoint)
-          .then((opts: SearchFilterOptionsResponse) => {
+          .then((opts) => {
             setAdvancedSearchFilterOptions(mapSearchOptionsPayload(opts));
             setReferenceParagraphsBySource(opts.referenceParagraphsBySource ?? {});
           })
@@ -99,10 +98,11 @@ export function useEntrypointData(
           });
 
         setEntrypointLoaded(true);
-        setLoadingEntrypoint(false);
       })
       .catch((err) => {
         console.error("Failed to load entrypoint", err);
+      })
+      .finally(() => {
         setLoadingEntrypoint(false);
       });
   }, [clearTreeUiState, entrypoint, resetAdvancedSearch, year]);
