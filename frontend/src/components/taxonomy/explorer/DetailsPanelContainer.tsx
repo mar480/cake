@@ -3,6 +3,7 @@ import DetailsTab from "./DetailsTab";
 import HypercubeRelationshipsTab from "./HypercubeRelationshipsTab";
 import TreeLocationsTab, { TreeLocationTarget } from "./TreeLocationsTab";
 import AdvancedSearchTab from "./AdvancedSearchTab";
+import SearchResultsTab from "./SearchResultsTab";
 import {
   AdvancedSearchState,
   AdvancedSearchFilterOptions,
@@ -15,7 +16,8 @@ type DetailsTabName =
   | "Details"
   | "Hypercube Relationships"
   | "Tree Locations"
-  | "Advanced Search";
+  | "Advanced Search"
+  | "Search Results";
 
 interface DetailPanelProps {
   selectedNode: TreeNode | null;
@@ -71,10 +73,13 @@ const DetailPanelContainer: React.FC<DetailPanelProps> = ({
             "Hypercube Relationships",
             "Tree Locations",
             "Advanced Search",
+            "Search Results",
           ] as const)
-        : (["Details", "Tree Locations", "Advanced Search"] as const),
+        : (["Details", "Tree Locations", "Advanced Search", "Search Results"] as const),
     [showHypercubeTab]
   );
+
+  const hasSearchRun = Boolean(advancedSearchState?.lastRunAt);
 
   useEffect(() => {
     if (!tabs.includes(activeTab)) {
@@ -109,16 +114,17 @@ const DetailPanelContainer: React.FC<DetailPanelProps> = ({
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
-<div className="flex border-b px-1 pt-1 shadow-sm">
+      <div className="flex border-b px-1 pt-1 shadow-sm">
   {tabs.map((tab) => (
     <button
       key={tab}
       className={`px-4 py-1.5 text-sm font-medium border border-b-0 rounded-t-md shadow-sm transition-colors mr-1 ${
         activeTab === tab
           ? "bg-blue-100 border-blue-300 text-blue-900"
-          : "bg-gray-200 border-gray-300 text-gray-800 hover:bg-gray-300"
+          : "bg-gray-200 border-gray-300 text-gray-800 hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
       }`}
       onClick={() => setActiveTab(tab)}
+      disabled={tab === "Search Results" && !hasSearchRun}
     >
       {tab}
     </button>
@@ -134,11 +140,22 @@ const DetailPanelContainer: React.FC<DetailPanelProps> = ({
             onQueryChange={onAdvancedSearchQueryChange}
             onFiltersChange={onAdvancedSearchFiltersChange}
             onRunSearch={onRunAdvancedSearch}
+            onOpenResultsTab={() => setActiveTab("Search Results")}
+            onResetSearch={onResetAdvancedSearch}
+            year={year}
+          />
+        )}
+
+        {activeTab === "Search Results" && (
+          <SearchResultsTab
+            state={advancedSearchState}
+            onFiltersChange={onAdvancedSearchFiltersChange}
+            onRunSearch={onRunAdvancedSearch}
             onResetSearch={onResetAdvancedSearch}
             onNavigateToSearchNode={onNavigateToSearchNode}
+            onReturnToSearch={() => setActiveTab("Advanced Search")}
             networkLabels={networkLabels}
             resultNetworks={resultNetworks}
-            year={year}
           />
         )}
 

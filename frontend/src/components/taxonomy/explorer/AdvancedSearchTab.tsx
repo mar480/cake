@@ -60,10 +60,8 @@ interface AdvancedSearchTabProps {
   onQueryChange: (query: string) => void;
   onFiltersChange: (next: AdvancedSearchFilters) => void;
   onRunSearch: (nextOffset?: number) => void;
+  onOpenResultsTab?: () => void;
   onResetSearch: () => void;
-  onNavigateToSearchNode?: (qname: string, network?: string) => void;
-  networkLabels?: Record<string, string>;
-  resultNetworks?: Record<string, string[]>;
   year?: string | null;
 }
 
@@ -99,12 +97,6 @@ function toggleString(values: string[], value: string): string[] {
 function toggleBoolean(values: boolean[], value: boolean): boolean[] {
   return values.includes(value) ? values.filter((v) => v !== value) : [...values, value];
 }
-
-type FilterChip = {
-  key: string;
-  label: string;
-  remove: () => void;
-};
 
 function normalizeReferenceSource(value: unknown): string | null {
   if (typeof value !== "string") return null;
@@ -186,10 +178,8 @@ const AdvancedSearchTab: React.FC<AdvancedSearchTabProps> = ({
   onQueryChange,
   onFiltersChange,
   onRunSearch,
+  onOpenResultsTab,
   onResetSearch,
-  onNavigateToSearchNode,
-  networkLabels,
-  resultNetworks,
   year,
 }) => {
 
@@ -213,12 +203,7 @@ const AdvancedSearchTab: React.FC<AdvancedSearchTabProps> = ({
   const safeFilterOptions = filterOptions ?? EMPTY_FILTER_OPTIONS;
   const safeReferenceParagraphsBySource = referenceParagraphsBySource ?? {};
 
-  const { query, filters, results, loading, error, lastRunAt, pagination } = safeState;
-  const { limit, offset, total } = pagination;
-  const hasPrev = offset > 0;
-  const hasNext = offset + limit < total;
-  const from = total === 0 ? 0 : offset + 1;
-  const to = total === 0 ? 0 : Math.min(offset + limit, total);
+  const { query, filters, loading, error } = safeState;
 
   const paragraphOptions =
     filters.referenceSource
@@ -229,97 +214,6 @@ const AdvancedSearchTab: React.FC<AdvancedSearchTabProps> = ({
   const balanceHelpText = isLloydsTaxonomySelected
     ? "The concepts in the Lloyd’s taxonomy do not rely on the debit and credit types functionality from the standard taxonomy."
     : "Accounting balance type.";
-
-  const chips: FilterChip[] = [
-    ...filters.balance.map((value) => ({
-      key: `balance:${value}`,
-      label: `Balance: ${value}`,
-      remove: () => onFiltersChange({ ...filters, balance: filters.balance.filter((v) => v !== value) }),
-    })),
-    ...filters.periodType.map((value) => ({
-      key: `periodType:${value}`,
-      label: `Period type: ${value}`,
-      remove: () => onFiltersChange({ ...filters, periodType: filters.periodType.filter((v) => v !== value) }),
-    })),
-    ...filters.xbrlType.map((value) => ({
-      key: `xbrlType:${value}`,
-      label: `XBRL type: ${value}`,
-      remove: () => onFiltersChange({ ...filters, xbrlType: filters.xbrlType.filter((v) => v !== value) }),
-    })),
-    ...filters.isDimension.map((value) => ({
-      key: `isDimension:${String(value)}`,
-      label: value ? "Dimension: yes" : "Dimension: no",
-      remove: () =>
-        onFiltersChange({ ...filters, isDimension: filters.isDimension.filter((v) => v !== value) }),
-    })),
-    ...filters.fullType.map((value) => ({
-      key: `fullType:${value}`,
-      label: `Full type: ${value}`,
-      remove: () => onFiltersChange({ ...filters, fullType: filters.fullType.filter((v) => v !== value) }),
-    })),
-    ...filters.namespace.map((value) => ({
-      key: `namespace:${value}`,
-      label: `Namespace: ${value}`,
-      remove: () => onFiltersChange({ ...filters, namespace: filters.namespace.filter((v) => v !== value) }),
-    })),
-    ...filters.substitutionGroup.map((value) => ({
-      key: `substitutionGroup:${value}`,
-      label: `Substitution group: ${value}`,
-      remove: () =>
-        onFiltersChange({
-          ...filters,
-          substitutionGroup: filters.substitutionGroup.filter((v) => v !== value),
-        }),
-    })),
-    ...filters.abstract.map((value) => ({
-      key: `abstract:${String(value)}`,
-      label: `Abstract: ${String(value)}`,
-      remove: () => onFiltersChange({ ...filters, abstract: filters.abstract.filter((v) => v !== value) }),
-    })),
-    ...filters.nillable.map((value) => ({
-      key: `nillable:${String(value)}`,
-      label: `Nillable: ${String(value)}`,
-      remove: () => onFiltersChange({ ...filters, nillable: filters.nillable.filter((v) => v !== value) }),
-    })),
-    ...(filters.referenceSource
-      ? [
-          {
-            key: `referenceSource:${filters.referenceSource}`,
-            label: `Source: ${filters.referenceSource}`,
-            remove: () => onFiltersChange({ ...filters, referenceSource: null, referenceParagraph: [] }),
-          },
-        ]
-      : []),
-    ...filters.referenceParagraph.map((value) => ({
-      key: `referenceParagraph:${value}`,
-      label: `Paragraph: ${value}`,
-      remove: () =>
-        onFiltersChange({
-          ...filters,
-          referenceParagraph: filters.referenceParagraph.filter((v) => v !== value),
-        }),
-    })),
-  ];
-
-  const facetColorMapRef = useRef(new Map<string, string>());
-  chips.forEach((chip) => {
-    if (!facetColorMapRef.current.has(chip.key)) {
-      const nextClass =
-        FACET_CHIP_PALETTE[facetColorMapRef.current.size % FACET_CHIP_PALETTE.length];
-      facetColorMapRef.current.set(chip.key, nextClass);
-    }
-  });
-
-  const removeChipAndSearch = (chip: FilterChip) => {
-    chip.remove();
-    onRunSearch(0);
-  };
-
-  const clearAllFilters = () => {
-    onFiltersChange(EMPTY_FILTERS);
-    onRunSearch(0);
-  };
-
 
   return (
     <TooltipProvider delayDuration={150}>
@@ -340,6 +234,7 @@ const AdvancedSearchTab: React.FC<AdvancedSearchTabProps> = ({
                 if (e.key === "Enter") {
                   e.preventDefault();
                   onRunSearch(0);
+                  onOpenResultsTab?.();
                 }
               }}
             />
@@ -347,7 +242,10 @@ const AdvancedSearchTab: React.FC<AdvancedSearchTabProps> = ({
           <div className="flex gap-2 pb-[1px]">
             <button
               className="bg-blue-600 text-white text-sm px-3 py-1 rounded disabled:opacity-50"
-              onClick={() => onRunSearch(0)}
+              onClick={() => {
+                onRunSearch(0);
+                onOpenResultsTab?.();
+              }}
               disabled={loading}
             >
               {loading ? "Searching..." : "Search"}
@@ -357,40 +255,7 @@ const AdvancedSearchTab: React.FC<AdvancedSearchTabProps> = ({
             </button>
           </div>
         </div>
-        
-        
-               <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <div className="text-sm font-medium">Active facet filters</div>
-            <button
-              type="button"
-              className="text-xs px-2 py-1 rounded border bg-white disabled:opacity-50"
-              onClick={clearAllFilters}
-              disabled={chips.length === 0}
-            >
-              Clear all filters
-            </button>
-          </div>
-          {chips.length === 0 ? (
-            <div className="text-xs text-gray-500">No facet filters selected.</div>
-          ) : (
-            <div className="flex flex-wrap gap-2">
-              {chips.map((chip) => (
-                <button
-                  key={chip.key}
-                  type="button"
-                  className={`text-xs px-2 py-1 rounded-full border hover:brightness-95 ${facetColorMapRef.current.get(chip.key) ?? "bg-gray-100 border-gray-300 text-gray-800"}`}
-                  onClick={() => removeChipAndSearch(chip)}
-                  title="Remove filter and search again"
-                >
-                  {chip.label} ×
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-
-        <Accordion type="multiple" defaultValue={["search-filters", "references"]} className="w-full space-y-3">
+        <Accordion type="multiple" defaultValue={["search-filters", "references", "advanced-xbrl"]} className="w-full space-y-3">
           <AccordionItem value="search-filters" className="border rounded-md overflow-hidden">
             <AccordionTrigger className="py-2 px-2 text-sm font-semibold bg-blue-100 rounded">
               Search filters
@@ -539,134 +404,6 @@ const AdvancedSearchTab: React.FC<AdvancedSearchTabProps> = ({
             </AccordionContent>
           </AccordionItem>
         </Accordion>
-
-        <div className="border rounded">
-          <div className="px-3 py-2 border-b bg-gray-50 text-xs text-gray-600">
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <div className="font-bold text-base text-gray-700">Search results</div>
-                <div className="mt-1">
-                  {lastRunAt ? `Last run: ${new Date(lastRunAt).toLocaleString()}` : "No search run yet"}
-                </div>
-              </div>
-              <button
-                type="button"
-                className="px-2 py-1 rounded border bg-white text-xs hover:bg-gray-100"
-                onClick={() => {
-                  onQueryChange("");
-                  onResetSearch();
-                }}
-              >
-                Clear results
-              </button>
-            </div>
-          </div>
-          {results.length === 0 ? (
-            <div className="p-4 text-sm text-gray-500">No results.</div>
-          ) : (
-            <ul className="divide-y">
-              {results.map((result) => {
-                const associatedNetworks = resultNetworks?.[result.qname] ?? [];
-                const goToNodeLabel = networkLabels?.presentation ?? "Presentation";
-                const matchingFacetKey = result.xbrlType ? `xbrlType:${result.xbrlType}` : "";
-                const matchingFacetClass = matchingFacetKey
-                  ? facetColorMapRef.current.get(matchingFacetKey)
-                  : undefined;
-
-                return (
-                  <li key={result.id} className="p-3 flex items-start justify-between gap-3">
-                    <div className="min-w-0 flex-1 space-y-1">
-                      <div className="font-medium text-sm break-words">{result.label || result.qname}</div>
-                      <div className="text-xs text-gray-500 break-all">{result.qname}</div>
-                      <div className="flex flex-wrap gap-1 pt-1">
-                        {result.balance && (
-                          <span className="text-xs px-2 py-0.5 rounded-full border bg-white">Balance: {result.balance}</span>
-                        )}
-                        {result.periodType && (
-                          <span className="text-xs px-2 py-0.5 rounded-full border bg-white">Period: {result.periodType}</span>
-                        )}
-                        {result.xbrlType && (
-                          <span
-                            className={`text-xs px-2 py-0.5 rounded-full border ${
-                              matchingFacetClass ?? "bg-gray-100 border-gray-300 text-gray-700"
-                            }`}
-                          >
-                            XBRL: {result.xbrlType}
-                          </span>
-                        )}
-                        <span className="text-xs px-2 py-0.5 rounded-full border bg-white">
-                          Dimension: {result.isDimension ? "yes" : "no"}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="flex items-center">
-                      <Button
-                        type="button"
-                        variant="secondary"
-                        size="sm"
-                        className="rounded-r-none"
-                        onClick={() => onNavigateToSearchNode?.(result.qname, "presentation")}
-                      >
-                        Go to node
-                      </Button>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button type="button" variant="secondary" size="sm" className="rounded-l-none px-2">
-                            <ChevronDown className="h-3.5 w-3.5" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          {associatedNetworks.length === 0 ? (
-                            <DropdownMenuItem disabled>No networks available</DropdownMenuItem>
-                          ) : (
-                            associatedNetworks.map((networkKey) => (
-                              <DropdownMenuItem
-                                key={`${result.id}-${networkKey}`}
-                                onClick={() => onNavigateToSearchNode?.(result.qname, networkKey)}
-                              >
-                                {networkLabels?.[networkKey] ?? networkKey}
-                              </DropdownMenuItem>
-                            ))
-                          )}
-                          {associatedNetworks.length > 0 && !associatedNetworks.includes("presentation") && (
-                            <DropdownMenuItem onClick={() => onNavigateToSearchNode?.(result.qname, "presentation")}>
-                              {goToNodeLabel}
-                            </DropdownMenuItem>
-                          )}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-                  </li>
-                );
-              })}
-            </ul>
-          )}
-          <div className="px-3 py-2 border-t bg-gray-50 flex items-center justify-between text-xs text-gray-600">
-            <span>
-              Showing {from}-{to} of {total}
-            </span>
-            <div className="flex gap-2">
-              <button
-                type="button"
-                className="px-2 py-1 rounded border bg-white disabled:opacity-50"
-                disabled={loading || !hasPrev}
-                onClick={() => onRunSearch(Math.max(0, offset - limit))}
-              >
-                Previous
-              </button>
-              <button
-                type="button"
-                className="px-2 py-1 rounded border bg-white disabled:opacity-50"
-                disabled={loading || !hasNext}
-                onClick={() => onRunSearch(offset + limit)}
-              >
-                Next
-              </button>
-            </div>
-          </div>
-        </div>
-
-
 
         {error && <div className="text-sm text-red-600">{error}</div>}
 
