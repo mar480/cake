@@ -1,4 +1,4 @@
-import React, { useMemo, useRef } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,8 +12,8 @@ import { AdvancedSearchFilters, AdvancedSearchState } from "@/types/advancedSear
 type FilterChip = {
   key: string;
   label: string;
-  active: boolean;
-  toggle: (active: boolean) => void;
+  field: "balance" | "periodType" | "xbrlType" | "isDimension";
+  value: string | boolean;
 };
 
 const FACET_CHIP_PALETTE = [
@@ -77,21 +77,13 @@ const SearchResultsTab: React.FC<SearchResultsTabProps> = ({
   const from = total === 0 ? 0 : offset + 1;
   const to = total === 0 ? 0 : Math.min(offset + limit, total);
 
-  const chips: FilterChip[] = useMemo(() => {
-    const withString = (
-      field: keyof AdvancedSearchFilters,
-      values: string[],
-      labelPrefix: string
-    ) =>
+  const activeChips: FilterChip[] = useMemo(() => {
+    const withString = (field: "balance" | "periodType" | "xbrlType", values: string[], labelPrefix: string) =>
       values.map((value) => ({
-        key: `${String(field)}:${value}`,
+        key: `${field}:${value}`,
         label: `${labelPrefix}: ${value}`,
-        active: true,
-        toggle: (active: boolean) => {
-          const nextValues = active ? [...values, value] : values.filter((v) => v !== value);
-          onFiltersChange({ ...filters, [field]: nextValues } as AdvancedSearchFilters);
-          onRunSearch(0);
-        },
+        field,
+        value,
       }));
 
     return [
@@ -101,17 +93,75 @@ const SearchResultsTab: React.FC<SearchResultsTabProps> = ({
       ...filters.isDimension.map((value) => ({
         key: `isDimension:${String(value)}`,
         label: value ? "Dimension: yes" : "Dimension: no",
-        active: true,
-        toggle: (active: boolean) => {
-          const nextValues = active
-            ? [...filters.isDimension, value]
-            : filters.isDimension.filter((v) => v !== value);
-          onFiltersChange({ ...filters, isDimension: nextValues });
-          onRunSearch(0);
-        },
+        field: "isDimension" as const,
+        value,
       })),
     ];
-  }, [filters, onFiltersChange, onRunSearch]);
+  }, [filters.balance, filters.isDimension, filters.periodType, filters.xbrlType]);
+
+  const chipRegistryRef = useRef(new Map<string, FilterChip>());
+  activeChips.forEach((chip) => {
+    chipRegistryRef.current.set(chip.key, chip);
+  });
+  const chips = Array.from(chipRegistryRef.current.values());
+
+  const [resultFilter, setResultFilter] = useState<{
+    balance: string[];
+    periodType: string[];
+    xbrlType: string[];
+  }>({ balance: [], periodType: [], xbrlType: [] });
+
+  const resultFilterOptions = useMemo(() => {
+    const balance = new Set<string>();
+    const periodType = new Set<string>();
+    const xbrlType = new Set<string>();
+    results.forEach((result) => {
+      if (result.balance) balance.add(result.balance);
+      if (result.periodType) periodType.add(result.periodType);
+      if (result.xbrlType) xbrlType.add(result.xbrlType);
+    });
+    return {
+      balance: Array.from(balance).sort(),
+      periodType: Array.from(periodType).sort(),
+      xbrlType: Array.from(xbrlType).sort(),
+    };
+  }, [results]);
+
+  useEffect(() => {
+    setResultFilter((prev) => ({
+      balance: prev.balance.filter((value) => resultFilterOptions.balance.includes(value)),
+      periodType: prev.periodType.filter((value) => resultFilterOptions.periodType.includes(value)),
+      xbrlType: prev.xbrlType.filter((value) => resultFilterOptions.xbrlType.includes(value)),
+    }));
+  }, [resultFilterOptions]);
+
+  const isChipActive = (chip: FilterChip) => {
+    if (chip.field === "isDimension") {
+      return filters.isDimension.includes(Boolean(chip.value));
+    }
+    return filters[chip.field].includes(String(chip.value));
+  };
+
+  const toggleChip = (chip: FilterChip) => {
+    const currentlyActive = isChipActive(chip);
+    if (chip.field === "isDimension") {
+      const nextValues = currentlyActive
+        ? filters.isDimension.filter((value) => value !== Boolean(chip.value))
+        : [...filters.isDimension, Boolean(chip.value)];
+      onFiltersChange({ ...filters, isDimension: Array.from(new Set(nextValues)) });
+      onRunSearch(0);
+      return;
+    }
+
+    const currentValues = filters[chip.field];
+    const typedValue = String(chip.value);
+    const nextValues = currentlyActive
+      ? currentValues.filter((value) => value !== typedValue)
+      : [...currentValues, typedValue];
+
+    onFiltersChange({ ...filters, [chip.field]: Array.from(new Set(nextValues)) } as AdvancedSearchFilters);
+    onRunSearch(0);
+  };
 
   const facetColorMapRef = useRef(new Map<string, string>());
   chips.forEach((chip) => {
@@ -129,6 +179,33 @@ const SearchResultsTab: React.FC<SearchResultsTabProps> = ({
 
   const metadataChipClass = (facetKey: string) =>
     facetColorMapRef.current.get(facetKey) ?? "bg-gray-100 border-gray-300 text-gray-700";
+
+  const filteredResults = useMemo(() => {
+    return results.filter((result) => {
+      if (resultFilter.balance.length > 0 && (!result.balance || !resultFilter.balance.includes(result.balance))) {
+        return false;
+      }
+      if (
+        resultFilter.periodType.length > 0 &&
+        (!result.periodType || !resultFilter.periodType.includes(result.periodType))
+      ) {
+        return false;
+      }
+      if (resultFilter.xbrlType.length > 0 && (!result.xbrlType || !resultFilter.xbrlType.includes(result.xbrlType))) {
+        return false;
+      }
+      return true;
+    });
+  }, [resultFilter.balance, resultFilter.periodType, resultFilter.xbrlType, results]);
+
+  const toggleResultFilterValue = (field: "balance" | "periodType" | "xbrlType", value: string) => {
+    setResultFilter((prev) => ({
+      ...prev,
+      [field]: prev[field].includes(value)
+        ? prev[field].filter((item) => item !== value)
+        : [...prev[field], value],
+    }));
+  };
 
   return (
     <div className="p-4 space-y-4">
@@ -162,7 +239,7 @@ const SearchResultsTab: React.FC<SearchResultsTabProps> = ({
         </div>
 
         <div className="p-3 border-b bg-white">
-          <div className="text-sm font-medium mb-2">Active facet filters (toggle)</div>
+          <div className="text-sm font-medium mb-2">Active facet filters (toggle on/off)</div>
           {chips.length === 0 ? (
             <div className="text-xs text-gray-500">No facet filters selected.</div>
           ) : (
@@ -171,22 +248,55 @@ const SearchResultsTab: React.FC<SearchResultsTabProps> = ({
                 <button
                   key={chip.key}
                   type="button"
-                  className={`text-xs px-2 py-1 rounded-full border ${facetColorMapRef.current.get(chip.key)}`}
-                  onClick={() => chip.toggle(false)}
-                  title="Toggle filter off and refresh results"
+                  className={`text-xs px-2 py-1 rounded-full border ${
+                    isChipActive(chip)
+                      ? facetColorMapRef.current.get(chip.key)
+                      : "bg-gray-100 border-gray-300 text-gray-500 line-through"
+                  }`}
+                  onClick={() => toggleChip(chip)}
+                  title="Toggle filter and refresh results"
                 >
-                  {chip.label} ×
+                  {chip.label}
                 </button>
               ))}
             </div>
           )}
         </div>
 
-        {results.length === 0 ? (
+        <div className="p-3 border-b bg-white space-y-2">
+          <div className="text-sm font-medium">Filter these results</div>
+          <div className="grid grid-cols-3 gap-3">
+            {(["balance", "periodType", "xbrlType"] as const).map((field) => (
+              <div key={field} className="space-y-1">
+                <div className="text-xs font-medium text-gray-600">
+                  {field === "periodType" ? "Period type" : field === "xbrlType" ? "XBRL type" : "Balance"}
+                </div>
+                <div className="border rounded p-2 max-h-24 overflow-auto space-y-1">
+                  {resultFilterOptions[field].length === 0 ? (
+                    <div className="text-xs text-gray-400">No options</div>
+                  ) : (
+                    resultFilterOptions[field].map((value) => (
+                      <label key={`${field}-${value}`} className="flex items-center gap-2 text-xs">
+                        <input
+                          type="checkbox"
+                          checked={resultFilter[field].includes(value)}
+                          onChange={() => toggleResultFilterValue(field, value)}
+                        />
+                        <span>{value}</span>
+                      </label>
+                    ))
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {filteredResults.length === 0 ? (
           <div className="p-4 text-sm text-gray-500">No results.</div>
         ) : (
           <ul className="divide-y">
-            {results.map((result) => {
+            {filteredResults.map((result) => {
               const associatedNetworks = resultNetworks?.[result.qname] ?? [];
               const goToNodeLabel = networkLabels?.presentation ?? "Presentation";
 
@@ -223,15 +333,19 @@ const SearchResultsTab: React.FC<SearchResultsTabProps> = ({
                       type="button"
                       variant="outline"
                       size="sm"
-                      className="rounded-r-none border-r-0"
+                      className="rounded-r-none border-r-4 border-r-gray-400"
                       onClick={() => onNavigateToSearchNode?.(result.qname, "presentation")}
                     >
                       Go to node
                     </Button>
-                    <div className="h-8 border-y border-l border-gray-300 flex items-center px-2 text-gray-400">|</div>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button type="button" variant="outline" size="sm" className="rounded-l-none px-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="rounded-l-none px-2 border-l-4 border-l-gray-400 -ml-px"
+                        >
                           <ChevronDown className="h-3.5 w-3.5" />
                         </Button>
                       </DropdownMenuTrigger>
