@@ -237,3 +237,15 @@ Only then create the next task branch and continue refactor work.
 2. Run the merge-sync drill above (local + Codex).
 3. Start next implementation on a fresh feature branch from synced `main`.
 4. Begin with **PR-B archive extension pass**, then proceed to PR-C.
+
+---
+
+## 6) PR-B implementation notes (2026-04-07)
+
+Completed archive-extension sweep for newly identified uncertain artifacts:
+
+- moved machine-specific Windows build helper (`build_and_copy.bat`) into `archive/pr-b-2026-04-07/legacy-assets/`;
+- moved historical `frontend/public/icons/` variants into `archive/pr-b-2026-04-07/legacy-assets/frontend-public-icons/`;
+- moved legacy favicon bundle `frontend/public/favicon_io.zip` into `archive/pr-b-2026-04-07/legacy-assets/`.
+
+No runtime-facing source files were deleted as part of PR-B.
