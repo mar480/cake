@@ -65,7 +65,7 @@ const FieldLabelWithHelp: React.FC<{ label: string; help: string }> = ({ label, 
           <Info size={14} />
         </button>
       </TooltipTrigger>
-      <TooltipContent side="right" className="max-w-xs text-xs">
+      <TooltipContent side="right" className="max-w-xs text-xs bg-white text-gray-900 border-gray-300 opacity-100">
         {help}
       </TooltipContent>
     </Tooltip>
