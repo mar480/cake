@@ -2,161 +2,162 @@
 
 Date: 2026-04-07
 
+## 0) Branch/commit verification protocol (must run first)
+
+Before each refactor PR review or merge decision, run:
+
+```bash
+git fetch --all --prune
+git branch --show-current
+git rev-parse HEAD
+git status
+```
+
+Use this to confirm we are on the expected branch/commit for the discussion.
+
+---
+
 ## 1) Repository status against the original multi-PR refactor plan
 
 ### Snapshot summary
 
-- The backend has already been partially modularized from a monolithic `app.py` into route, service, search, and state modules.
-- The frontend explorer container has already been decomposed with dedicated hooks and service utilities.
-- The archive-first phase appears **not yet completed** (no `archive/` directory currently present).
-- TypeScript config alignment still needs work: Vite alias uses `./src` while `tsconfig.app.json` paths/include still point to `viewer/frontend/src/*`.
-- Debug logging is still present and verbose in backend API flows, matching the stated preference to keep diagnostics.
+- Backend modularization is already in place (routes/services/search/state split).
+- Frontend container decomposition is already in place (hooks + service extraction).
+- Archive phase has **already started** via `old_app_before_refactor/` (explicitly ignored in `.gitignore`).
+- TypeScript alias/config alignment still needs work (`tsconfig.app.json` path/include mismatch vs Vite alias).
+- Verbose backend debug logs are present and retained as requested.
 
 ### Detailed status by planned phase
 
 #### PR 1 — Archive & Repository Hygiene
 
-Status: **Not complete**
+Status: **Complete (baseline achieved), with optional extension**
 
 Evidence:
-- No `archive/` directory currently exists.
-- No visible archive destination for old reference data is present.
+- `old_app_before_refactor/` is already excluded in `.gitignore`, indicating archive safety was applied.
 
-Action needed:
-- Add a dedicated `archive/` structure.
-- Move legacy/uncertain assets there (starting with old frontend reference material per earlier decision).
+Remaining option:
+- Create an in-repo `archive/` folder for additional uncertain/dead artifacts that should remain visible in history.
 
 #### PR 2 — Backend Modularization (preserve debug logs)
 
 Status: **Mostly complete**
 
 Evidence:
-- `backend/app.py` is now lightweight and delegates route registration.
-- Route logic is separated into `backend/routes/api_routes.py` and `backend/routes/web_routes.py`.
-- Search and taxonomy concerns are split into `backend/search/*` and `backend/services/*` modules.
-- Verbose diagnostics are still present in API handlers.
+- `backend/app.py` is lightweight and delegates route registration.
+- Routing is split into `backend/routes/api_routes.py` and `backend/routes/web_routes.py`.
+- Search and taxonomy concerns are separated under `backend/search/*` and `backend/services/*`.
+- Verbose diagnostics remain in endpoint flows.
 
 Remaining opportunity:
-- `api_routes.py` is still large and can be split further by endpoint domain in a later pass if desired.
+- `api_routes.py` can be split further by endpoint domain later, if wanted.
 
 #### PR 3 — Frontend Container Decomposition
 
 Status: **Largely complete**
 
 Evidence:
-- `XBRLTaxonomyExplorerContainer.tsx` is now compact and orchestration-focused.
-- Hooks exist for major concerns: `useEntrypointData`, `useAdvancedSearch`, `useTreeNavigation`.
-- Service layer exists: `services/explorerApi.ts`.
+- `XBRLTaxonomyExplorerContainer.tsx` is orchestration-focused.
+- Hooks exist for key concerns: `useEntrypointData`, `useAdvancedSearch`, `useTreeNavigation`.
+- API logic exists in `services/explorerApi.ts`.
 
 Remaining opportunity:
-- Continue minor cleanup by extracting any remaining cross-cutting utility logic into shared helpers where duplication appears.
+- Continue minor utility deduplication where repetition still exists.
 
 #### PR 4 — Repetition + Dead Code Cleanup (archive-first)
 
-Status: **Partially complete / needs a focused pass**
+Status: **Partially complete / needs focused pass**
 
 Evidence:
-- Some structural cleanup already happened as part of PR2/PR3 style decomposition.
-- Archive-first policy has not yet been visibly applied in-repo.
+- Structural cleanup already happened during modularization.
+- A dedicated archive extension pass has not yet been done for newly identified uncertain files.
 
 Action needed:
-- Run an explicit unused/dead-code sweep and archive uncertain files instead of deleting.
+- Perform unused/dead-code sweep and move uncertain items into archive rather than deleting.
 
 #### PR 5 — TypeScript “Not Embarrassing” Pass
 
 Status: **Not complete**
 
 Evidence:
-- `frontend/tsconfig.app.json` currently has mismatched alias/include paths (`viewer/frontend/src`) vs actual Vite alias (`./src`).
-- Strictness remains mostly disabled, which is fine for incremental adoption, but alias consistency should be fixed first.
+- `frontend/tsconfig.app.json` still points to `viewer/frontend/src` while Vite alias points to `./src`.
+- Strictness remains relaxed (acceptable for incremental approach).
 
 Action needed:
-- Align TS and Vite path resolution first.
-- Then apply targeted type strengthening in explorer/search payloads.
+- Align TS + Vite path resolution first.
+- Then tighten typing in high-value flows (entrypoint/search payloads).
 
 #### PR 6 — Stabilization + Handover Notes
 
 Status: **Pending**
 
 Action needed:
-- Once archive + TS alignment + dead code pass are done, run stabilization checks and produce a concise architecture/handover note.
+- Final parity checks + concise architecture/handover summary once archive/type/dead-code passes are complete.
 
-## 2) Updated refactor execution order (recommended)
+---
 
-Given current state, the original plan should be updated to avoid rework:
+## 2) Updated execution order from this point
 
-1. **PR-A: Git workflow guardrails + branch hygiene docs** (this document + operational discipline).
-2. **PR-B: Archive phase** (create `archive/`, move agreed legacy/reference data safely).
-3. **PR-C: TS alias/config alignment + targeted type cleanup** (low-risk correctness first).
-4. **PR-D: Dead code/repetition sweep** (archive uncertain items, keep runtime behavior unchanged).
-5. **PR-E: Stabilization and handover summary**.
+Given PR1 is already effectively in place, proceed as:
 
-This sequence matches current code reality better than restarting from a broad backend/frontend split.
+1. **PR-B**: archive extension pass (only where new uncertain files are discovered).
+2. **PR-C**: TS alias/config alignment + targeted type improvements.
+3. **PR-D**: dead code/repetition cleanup (archive-first).
+4. **PR-E**: stabilization + handover note.
+
+---
 
 ## 3) Standard Git workflow we will always follow
 
-This is the **mandatory workflow** for every change set.
-
-### A. Start of work (state verification)
+### A. Start-of-task verification (mandatory)
 
 ```bash
 git fetch --all --prune
 git branch --show-current
+git rev-parse --short HEAD
 git status
 git log --oneline --decorate -n 5
 ```
 
 Rules:
-- Never start new work without first checking branch + clean status.
-- If branch is stale or unknown, stop and reset to `main` flow below.
+- Never start coding without branch + commit verification.
+- If branch is stale/unclear, stop and re-sync from `main`.
 
-### B. Sync main before creating a feature branch
+### B. Sync base branch
 
 ```bash
 git switch main
 git pull --ff-only origin main
 ```
 
-Rules:
-- `main` must fast-forward cleanly before branching.
-- Do not branch from stale `main`.
-
-### C. Create exactly one task branch per PR
+### C. Create one branch per PR
 
 ```bash
 git switch -c feature/<short-task-name>
 ```
 
 Examples:
-- `feature/archive-oldref`
+- `feature/archive-extension`
 - `chore/ts-alias-alignment`
-- `fix/search-filter-types`
+- `fix/advanced-search-types`
 
-### D. During implementation
+### D. Implement in small, clear commits
 
 ```bash
 git status
 ```
 
 Rules:
-- Keep commits small and scoped.
-- Prefer multiple focused commits over one “misc changes” commit.
-- Do not mix unrelated refactors in one branch.
+- Keep scope tight.
+- Avoid mixing unrelated changes.
+- Prefer multiple meaningful commits over one giant commit.
 
-### E. Pre-commit checks (project-relevant)
-
-Run the agreed checks for that PR scope (examples):
+### E. Run checks for PR scope
 
 ```bash
-# backend
 python -m compileall backend
-
-# frontend
 npm --prefix frontend run build
 ```
-
-Rules:
-- If a check fails, fix or clearly document why before commit.
 
 ### F. Commit and push
 
@@ -166,20 +167,14 @@ git commit -m "<Verb> <specific change>"
 git push -u origin feature/<short-task-name>
 ```
 
-Commit style:
-- `Archive old frontend reference dataset`
-- `Align tsconfig path alias with Vite`
-- `Extract search filter helper for reuse`
-
-### G. Open PR and merge policy
+### G. Open and merge PR
 
 Rules:
-- Open PR from feature branch into `main`.
-- Review “Files changed” before merging.
-- Use one consistent merge method for this repo (recommended: **Squash and merge** for clean solo history).
-- After merge, always sync local/main before any next task.
+- PR from feature branch → `main`.
+- Review diff before merge.
+- Use one consistent merge mode (recommended: **Squash and merge**).
 
-### H. Post-merge cleanup (required)
+### H. Post-merge local cleanup
 
 ```bash
 git switch main
@@ -187,26 +182,58 @@ git pull --ff-only origin main
 git branch -d feature/<short-task-name>
 ```
 
-### I. Codex-specific guardrail (critical)
+### I. Codex/cloud guardrail
 
-At the start of every Codex task, explicitly confirm in prompt:
-- target repo
-- target base branch (`main`)
-- expected working branch name for the new PR
+At task start, explicitly state:
+- repo
+- base branch (`main`)
+- new working branch name
 
-At the end of every Codex task, verify commands are shown in output:
+At task end, always show:
 - current branch
-- git status
+- `git status`
 - latest commit hash
 
-This prevents stale-branch PR drift and repeated merge conflicts.
+---
 
-## 4) Confirmed next steps before proceeding
+## 4) Merge-sync drill (what we will test next)
 
-No further refactor implementation should start until these are acknowledged:
+After this PR is merged on GitHub:
 
-1. Approve this updated order: **PR-A → PR-B → PR-C → PR-D → PR-E**.
-2. Confirm merge style default for this repo (**Squash and merge** recommended).
-3. Confirm branch naming convention (`feature/`, `fix/`, `chore/`) to enforce consistently.
-4. Then begin PR-B (archive phase) on a fresh branch from updated `main`.
+### On your local machine
 
+```bash
+git switch main
+git pull --ff-only origin main
+git log --oneline --decorate -n 3
+```
+
+Expected result:
+- `main` includes the merge commit (or squash commit) for this PR.
+
+### In Codex environment (next task start)
+
+```bash
+git fetch --all --prune
+git switch main
+git pull --ff-only origin main
+git branch --show-current
+git rev-parse HEAD
+git status
+```
+
+Expected result:
+- Branch is `main`.
+- HEAD matches latest remote `main` commit.
+- Working tree is clean.
+
+Only then create the next task branch and continue refactor work.
+
+---
+
+## 5) Confirmed next steps before proceeding
+
+1. Merge this updated workflow/status doc PR.
+2. Run the merge-sync drill above (local + Codex).
+3. Start next implementation on a fresh feature branch from synced `main`.
+4. Begin with **PR-B archive extension pass**, then proceed to PR-C.
