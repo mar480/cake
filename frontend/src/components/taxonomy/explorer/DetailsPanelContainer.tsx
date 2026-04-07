@@ -25,6 +25,7 @@ interface DetailPanelProps {
   treeLocations: TreeLocationTarget[];
   language: "en" | "cy";
   network: string;
+  year: string | null;
   advancedSearchState: AdvancedSearchState;
   advancedSearchFilterOptions: AdvancedSearchFilterOptions;
   referenceParagraphsBySource: Record<string, string[]>;
@@ -42,6 +43,7 @@ const DetailPanelContainer: React.FC<DetailPanelProps> = ({
   treeLocations,
   language,
   network,
+  year,
   advancedSearchState,
   advancedSearchFilterOptions,
   referenceParagraphsBySource,
@@ -128,6 +130,7 @@ const DetailPanelContainer: React.FC<DetailPanelProps> = ({
             onRunSearch={onRunAdvancedSearch}
             onResetSearch={onResetAdvancedSearch}
             onNavigateToNode={onNavigateToNode}
+            year={year}
           />
         )}
 
