@@ -98,6 +98,26 @@ export function useTreeNavigation({
     [network, setExpandedKeys, setHighlightedKey, setNetwork]
   );
 
+  const navigateToQNameInNetwork = useCallback(
+    (targetQName: string, targetNetwork: string, options?: { preserveDetails?: boolean }) => {
+      if (!targetQName || !targetNetwork) return;
+      if (!rawTreeData[targetNetwork]) return;
+
+      setPendingNavigation({
+        network: targetNetwork,
+        qname: targetQName,
+        updateDetails: options?.preserveDetails ? false : true,
+      });
+
+      if (network !== targetNetwork) {
+        setNetwork(targetNetwork);
+        setExpandedKeys({});
+        setHighlightedKey(null);
+      }
+    },
+    [network, rawTreeData, setExpandedKeys, setHighlightedKey, setNetwork]
+  );
+
   useEffect(() => {
     if (!pendingNavigation) return;
     if (network !== pendingNavigation.network) return;
@@ -160,5 +180,6 @@ export function useTreeNavigation({
     treeLocations,
     expandPathToQName,
     navigateToLocation,
+    navigateToQNameInNetwork,
   };
 }

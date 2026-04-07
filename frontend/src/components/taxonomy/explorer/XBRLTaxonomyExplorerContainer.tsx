@@ -10,6 +10,30 @@ import { useAdvancedSearch } from "./hooks/useAdvancedSearch";
 import { useEntrypointData } from "./hooks/useEntrypointData";
 import { useTreeNavigation } from "./hooks/useTreeNavigation";
 
+const NETWORK_TAB_ORDER = [
+  "presentation",
+  "definition_hydim",
+  "definition_dimdom",
+  "definition_dimdef",
+  "definition_dommem",
+  "definition_all",
+  "definition_crossref",
+  "definition_inflow",
+  "definition_outflow",
+] as const;
+
+const NETWORK_LABELS: Record<string, string> = {
+  presentation: "Presentation",
+  definition_hydim: "Definition: hypercube-dimension",
+  definition_dimdom: "Definition: dimension-domain",
+  definition_dimdef: "Definition: dimension-default",
+  definition_dommem: "Definition: domain-member",
+  definition_all: "Definition: all",
+  definition_crossref: "Definition: crossref",
+  definition_inflow: "Definition: inflow",
+  definition_outflow: "Definition: outflow",
+};
+
 const XBRLTaxonomyExplorerContainer: React.FC = () => {
   // UI state
   const [selectedNode, setSelectedNode] = useState<TreeNode | null>(null);
@@ -54,7 +78,7 @@ const XBRLTaxonomyExplorerContainer: React.FC = () => {
     return mapElrGroupedTreeToTreeNodes(raw);
   }, [rawTreeData, network]);
 
-  const { treeLocations, expandPathToQName, navigateToLocation } = useTreeNavigation({
+  const { treeLocations, expandPathToQName, navigateToLocation, navigateToQNameInNetwork } = useTreeNavigation({
     currentTreeNodes,
     rawTreeData,
     detailNode,
@@ -65,6 +89,40 @@ const XBRLTaxonomyExplorerContainer: React.FC = () => {
     setSelectedNode,
     setDetailNode,
   });
+
+  const resultNetworks = useMemo(() => {
+    const networksByQname = new Map<string, Set<string>>();
+
+    const walk = (networkKey: string, node: { qname?: string; children?: { qname?: string; children?: unknown[] }[] }) => {
+      if (node.qname) {
+        if (!networksByQname.has(node.qname)) networksByQname.set(node.qname, new Set());
+        networksByQname.get(node.qname)?.add(networkKey);
+      }
+      (node.children ?? []).forEach((child) => walk(networkKey, child as never));
+    };
+
+    Object.entries(rawTreeData).forEach(([networkKey, groups]) => {
+      (groups ?? []).forEach((group) => {
+        (group.root_tree ?? []).forEach((root) => walk(networkKey, root));
+      });
+    });
+
+    const mapped: Record<string, string[]> = {};
+    networksByQname.forEach((networkSet, qname) => {
+      const ordered = NETWORK_TAB_ORDER.filter((networkKey) => networkSet.has(networkKey));
+      const extras = Array.from(networkSet).filter((networkKey) => !NETWORK_TAB_ORDER.includes(networkKey as never));
+      mapped[qname] = [...ordered, ...extras];
+    });
+    return mapped;
+  }, [rawTreeData]);
+
+  const navigateFromSearch = useCallback(
+    (qname: string, targetNetwork?: string) => {
+      const destinationNetwork = targetNetwork || "presentation";
+      navigateToQNameInNetwork(qname, destinationNetwork);
+    },
+    [navigateToQNameInNetwork]
+  );
 
   // Default network
   useEffect(() => {
@@ -112,6 +170,7 @@ const XBRLTaxonomyExplorerContainer: React.FC = () => {
           }
         }}
         onNavigateToNode={expandPathToQName}
+        onNavigateToSearchNode={navigateFromSearch}
         onNavigateToLocation={navigateToLocation}
         currentTreeNodes={currentTreeNodes}
         entrypointLoaded={entrypointLoaded}
@@ -123,6 +182,8 @@ const XBRLTaxonomyExplorerContainer: React.FC = () => {
         onAdvancedSearchFiltersChange={updateAdvancedSearchFilters}
         onRunAdvancedSearch={runAdvancedSearch}
         onResetAdvancedSearch={resetAdvancedSearch}
+        networkLabels={NETWORK_LABELS}
+        resultNetworks={resultNetworks}
       />
     </>
   );

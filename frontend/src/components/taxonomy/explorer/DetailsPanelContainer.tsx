@@ -20,8 +20,11 @@ type DetailsTabName =
 interface DetailPanelProps {
   selectedNode: TreeNode | null;
   onNavigateToNode?: (qname: string) => void;
+  onNavigateToSearchNode?: (qname: string, network?: string) => void;
   onNavigateToCrossReference?: (qname: string) => void;
   onNavigateToLocation?: (target: TreeLocationTarget) => void;
+  networkLabels?: Record<string, string>;
+  resultNetworks?: Record<string, string[]>;
   treeLocations: TreeLocationTarget[];
   language: "en" | "cy";
   network: string;
@@ -38,8 +41,11 @@ interface DetailPanelProps {
 const DetailPanelContainer: React.FC<DetailPanelProps> = ({
   selectedNode,
   onNavigateToNode,
+  onNavigateToSearchNode,
   onNavigateToCrossReference,
   onNavigateToLocation,
+  networkLabels,
+  resultNetworks,
   treeLocations,
   language,
   network,
@@ -129,7 +135,9 @@ const DetailPanelContainer: React.FC<DetailPanelProps> = ({
             onFiltersChange={onAdvancedSearchFiltersChange}
             onRunSearch={onRunAdvancedSearch}
             onResetSearch={onResetAdvancedSearch}
-            onNavigateToNode={onNavigateToNode}
+            onNavigateToSearchNode={onNavigateToSearchNode}
+            networkLabels={networkLabels}
+            resultNetworks={resultNetworks}
             year={year}
           />
         )}

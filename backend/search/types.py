@@ -7,6 +7,7 @@ class SearchFilters(TypedDict, total=False):
     balance: List[str]
     periodType: List[str]
     xbrlType: List[str]
+    isDimension: List[bool]
     fullType: List[str]
     abstract: List[bool]
     nillable: List[bool]
@@ -28,6 +29,11 @@ class SearchResult(TypedDict):
     qname: str
     label: str
     local_name: str
+    balance: str
+    period_type: str
+    xbrl_type: str
+    substitution_group: str
+    is_dimension: bool
     score: int
     matched_fields: List[str]
     score_breakdown: dict[str, int]
