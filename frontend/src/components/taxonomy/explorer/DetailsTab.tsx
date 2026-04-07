@@ -10,6 +10,14 @@ import {
 import { ConceptDetailsResponse, ConceptReference } from "./apiTypes";
 import { TreeNode } from "./tree_utils";
 
+
+const LABEL_ROLE_DISPLAY_NAMES: Record<string, string> = {
+  "http://www.lloyds.com/lloyds/roles/idLabel": "ID Label (Lloyd's)",
+};
+
+const getLabelRoleDisplayName = (role: string): string =>
+  LABEL_ROLE_DISPLAY_NAMES[role] ?? role;
+
 interface Props {
   concept: ConceptDetailsResponse;
   selectedNode: TreeNode;
@@ -226,11 +234,11 @@ const DetailsTab: React.FC<Props> = ({
                           {label.type ===
                           concept.concept.preferred_label_role ? (
                             <div className="px-2 py-1 rounded bg-blue-100 text-blue-800 inline-block">
-                              <div className="font-semibold">{label.type}</div>
+                              <div className="font-semibold">{getLabelRoleDisplayName(label.type)}</div>
                               <div className="text-xs italic">(Preferred)</div>
                             </div>
                           ) : (
-                            label.type
+                            getLabelRoleDisplayName(label.type)
                           )}
                         </td>
 

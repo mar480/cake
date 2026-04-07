@@ -53,6 +53,7 @@ interface AdvancedSearchTabProps {
   onRunSearch: (nextOffset?: number) => void;
   onResetSearch: () => void;
   onNavigateToNode?: (qname: string) => void;
+  year?: string | null;
 }
 
 const FieldLabelWithHelp: React.FC<{ label: string; help: string }> = ({ label, help }) => (
@@ -167,6 +168,7 @@ const AdvancedSearchTab: React.FC<AdvancedSearchTabProps> = ({
   onRunSearch,
   onResetSearch,
   onNavigateToNode,
+  year,
 }) => {
 
     const normalizedFilters: AdvancedSearchFilters = {
@@ -200,6 +202,11 @@ const AdvancedSearchTab: React.FC<AdvancedSearchTabProps> = ({
     filters.referenceSource
       ? safeReferenceParagraphsBySource[filters.referenceSource] || []
       : [];
+
+  const isLloydsTaxonomySelected = year === "lloyds-2025";
+  const balanceHelpText = isLloydsTaxonomySelected
+    ? "The concepts in the Lloyd’s taxonomy do not rely on the debit and credit types functionality from the standard taxonomy."
+    : "Accounting balance type.";
 
   const chips: FilterChip[] = [
     ...filters.balance.map((value) => ({
@@ -422,7 +429,7 @@ const AdvancedSearchTab: React.FC<AdvancedSearchTabProps> = ({
                 <div className="grid grid-cols-2 gap-3 items-start">
                   <StringCheckboxGroup
                     label="Balance"
-                    help="Accounting balance type."
+                    help={balanceHelpText}
                     options={safeFilterOptions.balance}
                     selected={filters.balance}
                     onChange={(next) => onFiltersChange({ ...filters, balance: next })}
