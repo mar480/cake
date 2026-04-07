@@ -151,6 +151,7 @@ const XBRLTaxonomyExplorer: React.FC<Props> = ({
           <DetailsPanelContainer
             selectedNode={detailNode}
             onNavigateToNode={onNavigateToNode}
+            year={year}
             onNavigateToCrossReference={(qname) => onNavigateToNode(qname, { preserveDetails: true })}
             onNavigateToLocation={onNavigateToLocation}
             treeLocations={treeLocations}
