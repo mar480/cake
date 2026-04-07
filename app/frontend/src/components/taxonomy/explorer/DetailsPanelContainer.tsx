@@ -1,0 +1,168 @@
+import React, { useEffect, useMemo, useState } from "react";
+import DetailsTab from "./DetailsTab";
+import HypercubeRelationshipsTab from "./HypercubeRelationshipsTab";
+import TreeLocationsTab, { TreeLocationTarget } from "./TreeLocationsTab";
+import AdvancedSearchTab from "./AdvancedSearchTab";
+import {
+  AdvancedSearchState,
+  AdvancedSearchFilterOptions,
+  AdvancedSearchFilters,
+} from "@/types/advancedSearch";
+
+type DetailsTabName =
+  | "Details"
+  | "Hypercube Relationships"
+  | "Tree Locations"
+  | "Advanced Search";
+
+interface DetailPanelProps {
+  selectedNode: any;
+  onNavigateToNode?: (qname: string) => void;
+  onNavigateToCrossReference?: (qname: string) => void;
+  onNavigateToLocation?: (target: TreeLocationTarget) => void;
+  treeLocations: TreeLocationTarget[];
+  language: "en" | "cy";
+  network: string;
+  advancedSearchState: AdvancedSearchState;
+  advancedSearchFilterOptions: AdvancedSearchFilterOptions;
+  referenceParagraphsBySource: Record<string, string[]>;
+  onAdvancedSearchQueryChange: (query: string) => void;
+  onAdvancedSearchFiltersChange: (next: AdvancedSearchFilters) => void;
+  onRunAdvancedSearch: (nextOffset?: number) => void;
+  onResetAdvancedSearch: () => void;
+}
+
+const DetailPanelContainer: React.FC<DetailPanelProps> = ({
+  selectedNode,
+  onNavigateToNode,
+  onNavigateToCrossReference,
+  onNavigateToLocation,
+  treeLocations,
+  language,
+  network,
+  advancedSearchState,
+  advancedSearchFilterOptions,
+  referenceParagraphsBySource,
+  onAdvancedSearchQueryChange,
+  onAdvancedSearchFiltersChange,
+  onRunAdvancedSearch,
+  onResetAdvancedSearch,
+}) => {
+  const [activeTab, setActiveTab] = useState<DetailsTabName>("Details");
+  const [concept, setConcept] = useState<any | null>(null);
+
+  const showHypercubeTab = network === "presentation";
+
+  const tabs = useMemo(
+    () =>
+      showHypercubeTab
+        ? ([
+            "Details",
+            "Hypercube Relationships",
+            "Tree Locations",
+            "Advanced Search",
+          ] as const)
+        : (["Details", "Tree Locations", "Advanced Search"] as const),
+    [showHypercubeTab]
+  );
+
+  useEffect(() => {
+    if (!tabs.includes(activeTab)) {
+      setActiveTab("Details");
+    }
+  }, [tabs, activeTab]);
+
+  useEffect(() => {
+    if (selectedNode?.data?.qname) {
+      const qname = selectedNode.data.qname;
+      fetch(`/api/concept-details?qname=${encodeURIComponent(qname)}`)
+        .then((res) => res.json())
+        .then((data) => setConcept(data))
+        .catch((err) => {
+          console.error("Error fetching concept:", err);
+          setConcept(null);
+        });
+    } else {
+      setConcept(null);
+    }
+  }, [selectedNode]);
+
+  useEffect(() => {
+    if (selectedNode) {
+      setActiveTab("Details");
+    }
+  }, [selectedNode]);
+
+  const renderNoSelection = () => (
+    <div className="p-4 text-gray-500 text-center">Please select a concept.</div>
+  );
+
+  return (
+    <div className="flex flex-col h-full overflow-hidden">
+<div className="flex border-b px-1 pt-1 shadow-sm">
+  {tabs.map((tab) => (
+    <button
+      key={tab}
+      className={`px-4 py-1.5 text-sm font-medium border border-b-0 rounded-t-md shadow-sm transition-colors mr-1 ${
+        activeTab === tab
+          ? "bg-blue-100 border-blue-300 text-blue-900"
+          : "bg-gray-200 border-gray-300 text-gray-800 hover:bg-gray-300"
+      }`}
+      onClick={() => setActiveTab(tab)}
+    >
+      {tab}
+    </button>
+  ))}
+</div>
+
+      <div className="flex-1 overflow-auto">
+        {activeTab === "Advanced Search" && (
+          <AdvancedSearchTab
+            state={advancedSearchState}
+            filterOptions={advancedSearchFilterOptions}
+            referenceParagraphsBySource={referenceParagraphsBySource}
+            onQueryChange={onAdvancedSearchQueryChange}
+            onFiltersChange={onAdvancedSearchFiltersChange}
+            onRunSearch={onRunAdvancedSearch}
+            onResetSearch={onResetAdvancedSearch}
+            onNavigateToNode={onNavigateToNode}
+          />
+        )}
+
+        {activeTab === "Details" &&
+          (!selectedNode || !concept ? (
+            renderNoSelection()
+          ) : (
+            <DetailsTab
+              concept={concept}
+              selectedNode={selectedNode}
+              onNavigateToNode={onNavigateToNode}
+              onNavigateToCrossReference={onNavigateToCrossReference}
+            />
+          ))}
+
+        {activeTab === "Hypercube Relationships" &&
+          (showHypercubeTab ? (
+            !selectedNode || !concept ? (
+              renderNoSelection()
+            ) : (
+              <HypercubeRelationshipsTab qname={concept.concept.qname} language={language} />
+            )
+          ) : null)}
+
+        {activeTab === "Tree Locations" &&
+          (!selectedNode || !concept ? (
+            renderNoSelection()
+          ) : (
+            <TreeLocationsTab
+              qname={concept.concept.qname}
+              locations={treeLocations}
+              onNavigateToLocation={(target) => onNavigateToLocation?.(target)}
+            />
+          ))}
+      </div>
+    </div>
+  );
+};
+
+export default DetailPanelContainer;
