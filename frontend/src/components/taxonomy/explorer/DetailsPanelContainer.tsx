@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import DetailsTab from "./DetailsTab";
 import HypercubeRelationshipsTab from "./HypercubeRelationshipsTab";
 import TreeLocationsTab, { TreeLocationTarget } from "./TreeLocationsTab";
@@ -62,6 +62,8 @@ const DetailPanelContainer: React.FC<DetailPanelProps> = ({
 }) => {
   const [activeTab, setActiveTab] = useState<DetailsTabName>("Details");
   const [concept, setConcept] = useState<ConceptDetailsResponse | null>(null);
+  const [isConceptLoading, setIsConceptLoading] = useState(false);
+  const [conceptError, setConceptError] = useState<string | null>(null);
 
   const showHypercubeTab = network === "presentation";
 
@@ -87,20 +89,96 @@ const DetailPanelContainer: React.FC<DetailPanelProps> = ({
     }
   }, [tabs, activeTab]);
 
+  const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+  const fetchConceptDetailsWithRetry = useCallback(
+    async (
+      qname: string,
+      signal: AbortSignal,
+      maxAttempts = 3
+    ): Promise<ConceptDetailsResponse> => {
+      let lastError: Error | null = null;
+
+      for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+        try {
+          const response = await fetch(`/api/concept-details?qname=${encodeURIComponent(qname)}`, {
+            signal,
+          });
+
+          const payload = await response.json();
+
+          if (response.ok && payload?.concept) {
+            return payload as ConceptDetailsResponse;
+          }
+
+          const message =
+            typeof payload?.error === "string"
+              ? payload.error
+              : `Failed to load concept (${response.status})`;
+          const retryable =
+            response.status === 503 ||
+            response.status === 502 ||
+            response.status === 500 ||
+            response.status === 429 ||
+            payload?.retryable === true;
+
+          if (!retryable || attempt === maxAttempts) {
+            throw new Error(message);
+          }
+
+          await sleep(200 * attempt);
+        } catch (err) {
+          if (err instanceof DOMException && err.name === "AbortError") {
+            throw err;
+          }
+
+          lastError = err instanceof Error ? err : new Error("Unknown error");
+          if (attempt === maxAttempts) {
+            throw lastError;
+          }
+
+          await sleep(200 * attempt);
+        }
+      }
+
+      throw lastError ?? new Error("Failed to load concept");
+    },
+    []
+  );
+
   useEffect(() => {
     if (selectedNode?.data?.qname) {
       const qname = selectedNode.data.qname;
-      fetch(`/api/concept-details?qname=${encodeURIComponent(qname)}`)
-        .then((res) => res.json())
-        .then((data) => setConcept(data))
+      const controller = new AbortController();
+
+      setIsConceptLoading(true);
+      setConceptError(null);
+
+      fetchConceptDetailsWithRetry(qname, controller.signal)
+        .then((data) => {
+          setConcept(data);
+          setConceptError(null);
+        })
         .catch((err) => {
+          if (err instanceof DOMException && err.name === "AbortError") {
+            return;
+          }
           console.error("Error fetching concept:", err);
-          setConcept(null);
+          const message =
+            err instanceof Error ? err.message : "Failed to load concept details";
+          setConceptError(message);
+        })
+        .finally(() => {
+          setIsConceptLoading(false);
         });
+
+      return () => controller.abort();
     } else {
       setConcept(null);
+      setConceptError(null);
+      setIsConceptLoading(false);
     }
-  }, [selectedNode]);
+  }, [fetchConceptDetailsWithRetry, selectedNode]);
 
   useEffect(() => {
     if (selectedNode) {
@@ -132,6 +210,16 @@ const DetailPanelContainer: React.FC<DetailPanelProps> = ({
 </div>
 
       <div className="flex-1 overflow-auto">
+        {conceptError && (
+          <div className="mx-3 mt-3 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+            {conceptError}
+          </div>
+        )}
+
+        {isConceptLoading && (
+          <div className="px-4 pt-3 text-sm text-gray-500">Loading concept details…</div>
+        )}
+
         {activeTab === "Advanced Search" && (
           <AdvancedSearchTab
             state={advancedSearchState}

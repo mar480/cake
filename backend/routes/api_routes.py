@@ -1,5 +1,6 @@
 import json
 import os
+import time
 
 from flask import g, jsonify, request
 
@@ -17,7 +18,22 @@ from services.taxonomy_service import (
     load_taxonomy_with_lloyds_fallback,
     safe_close_taxonomy,
 )
-from state import search_filter_options_cache, taxonomy_cache
+from state import search_filter_options_cache, taxonomy_cache, taxonomy_lock
+
+
+def get_active_taxonomy_with_retry(max_attempts: int = 3, delay_seconds: float = 0.2):
+    for attempt in range(max_attempts):
+        with taxonomy_lock:
+            taxonomy = taxonomy_cache.get("active")
+            is_loading = taxonomy_cache.get("is_loading", False)
+
+        if taxonomy is not None and not is_loading:
+            return taxonomy
+
+        if attempt < max_attempts - 1:
+            time.sleep(delay_seconds)
+
+    return None
 
 
 def register_api_routes(app, taxonomy_base_dir: str):
@@ -46,10 +62,18 @@ def register_api_routes(app, taxonomy_base_dir: str):
 
     @app.route("/api/concept-details")
     def concept_details():
-        taxonomy = getattr(g, "taxonomy", taxonomy_cache.get("active"))
+        qname = request.args.get("qname", "").strip()
+
+        if ":" not in qname:
+            print("[concept-details] invalid qname format")
+            return jsonify({"error": "Invalid qname"}), 400
+
+        taxonomy = getattr(g, "taxonomy", None)
+        if taxonomy is None:
+            taxonomy = get_active_taxonomy_with_retry()
 
         print("\n[concept-details] ===== START =====")
-        print(f"[concept-details] requested qname={request.args.get('qname', '')}")
+        print(f"[concept-details] requested qname={qname}")
         print(f"[concept-details] g has taxonomy? {hasattr(g, 'taxonomy')}")
         print(
             f"[concept-details] cache has active? {'active' in taxonomy_cache and taxonomy_cache.get('active') is not None}"
@@ -57,7 +81,21 @@ def register_api_routes(app, taxonomy_base_dir: str):
 
         if taxonomy is None:
             print("[concept-details] taxonomy is None")
-            return jsonify({"error": "No taxonomy loaded"}), 400
+            with taxonomy_lock:
+                is_loading = taxonomy_cache.get("is_loading", False)
+            return (
+                jsonify(
+                    {
+                        "error": (
+                            "Taxonomy is still loading"
+                            if is_loading
+                            else "Taxonomy temporarily unavailable"
+                        ),
+                        "retryable": True,
+                    }
+                ),
+                503,
+            )
 
         g.taxonomy = taxonomy
 
@@ -86,11 +124,6 @@ def register_api_routes(app, taxonomy_base_dir: str):
             print(f"[concept-details] model inspection error: {ex}")
             available_prefixes = []
 
-        qname = request.args.get("qname", "")
-        if ":" not in qname:
-            print("[concept-details] invalid qname format")
-            return jsonify({"error": "Invalid qname"}), 400
-
         prefix, local_name = qname.split(":", 1)
         print(f"[concept-details] requested prefix={prefix}, local_name={local_name}")
 
@@ -115,7 +148,20 @@ def register_api_routes(app, taxonomy_base_dir: str):
                 404,
             )
 
-        concept_data = g.taxonomy.concepts.get_concept_json(ns, local_name)
+        try:
+            concept_data = g.taxonomy.concepts.get_concept_json(ns, local_name)
+        except Exception as ex:
+            print(f"[concept-details] get_concept_json error: {ex}")
+            return (
+                jsonify(
+                    {
+                        "error": "Failed to resolve concept details",
+                        "retryable": True,
+                    }
+                ),
+                503,
+            )
+
         if not concept_data:
             print("[concept-details] concept_data not found")
             return jsonify({"error": f"Concept '{qname}' not found"}), 404
@@ -140,7 +186,7 @@ def register_api_routes(app, taxonomy_base_dir: str):
 
     @app.route("/api/load-entrypoint", methods=["POST"])
     def load_entrypoint():
-        data = request.get_json()
+        data = request.get_json() or {}
         year = data.get("year")
         href = data.get("href")
 
@@ -158,9 +204,21 @@ def register_api_routes(app, taxonomy_base_dir: str):
                 f"[load-entrypoint] taxonomy_cache has active? {'active' in taxonomy_cache and taxonomy_cache.get('active') is not None}"
             )
 
-            old_taxonomy = taxonomy_cache.get("active")
-            if old_taxonomy is not None:
-                safe_close_taxonomy(old_taxonomy)
+            with taxonomy_lock:
+                taxonomy_cache["is_loading"] = True
+                old_taxonomy = taxonomy_cache.get("active")
+
+            new_taxonomy = load_taxonomy_with_lloyds_fallback(
+                taxonomy_base_dir, year, entrypoint_path
+            )
+
+            with taxonomy_lock:
+                taxonomy_cache["active"] = new_taxonomy
+                taxonomy_cache["is_loading"] = False
+
+            g.taxonomy = new_taxonomy
+
+            if old_taxonomy is not None and old_taxonomy is not new_taxonomy:
                 print(
                     f"[load-entrypoint] old taxonomy id={id(old_taxonomy)} model_id={id(getattr(old_taxonomy, 'model', None))}"
                 )
@@ -169,17 +227,7 @@ def register_api_routes(app, taxonomy_base_dir: str):
                 except Exception as ex:
                     old_count = f"ERR: {ex}"
                 print(f"[load-entrypoint] old qnameConcepts count={old_count}")
-                # close old taxonomy before replace
-                try:
-                    old_taxonomy.controller.close()
-                    print("[load-entrypoint] old taxonomy controller closed")
-                except Exception as ex:
-                    print(f"[load-entrypoint] old taxonomy close error: {ex}")
-
-            g.taxonomy = load_taxonomy_with_lloyds_fallback(
-                taxonomy_base_dir, year, entrypoint_path
-            )
-            taxonomy_cache["active"] = g.taxonomy
+                safe_close_taxonomy(old_taxonomy)
 
             print(f"[load-entrypoint] new taxonomy id={id(g.taxonomy)}")
             print(
@@ -244,6 +292,8 @@ def register_api_routes(app, taxonomy_base_dir: str):
             )
 
         except Exception as e:
+            with taxonomy_lock:
+                taxonomy_cache["is_loading"] = False
             print(f"[load-entrypoint] ERROR: {e}")
             return jsonify({"error": f"Failed to load taxonomy: {str(e)}"}), 500
 
