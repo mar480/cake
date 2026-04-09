@@ -51,6 +51,13 @@ def handle_unexpected_error(err):
     raise err
 
 
+@app.errorhandler(503)
+def handle_503(err):
+    if request.path.startswith("/api/"):
+        return jsonify({"error": "Service temporarily unavailable"}), 503
+    return err
+
+
 register_web_routes(app)
 register_api_routes(app, TAXONOMY_BASE_DIR)
 
