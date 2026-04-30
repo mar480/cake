@@ -151,6 +151,30 @@ const XBRLTaxonomyExplorerContainer: React.FC = () => {
     return buildElrMap("presentation");
   }, [buildElrMap]);
 
+  const directDefinitionElrsByQname = useMemo(() => {
+    const definitionNetworks = [
+      "definition_hydim",
+      "definition_dimdom",
+      "definition_dimdef",
+      "definition_dommem",
+      "definition_all",
+    ] as const;
+
+    const merged = new Map<string, Set<string>>();
+
+    definitionNetworks.forEach((networkKey) => {
+      const networkMap = buildElrMap(networkKey);
+      Object.entries(networkMap).forEach(([qname, elrs]) => {
+        if (!merged.has(qname)) merged.set(qname, new Set());
+        elrs.forEach((elr) => merged.get(qname)?.add(elr));
+      });
+    });
+
+    return Object.fromEntries(
+      Array.from(merged.entries()).map(([qname, elrSet]) => [qname, Array.from(elrSet)])
+    );
+  }, [buildElrMap]);
+
   const hypercubeToDefinitionElrs = useMemo(() => {
     const mapped = new Map<string, string[]>();
     const groups = rawTreeData.definition_hydim ?? [];
@@ -175,7 +199,7 @@ const XBRLTaxonomyExplorerContainer: React.FC = () => {
     const mapped: Record<string, string[]> = {};
 
     advancedSearchState.allResults.forEach((result) => {
-      const elrs = new Set<string>();
+      const elrs = new Set<string>(directDefinitionElrsByQname[result.qname] ?? []);
       (result.hypercubes ?? []).forEach((hypercubeQname) => {
         (hypercubeToDefinitionElrs[hypercubeQname] ?? []).forEach((elrDefinition) => {
           elrs.add(elrDefinition);
@@ -185,7 +209,7 @@ const XBRLTaxonomyExplorerContainer: React.FC = () => {
     });
 
     return mapped;
-  }, [advancedSearchState.allResults, hypercubeToDefinitionElrs]);
+  }, [advancedSearchState.allResults, directDefinitionElrsByQname, hypercubeToDefinitionElrs]);
 
   const navigateFromSearch = useCallback(
     (qname: string, targetNetwork?: string) => {
