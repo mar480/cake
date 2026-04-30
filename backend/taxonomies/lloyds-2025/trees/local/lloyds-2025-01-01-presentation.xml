@@ -1,0 +1,574 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<linkbase xmlns='http://www.xbrl.org/2003/linkbase' xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' xsi:schemaLocation='http://www.xbrl.org/2003/linkbase http://www.xbrl.org/2003/xbrl-linkbase-2003-12-31.xsd' xmlns:xlink='http://www.w3.org/1999/xlink'>
+  <presentationLink xlink:role='https://www.lloyds.com/lloyds/roles/Entity-Information' xlink:type='extended'>
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_EntityIdentifyingCodesHeading' xlink:label='concept_EntityIdentifyingCodesHeading_1' xlink:type='locator' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_EntityInformationHeading' xlink:label='concept_EntityInformationHeading_1' xlink:type='locator' />
+    <presentationArc order='1.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_EntityInformationHeading_1' xlink:to='concept_EntityIdentifyingCodesHeading_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_SyndicateNumber' xlink:label='concept_SyndicateNumber_1' xlink:type='locator' />
+    <presentationArc order='1.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_EntityIdentifyingCodesHeading_1' xlink:to='concept_SyndicateNumber_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_EntityActivitiesHeading' xlink:label='concept_EntityActivitiesHeading_1' xlink:type='locator' />
+    <presentationArc order='2.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_EntityInformationHeading_1' xlink:to='concept_EntityActivitiesHeading_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_LifeSyndicate' xlink:label='concept_LifeSyndicate_1' xlink:type='locator' />
+    <presentationArc order='1.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_EntityActivitiesHeading_1' xlink:to='concept_LifeSyndicate_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_ManagingAgentName' xlink:label='concept_ManagingAgentName_1' xlink:type='locator' />
+    <presentationArc order='2.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_EntityActivitiesHeading_1' xlink:to='concept_ManagingAgentName_1' xlink:type='arc' />
+  </presentationLink>
+  <roleRef roleURI='https://www.lloyds.com/lloyds/roles/Entity-Information' xlink:href='lloyds-2025-01-01.xsd#entityInformation' xlink:type='simple' />
+  <presentationLink xlink:role='https://www.lloyds.com/lloyds/roles/Report-Information' xlink:type='extended'>
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_Schedule3Data' xlink:label='concept_Schedule3Data_1' xlink:type='locator' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_ReportInformationHeading' xlink:label='concept_ReportInformationHeading_1' xlink:type='locator' />
+    <presentationArc order='1.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_ReportInformationHeading_1' xlink:to='concept_Schedule3Data_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_ReportDatesPeriodsCoveredHeading' xlink:label='concept_ReportDatesPeriodsCoveredHeading_1' xlink:type='locator' />
+    <presentationArc order='2.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_ReportInformationHeading_1' xlink:to='concept_ReportDatesPeriodsCoveredHeading_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_EndDateForPeriodCoveredByReport' xlink:label='concept_EndDateForPeriodCoveredByReport_1' xlink:type='locator' />
+    <presentationArc order='1.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_ReportDatesPeriodsCoveredHeading_1' xlink:to='concept_EndDateForPeriodCoveredByReport_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_EndDateForPriorPeriod' xlink:label='concept_EndDateForPriorPeriod_1' xlink:type='locator' />
+    <presentationArc order='2.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_ReportDatesPeriodsCoveredHeading_1' xlink:to='concept_EndDateForPriorPeriod_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_PresentationalCurrency' xlink:label='concept_PresentationalCurrency_1' xlink:type='locator' />
+    <presentationArc order='3.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_ReportInformationHeading_1' xlink:to='concept_PresentationalCurrency_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_FunctionalCurrency' xlink:label='concept_FunctionalCurrency_1' xlink:type='locator' />
+    <presentationArc order='4.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_ReportInformationHeading_1' xlink:to='concept_FunctionalCurrency_1' xlink:type='arc' />
+  </presentationLink>
+  <roleRef roleURI='https://www.lloyds.com/lloyds/roles/Report-Information' xlink:href='lloyds-2025-01-01.xsd#reportInformation' xlink:type='simple' />
+  <presentationLink xlink:role='https://www.lloyds.com/lloyds/roles/Statement-Profit-Loss' xlink:type='extended'>
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_TechnicalAccount-LongTermBusinessHeading' xlink:label='concept_TechnicalAccount-LongTermBusinessHeading_1' xlink:type='locator' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_StatementProfitOrLossInsuranceSectorHeading' xlink:label='concept_StatementProfitOrLossInsuranceSectorHeading_1' xlink:type='locator' />
+    <presentationArc order='1.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_StatementProfitOrLossInsuranceSectorHeading_1' xlink:to='concept_TechnicalAccount-LongTermBusinessHeading_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_EarnedPremiumNetReinsurance' xlink:label='concept_EarnedPremiumNetReinsurance_1' xlink:type='locator' />
+    <presentationArc order='1.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_TechnicalAccount-LongTermBusinessHeading_1' xlink:to='concept_EarnedPremiumNetReinsurance_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_PremiumWrittenNetReinsurance' xlink:label='concept_PremiumWrittenNetReinsurance_1' xlink:type='locator' />
+    <presentationArc order='1.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_EarnedPremiumNetReinsurance_1' xlink:to='concept_PremiumWrittenNetReinsurance_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_GrossPremiumsWritten' xlink:label='concept_GrossPremiumsWritten_1' xlink:type='locator' />
+    <presentationArc order='1.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_PremiumWrittenNetReinsurance_1' xlink:to='concept_GrossPremiumsWritten_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_OutwardReinsurancePremiums' xlink:label='concept_OutwardReinsurancePremiums_1' xlink:type='locator' />
+    <presentationArc order='2.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_PremiumWrittenNetReinsurance_1' xlink:to='concept_OutwardReinsurancePremiums_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_NetChangeInProvisionsForUnearnedPremiums' xlink:label='concept_NetChangeInProvisionsForUnearnedPremiums_1' xlink:type='locator' />
+    <presentationArc order='2.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_EarnedPremiumNetReinsurance_1' xlink:to='concept_NetChangeInProvisionsForUnearnedPremiums_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_ChangeInGrossProvisionsUnearnedPremiums' xlink:label='concept_ChangeInGrossProvisionsUnearnedPremiums_1' xlink:type='locator' />
+    <presentationArc order='1.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_NetChangeInProvisionsForUnearnedPremiums_1' xlink:to='concept_ChangeInGrossProvisionsUnearnedPremiums_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_ChangeInProvisionsUnearnedPremiumsReinsurersShare' xlink:label='concept_ChangeInProvisionsUnearnedPremiumsReinsurersShare_1' xlink:type='locator' />
+    <presentationArc order='2.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_NetChangeInProvisionsForUnearnedPremiums_1' xlink:to='concept_ChangeInProvisionsUnearnedPremiumsReinsurersShare_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_AllocatedInvestmentReturnTransferredFromNon-technicalAccount' xlink:label='concept_AllocatedInvestmentReturnTransferredFromNon-technicalAccount_1' xlink:type='locator' />
+    <presentationArc order='2.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_TechnicalAccount-LongTermBusinessHeading_1' xlink:to='concept_AllocatedInvestmentReturnTransferredFromNon-technicalAccount_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_OtherTechnicalIncomeNetReinsurance' xlink:label='concept_OtherTechnicalIncomeNetReinsurance_1' xlink:type='locator' />
+    <presentationArc order='3.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_TechnicalAccount-LongTermBusinessHeading_1' xlink:to='concept_OtherTechnicalIncomeNetReinsurance_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_ClaimsIncurredNetReinsurance' xlink:label='concept_ClaimsIncurredNetReinsurance_1' xlink:type='locator' />
+    <presentationArc order='4.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_TechnicalAccount-LongTermBusinessHeading_1' xlink:to='concept_ClaimsIncurredNetReinsurance_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_NetClaimsPaid' xlink:label='concept_NetClaimsPaid_1' xlink:type='locator' />
+    <presentationArc order='1.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_ClaimsIncurredNetReinsurance_1' xlink:to='concept_NetClaimsPaid_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_ClaimsPaid-GrossAmount' xlink:label='concept_ClaimsPaid-GrossAmount_1' xlink:type='locator' />
+    <presentationArc order='1.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_NetClaimsPaid_1' xlink:to='concept_ClaimsPaid-GrossAmount_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_ClaimsPaid-ReinsurersShare' xlink:label='concept_ClaimsPaid-ReinsurersShare_1' xlink:type='locator' />
+    <presentationArc order='2.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_NetClaimsPaid_1' xlink:to='concept_ClaimsPaid-ReinsurersShare_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_NetChangeInProvisionsForClaims' xlink:label='concept_NetChangeInProvisionsForClaims_1' xlink:type='locator' />
+    <presentationArc order='2.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_ClaimsIncurredNetReinsurance_1' xlink:to='concept_NetChangeInProvisionsForClaims_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_ChangeInProvisionsForClaims-GrossAmount' xlink:label='concept_ChangeInProvisionsForClaims-GrossAmount_1' xlink:type='locator' />
+    <presentationArc order='1.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_NetChangeInProvisionsForClaims_1' xlink:to='concept_ChangeInProvisionsForClaims-GrossAmount_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_ChangeInProvisionsForClaims-ReinsurersShare' xlink:label='concept_ChangeInProvisionsForClaims-ReinsurersShare_1' xlink:type='locator' />
+    <presentationArc order='2.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_NetChangeInProvisionsForClaims_1' xlink:to='concept_ChangeInProvisionsForClaims-ReinsurersShare_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_NetChangeInOtherTechnicalProvisionsIncludingLongTermBusinessProvisions' xlink:label='concept_NetChangeInOtherTechnicalProvisionsIncludingLongTermBusinessProvisions_1' xlink:type='locator' />
+    <presentationArc order='5.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_TechnicalAccount-LongTermBusinessHeading_1' xlink:to='concept_NetChangeInOtherTechnicalProvisionsIncludingLongTermBusinessProvisions_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_NetChangeInLongTermBusinessProvisions' xlink:label='concept_NetChangeInLongTermBusinessProvisions_1' xlink:type='locator' />
+    <presentationArc order='1.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_NetChangeInOtherTechnicalProvisionsIncludingLongTermBusinessProvisions_1' xlink:to='concept_NetChangeInLongTermBusinessProvisions_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_LongTermBusinessProvisions-GrossAmount' xlink:label='concept_LongTermBusinessProvisions-GrossAmount_1' xlink:type='locator' />
+    <presentationArc order='1.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_NetChangeInLongTermBusinessProvisions_1' xlink:to='concept_LongTermBusinessProvisions-GrossAmount_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_LongTermBusinessProvisions-ReinsurersShare' xlink:label='concept_LongTermBusinessProvisions-ReinsurersShare_1' xlink:type='locator' />
+    <presentationArc order='2.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_NetChangeInLongTermBusinessProvisions_1' xlink:to='concept_LongTermBusinessProvisions-ReinsurersShare_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_OtherTechnicalProvisionsNetReinsurance' xlink:label='concept_OtherTechnicalProvisionsNetReinsurance_1' xlink:type='locator' />
+    <presentationArc order='2.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_NetChangeInOtherTechnicalProvisionsIncludingLongTermBusinessProvisions_1' xlink:to='concept_OtherTechnicalProvisionsNetReinsurance_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_NetOperatingExpenses' xlink:label='concept_NetOperatingExpenses_1' xlink:type='locator' />
+    <presentationArc order='6.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_TechnicalAccount-LongTermBusinessHeading_1' xlink:to='concept_NetOperatingExpenses_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_OtherTechnicalChargesNetReinsurance' xlink:label='concept_OtherTechnicalChargesNetReinsurance_1' xlink:type='locator' />
+    <presentationArc order='7.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_TechnicalAccount-LongTermBusinessHeading_1' xlink:to='concept_OtherTechnicalChargesNetReinsurance_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_BalanceOnTechnicalAccount-LongTermBusinessSubtotal' xlink:label='concept_BalanceOnTechnicalAccount-LongTermBusinessSubtotal_1' xlink:type='locator' />
+    <presentationArc order='8.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_TechnicalAccount-LongTermBusinessHeading_1' xlink:to='concept_BalanceOnTechnicalAccount-LongTermBusinessSubtotal_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_TechnicalAccount-GeneralBusinessHeading' xlink:label='concept_TechnicalAccount-GeneralBusinessHeading_1' xlink:type='locator' />
+    <presentationArc order='2.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_StatementProfitOrLossInsuranceSectorHeading_1' xlink:to='concept_TechnicalAccount-GeneralBusinessHeading_1' xlink:type='arc' />
+    <presentationArc order='1.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_TechnicalAccount-GeneralBusinessHeading_1' xlink:to='concept_EarnedPremiumNetReinsurance_1' xlink:type='arc' />
+    <presentationArc order='2.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_TechnicalAccount-GeneralBusinessHeading_1' xlink:to='concept_AllocatedInvestmentReturnTransferredFromNon-technicalAccount_1' xlink:type='arc' />
+    <presentationArc order='3.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_TechnicalAccount-GeneralBusinessHeading_1' xlink:to='concept_OtherTechnicalIncomeNetReinsurance_1' xlink:type='arc' />
+    <presentationArc order='4.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_TechnicalAccount-GeneralBusinessHeading_1' xlink:to='concept_ClaimsIncurredNetReinsurance_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_NetChangeInOtherTechnicalProvisions' xlink:label='concept_NetChangeInOtherTechnicalProvisions_1' xlink:type='locator' />
+    <presentationArc order='5.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_TechnicalAccount-GeneralBusinessHeading_1' xlink:to='concept_NetChangeInOtherTechnicalProvisions_1' xlink:type='arc' />
+    <presentationArc order='1.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_NetChangeInOtherTechnicalProvisions_1' xlink:to='concept_OtherTechnicalProvisionsNetReinsurance_1' xlink:type='arc' />
+    <presentationArc order='6.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_TechnicalAccount-GeneralBusinessHeading_1' xlink:to='concept_NetOperatingExpenses_1' xlink:type='arc' />
+    <presentationArc order='7.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_TechnicalAccount-GeneralBusinessHeading_1' xlink:to='concept_OtherTechnicalChargesNetReinsurance_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_BalanceOnTechnicalAccount-GeneralBusinessSubtotal' xlink:label='concept_BalanceOnTechnicalAccount-GeneralBusinessSubtotal_1' xlink:type='locator' />
+    <presentationArc order='8.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_TechnicalAccount-GeneralBusinessHeading_1' xlink:to='concept_BalanceOnTechnicalAccount-GeneralBusinessSubtotal_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_Non-technicalAccount-LongTermBusinessHeading' xlink:label='concept_Non-technicalAccount-LongTermBusinessHeading_1' xlink:type='locator' />
+    <presentationArc order='3.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_StatementProfitOrLossInsuranceSectorHeading_1' xlink:to='concept_Non-technicalAccount-LongTermBusinessHeading_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_BalanceOnTechnicalAccount-LongTermBusiness' xlink:label='concept_BalanceOnTechnicalAccount-LongTermBusiness_1' xlink:type='locator' />
+    <presentationArc order='1.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_Non-technicalAccount-LongTermBusinessHeading_1' xlink:to='concept_BalanceOnTechnicalAccount-LongTermBusiness_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_TotalInvestmentReturn' xlink:label='concept_TotalInvestmentReturn_1' xlink:type='locator' />
+    <presentationArc order='2.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_Non-technicalAccount-LongTermBusinessHeading_1' xlink:to='concept_TotalInvestmentReturn_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_InvestmentIncome' xlink:label='concept_InvestmentIncome_1' xlink:type='locator' />
+    <presentationArc order='1.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_TotalInvestmentReturn_1' xlink:to='concept_InvestmentIncome_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_RealisedGainslossesOnInvestments' xlink:label='concept_RealisedGainslossesOnInvestments_1' xlink:type='locator' />
+    <presentationArc order='2.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_TotalInvestmentReturn_1' xlink:to='concept_RealisedGainslossesOnInvestments_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_InvestmentExpensesCharges' xlink:label='concept_InvestmentExpensesCharges_1' xlink:type='locator' />
+    <presentationArc order='3.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_TotalInvestmentReturn_1' xlink:to='concept_InvestmentExpensesCharges_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_UnrealisedGainslossesOnInvestments' xlink:label='concept_UnrealisedGainslossesOnInvestments_1' xlink:type='locator' />
+    <presentationArc order='4.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_TotalInvestmentReturn_1' xlink:to='concept_UnrealisedGainslossesOnInvestments_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_GainLossOnForeignExchange' xlink:label='concept_GainLossOnForeignExchange_1' xlink:type='locator' />
+    <presentationArc order='3.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_Non-technicalAccount-LongTermBusinessHeading_1' xlink:to='concept_GainLossOnForeignExchange_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_OtherIncome' xlink:label='concept_OtherIncome_1' xlink:type='locator' />
+    <presentationArc order='4.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_Non-technicalAccount-LongTermBusinessHeading_1' xlink:to='concept_OtherIncome_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_OtherExpenses' xlink:label='concept_OtherExpenses_1' xlink:type='locator' />
+    <presentationArc order='5.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_Non-technicalAccount-LongTermBusinessHeading_1' xlink:to='concept_OtherExpenses_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_ProfitlossForFinancialPeriodSubtotal' xlink:label='concept_ProfitlossForFinancialPeriodSubtotal_1' xlink:type='locator' />
+    <presentationArc order='6.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_Non-technicalAccount-LongTermBusinessHeading_1' xlink:to='concept_ProfitlossForFinancialPeriodSubtotal_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_StatementProfitOrLossFree-textComment' xlink:label='concept_StatementProfitOrLossFree-textComment_1' xlink:type='locator' />
+    <presentationArc order='7.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_Non-technicalAccount-LongTermBusinessHeading_1' xlink:to='concept_StatementProfitOrLossFree-textComment_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_Non-technicalAccount-GeneralBusinessHeading' xlink:label='concept_Non-technicalAccount-GeneralBusinessHeading_1' xlink:type='locator' />
+    <presentationArc order='4.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_StatementProfitOrLossInsuranceSectorHeading_1' xlink:to='concept_Non-technicalAccount-GeneralBusinessHeading_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_BalanceOnTechnicalAccount-GeneralBusiness' xlink:label='concept_BalanceOnTechnicalAccount-GeneralBusiness_1' xlink:type='locator' />
+    <presentationArc order='1.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_Non-technicalAccount-GeneralBusinessHeading_1' xlink:to='concept_BalanceOnTechnicalAccount-GeneralBusiness_1' xlink:type='arc' />
+    <presentationArc order='2.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_Non-technicalAccount-GeneralBusinessHeading_1' xlink:to='concept_TotalInvestmentReturn_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_AllocatedInvestmentReturnTransferredToTechnicalAccount' xlink:label='concept_AllocatedInvestmentReturnTransferredToTechnicalAccount_1' xlink:type='locator' />
+    <presentationArc order='3.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_Non-technicalAccount-GeneralBusinessHeading_1' xlink:to='concept_AllocatedInvestmentReturnTransferredToTechnicalAccount_1' xlink:type='arc' />
+    <presentationArc order='4.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_Non-technicalAccount-GeneralBusinessHeading_1' xlink:to='concept_GainLossOnForeignExchange_1' xlink:type='arc' />
+    <presentationArc order='5.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_Non-technicalAccount-GeneralBusinessHeading_1' xlink:to='concept_OtherIncome_1' xlink:type='arc' />
+    <presentationArc order='6.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_Non-technicalAccount-GeneralBusinessHeading_1' xlink:to='concept_OtherExpenses_1' xlink:type='arc' />
+    <presentationArc order='7.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_Non-technicalAccount-GeneralBusinessHeading_1' xlink:to='concept_ProfitlossForFinancialPeriodSubtotal_1' xlink:type='arc' />
+  </presentationLink>
+  <roleRef roleURI='https://www.lloyds.com/lloyds/roles/Statement-Profit-Loss' xlink:href='lloyds-2025-01-01.xsd#statementProfitLoss' xlink:type='simple' />
+  <presentationLink xlink:role='https://www.lloyds.com/lloyds/roles/Statement-Comprehensive-Income' xlink:type='extended'>
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_CurrencyTranslationGainloss' xlink:label='concept_CurrencyTranslationGainloss_1' xlink:type='locator' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_StatementComprehensiveIncomeInsuranceSectorHeading' xlink:label='concept_StatementComprehensiveIncomeInsuranceSectorHeading_1' xlink:type='locator' />
+    <presentationArc order='1.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_StatementComprehensiveIncomeInsuranceSectorHeading_1' xlink:to='concept_CurrencyTranslationGainloss_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_UnrealisedGainslossOnAvailableForSaleAssets' xlink:label='concept_UnrealisedGainslossOnAvailableForSaleAssets_1' xlink:type='locator' />
+    <presentationArc order='2.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_StatementComprehensiveIncomeInsuranceSectorHeading_1' xlink:to='concept_UnrealisedGainslossOnAvailableForSaleAssets_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_RealisedGainslossOnAvailableForSaleAssets' xlink:label='concept_RealisedGainslossOnAvailableForSaleAssets_1' xlink:type='locator' />
+    <presentationArc order='3.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_StatementComprehensiveIncomeInsuranceSectorHeading_1' xlink:to='concept_RealisedGainslossOnAvailableForSaleAssets_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_ReclassificationsThroughProfitLoss' xlink:label='concept_ReclassificationsThroughProfitLoss_1' xlink:type='locator' />
+    <presentationArc order='4.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_StatementComprehensiveIncomeInsuranceSectorHeading_1' xlink:to='concept_ReclassificationsThroughProfitLoss_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_OtherRecognisedGainslosses' xlink:label='concept_OtherRecognisedGainslosses_1' xlink:type='locator' />
+    <presentationArc order='5.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_StatementComprehensiveIncomeInsuranceSectorHeading_1' xlink:to='concept_OtherRecognisedGainslosses_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_OtherOCI' xlink:label='concept_OtherOCI_1' xlink:type='locator' />
+    <presentationArc order='6.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_StatementComprehensiveIncomeInsuranceSectorHeading_1' xlink:to='concept_OtherOCI_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_TotalComprehensiveIncomelossForPeriodSubtotal' xlink:label='concept_TotalComprehensiveIncomelossForPeriodSubtotal_1' xlink:type='locator' />
+    <presentationArc order='7.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_StatementComprehensiveIncomeInsuranceSectorHeading_1' xlink:to='concept_TotalComprehensiveIncomelossForPeriodSubtotal_1' xlink:type='arc' />
+  </presentationLink>
+  <roleRef roleURI='https://www.lloyds.com/lloyds/roles/Statement-Comprehensive-Income' xlink:href='lloyds-2025-01-01.xsd#statementComprehensiveIncome' xlink:type='simple' />
+  <presentationLink xlink:role='https://www.lloyds.com/lloyds/roles/Balance-Sheet' xlink:type='extended'>
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_BalanceSheetTotalAssets' xlink:label='concept_BalanceSheetTotalAssets_1' xlink:type='locator' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_BalanceSheetInsuranceSectorHeading' xlink:label='concept_BalanceSheetInsuranceSectorHeading_1' xlink:type='locator' />
+    <presentationArc order='1.0' preferredLabel='http://www.xbrl.org/2003/role/terseLabel' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_BalanceSheetInsuranceSectorHeading_1' xlink:to='concept_BalanceSheetTotalAssets_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_BalanceSheetInvestments' xlink:label='concept_BalanceSheetInvestments_1' xlink:type='locator' />
+    <presentationArc order='1.0' preferredLabel='http://www.xbrl.org/2003/role/terseLabel' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_BalanceSheetTotalAssets_1' xlink:to='concept_BalanceSheetInvestments_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_BalanceSheetFinancialInvestments' xlink:label='concept_BalanceSheetFinancialInvestments_1' xlink:type='locator' />
+    <presentationArc order='1.0' preferredLabel='http://www.xbrl.org/2003/role/terseLabel' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_BalanceSheetInvestments_1' xlink:to='concept_BalanceSheetFinancialInvestments_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_BalanceSheetDepositsWithCedingUndertakings' xlink:label='concept_BalanceSheetDepositsWithCedingUndertakings_1' xlink:type='locator' />
+    <presentationArc order='2.0' preferredLabel='http://www.xbrl.org/2003/role/terseLabel' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_BalanceSheetInvestments_1' xlink:to='concept_BalanceSheetDepositsWithCedingUndertakings_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_BalanceSheetReinsurersShareTechnicalProvisions' xlink:label='concept_BalanceSheetReinsurersShareTechnicalProvisions_1' xlink:type='locator' />
+    <presentationArc order='2.0' preferredLabel='http://www.xbrl.org/2003/role/terseLabel' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_BalanceSheetTotalAssets_1' xlink:to='concept_BalanceSheetReinsurersShareTechnicalProvisions_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_ProvisionForUnearnedPremiumsReinsurersShare' xlink:label='concept_ProvisionForUnearnedPremiumsReinsurersShare_1' xlink:type='locator' />
+    <presentationArc order='1.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_BalanceSheetReinsurersShareTechnicalProvisions_1' xlink:to='concept_ProvisionForUnearnedPremiumsReinsurersShare_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_ClaimsOutstandingReinsurersShare' xlink:label='concept_ClaimsOutstandingReinsurersShare_1' xlink:type='locator' />
+    <presentationArc order='2.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_BalanceSheetReinsurersShareTechnicalProvisions_1' xlink:to='concept_ClaimsOutstandingReinsurersShare_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_LongTermBusinessProvisionReinsurersShare' xlink:label='concept_LongTermBusinessProvisionReinsurersShare_1' xlink:type='locator' />
+    <presentationArc order='3.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_BalanceSheetReinsurersShareTechnicalProvisions_1' xlink:to='concept_LongTermBusinessProvisionReinsurersShare_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_BalanceSheetDebtors' xlink:label='concept_BalanceSheetDebtors_1' xlink:type='locator' />
+    <presentationArc order='3.0' preferredLabel='http://www.xbrl.org/2003/role/terseLabel' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_BalanceSheetTotalAssets_1' xlink:to='concept_BalanceSheetDebtors_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_BalanceSheetDebtorsArisingOutDirectInsuranceOperations' xlink:label='concept_BalanceSheetDebtorsArisingOutDirectInsuranceOperations_1' xlink:type='locator' />
+    <presentationArc order='1.0' preferredLabel='http://www.xbrl.org/2003/role/terseLabel' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_BalanceSheetDebtors_1' xlink:to='concept_BalanceSheetDebtorsArisingOutDirectInsuranceOperations_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_BalanceSheetDebtorsArisingOutReinsuranceOperations' xlink:label='concept_BalanceSheetDebtorsArisingOutReinsuranceOperations_1' xlink:type='locator' />
+    <presentationArc order='2.0' preferredLabel='http://www.xbrl.org/2003/role/terseLabel' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_BalanceSheetDebtors_1' xlink:to='concept_BalanceSheetDebtorsArisingOutReinsuranceOperations_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_OtherDebtors' xlink:label='concept_OtherDebtors_1' xlink:type='locator' />
+    <presentationArc order='3.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_BalanceSheetDebtors_1' xlink:to='concept_OtherDebtors_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_BalanceSheetOtherAssets' xlink:label='concept_BalanceSheetOtherAssets_1' xlink:type='locator' />
+    <presentationArc order='4.0' preferredLabel='http://www.xbrl.org/2003/role/terseLabel' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_BalanceSheetTotalAssets_1' xlink:to='concept_BalanceSheetOtherAssets_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_TangibleAssets' xlink:label='concept_TangibleAssets_1' xlink:type='locator' />
+    <presentationArc order='1.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_BalanceSheetOtherAssets_1' xlink:to='concept_TangibleAssets_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_Right-of-useAssets' xlink:label='concept_Right-of-useAssets_1' xlink:type='locator' />
+    <presentationArc order='2.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_BalanceSheetOtherAssets_1' xlink:to='concept_Right-of-useAssets_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_BalanceSheetCashBankInHand' xlink:label='concept_BalanceSheetCashBankInHand_1' xlink:type='locator' />
+    <presentationArc order='3.0' preferredLabel='http://www.xbrl.org/2003/role/terseLabel' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_BalanceSheetOtherAssets_1' xlink:to='concept_BalanceSheetCashBankInHand_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_Other-OtherAssets' xlink:label='concept_Other-OtherAssets_1' xlink:type='locator' />
+    <presentationArc order='4.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_BalanceSheetOtherAssets_1' xlink:to='concept_Other-OtherAssets_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_BalanceSheetPrepaymentsAccruedIncome' xlink:label='concept_BalanceSheetPrepaymentsAccruedIncome_1' xlink:type='locator' />
+    <presentationArc order='5.0' preferredLabel='http://www.xbrl.org/2003/role/terseLabel' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_BalanceSheetTotalAssets_1' xlink:to='concept_BalanceSheetPrepaymentsAccruedIncome_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_AccruedInterestRent' xlink:label='concept_AccruedInterestRent_1' xlink:type='locator' />
+    <presentationArc order='1.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_BalanceSheetPrepaymentsAccruedIncome_1' xlink:to='concept_AccruedInterestRent_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_DeferredAcquisitionCosts' xlink:label='concept_DeferredAcquisitionCosts_1' xlink:type='locator' />
+    <presentationArc order='2.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_BalanceSheetPrepaymentsAccruedIncome_1' xlink:to='concept_DeferredAcquisitionCosts_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_OtherPrepaymentsAccruedIncome' xlink:label='concept_OtherPrepaymentsAccruedIncome_1' xlink:type='locator' />
+    <presentationArc order='3.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_BalanceSheetPrepaymentsAccruedIncome_1' xlink:to='concept_OtherPrepaymentsAccruedIncome_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_TotalLiabilitiesCapitalReserves' xlink:label='concept_TotalLiabilitiesCapitalReserves_1' xlink:type='locator' />
+    <presentationArc order='2.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_BalanceSheetInsuranceSectorHeading_1' xlink:to='concept_TotalLiabilitiesCapitalReserves_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_TotalCapitalReserves' xlink:label='concept_TotalCapitalReserves_1' xlink:type='locator' />
+    <presentationArc order='1.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_TotalLiabilitiesCapitalReserves_1' xlink:to='concept_TotalCapitalReserves_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_MembersBalances' xlink:label='concept_MembersBalances_1' xlink:type='locator' />
+    <presentationArc order='1.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_TotalCapitalReserves_1' xlink:to='concept_MembersBalances_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_BalanceSheetTotalLiabilities' xlink:label='concept_BalanceSheetTotalLiabilities_1' xlink:type='locator' />
+    <presentationArc order='2.0' preferredLabel='http://www.xbrl.org/2003/role/terseLabel' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_TotalLiabilitiesCapitalReserves_1' xlink:to='concept_BalanceSheetTotalLiabilities_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_BalanceSheetTechnicalProvisions' xlink:label='concept_BalanceSheetTechnicalProvisions_1' xlink:type='locator' />
+    <presentationArc order='1.0' preferredLabel='http://www.xbrl.org/2003/role/terseLabel' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_BalanceSheetTotalLiabilities_1' xlink:to='concept_BalanceSheetTechnicalProvisions_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_ProvisionForUnearnedPremiums' xlink:label='concept_ProvisionForUnearnedPremiums_1' xlink:type='locator' />
+    <presentationArc order='1.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_BalanceSheetTechnicalProvisions_1' xlink:to='concept_ProvisionForUnearnedPremiums_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_BalanceSheetClaimsOutstanding' xlink:label='concept_BalanceSheetClaimsOutstanding_1' xlink:type='locator' />
+    <presentationArc order='2.0' preferredLabel='http://www.xbrl.org/2003/role/terseLabel' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_BalanceSheetTechnicalProvisions_1' xlink:to='concept_BalanceSheetClaimsOutstanding_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_LongTermBusinessProvision' xlink:label='concept_LongTermBusinessProvision_1' xlink:type='locator' />
+    <presentationArc order='3.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_BalanceSheetTechnicalProvisions_1' xlink:to='concept_LongTermBusinessProvision_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_OtherTechnicalProvisions' xlink:label='concept_OtherTechnicalProvisions_1' xlink:type='locator' />
+    <presentationArc order='4.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_BalanceSheetTechnicalProvisions_1' xlink:to='concept_OtherTechnicalProvisions_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_BalanceSheetProvisionsForOtherRisks' xlink:label='concept_BalanceSheetProvisionsForOtherRisks_1' xlink:type='locator' />
+    <presentationArc order='2.0' preferredLabel='http://www.xbrl.org/2003/role/terseLabel' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_BalanceSheetTotalLiabilities_1' xlink:to='concept_BalanceSheetProvisionsForOtherRisks_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_BalanceSheetDepositsReceivedFromReinsurers' xlink:label='concept_BalanceSheetDepositsReceivedFromReinsurers_1' xlink:type='locator' />
+    <presentationArc order='3.0' preferredLabel='http://www.xbrl.org/2003/role/terseLabel' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_BalanceSheetTotalLiabilities_1' xlink:to='concept_BalanceSheetDepositsReceivedFromReinsurers_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_BalanceSheetCreditors' xlink:label='concept_BalanceSheetCreditors_1' xlink:type='locator' />
+    <presentationArc order='4.0' preferredLabel='http://www.xbrl.org/2003/role/terseLabel' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_BalanceSheetTotalLiabilities_1' xlink:to='concept_BalanceSheetCreditors_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_CreditorsArisingOutDirectInsuranceOperations' xlink:label='concept_CreditorsArisingOutDirectInsuranceOperations_1' xlink:type='locator' />
+    <presentationArc order='1.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_BalanceSheetCreditors_1' xlink:to='concept_CreditorsArisingOutDirectInsuranceOperations_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_CreditorsArisingOutReinsuranceOperations' xlink:label='concept_CreditorsArisingOutReinsuranceOperations_1' xlink:type='locator' />
+    <presentationArc order='2.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_BalanceSheetCreditors_1' xlink:to='concept_CreditorsArisingOutReinsuranceOperations_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_LeaseLiabilities' xlink:label='concept_LeaseLiabilities_1' xlink:type='locator' />
+    <presentationArc order='3.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_BalanceSheetCreditors_1' xlink:to='concept_LeaseLiabilities_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_OtherCreditorsIncludingTaxationSocialSecurity' xlink:label='concept_OtherCreditorsIncludingTaxationSocialSecurity_1' xlink:type='locator' />
+    <presentationArc order='4.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_BalanceSheetCreditors_1' xlink:to='concept_OtherCreditorsIncludingTaxationSocialSecurity_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_AmountsOwedToCreditInstitutions' xlink:label='concept_AmountsOwedToCreditInstitutions_1' xlink:type='locator' />
+    <presentationArc order='5.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_BalanceSheetCreditors_1' xlink:to='concept_AmountsOwedToCreditInstitutions_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_BalanceSheetAccrualsDeferredIncome' xlink:label='concept_BalanceSheetAccrualsDeferredIncome_1' xlink:type='locator' />
+    <presentationArc order='5.0' preferredLabel='http://www.xbrl.org/2003/role/terseLabel' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_BalanceSheetTotalLiabilities_1' xlink:to='concept_BalanceSheetAccrualsDeferredIncome_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_BalanceSheetStatementFinancialPositionFree-textComment' xlink:label='concept_BalanceSheetStatementFinancialPositionFree-textComment_1' xlink:type='locator' />
+    <presentationArc order='3.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_BalanceSheetInsuranceSectorHeading_1' xlink:to='concept_BalanceSheetStatementFinancialPositionFree-textComment_1' xlink:type='arc' />
+  </presentationLink>
+  <roleRef roleURI='https://www.lloyds.com/lloyds/roles/Balance-Sheet' xlink:href='lloyds-2025-01-01.xsd#balanceSheet' xlink:type='simple' />
+  <presentationLink xlink:role='https://www.lloyds.com/lloyds/roles/Statement-Changes-Balances' xlink:type='extended'>
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_MembersBalancesCarriedForwardPeriodEnd' xlink:label='concept_MembersBalancesCarriedForwardPeriodEnd_1' xlink:type='locator' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_StatementChangesInMembersBalancesInsuranceItemsHeading' xlink:label='concept_StatementChangesInMembersBalancesInsuranceItemsHeading_1' xlink:type='locator' />
+    <presentationArc order='1.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_StatementChangesInMembersBalancesInsuranceItemsHeading_1' xlink:to='concept_MembersBalancesCarriedForwardPeriodEnd_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_MembersBalancesBroughtForward1January' xlink:label='concept_MembersBalancesBroughtForward1January_1' xlink:type='locator' />
+    <presentationArc order='1.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_MembersBalancesCarriedForwardPeriodEnd_1' xlink:to='concept_MembersBalancesBroughtForward1January_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_TotalComprehensiveIncomelossForPeriod-SOCMB' xlink:label='concept_TotalComprehensiveIncomelossForPeriod-SOCMB_1' xlink:type='locator' />
+    <presentationArc order='2.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_MembersBalancesCarriedForwardPeriodEnd_1' xlink:to='concept_TotalComprehensiveIncomelossForPeriod-SOCMB_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_PaymentsProfitToMembersPersonalReserveFunds' xlink:label='concept_PaymentsProfitToMembersPersonalReserveFunds_1' xlink:type='locator' />
+    <presentationArc order='3.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_MembersBalancesCarriedForwardPeriodEnd_1' xlink:to='concept_PaymentsProfitToMembersPersonalReserveFunds_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_LossesCollectedInRelationToDistributionOnClosureUnderwritingYear' xlink:label='concept_LossesCollectedInRelationToDistributionOnClosureUnderwritingYear_1' xlink:type='locator' />
+    <presentationArc order='4.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_MembersBalancesCarriedForwardPeriodEnd_1' xlink:to='concept_LossesCollectedInRelationToDistributionOnClosureUnderwritingYear_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_CashCallsOnOpenUnderwritingYears' xlink:label='concept_CashCallsOnOpenUnderwritingYears_1' xlink:type='locator' />
+    <presentationArc order='5.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_MembersBalancesCarriedForwardPeriodEnd_1' xlink:to='concept_CashCallsOnOpenUnderwritingYears_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_MembersAgentFees' xlink:label='concept_MembersAgentFees_1' xlink:type='locator' />
+    <presentationArc order='6.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_MembersBalancesCarriedForwardPeriodEnd_1' xlink:to='concept_MembersAgentFees_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_NetMovementOnFundsInSyndicate' xlink:label='concept_NetMovementOnFundsInSyndicate_1' xlink:type='locator' />
+    <presentationArc order='7.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_MembersBalancesCarriedForwardPeriodEnd_1' xlink:to='concept_NetMovementOnFundsInSyndicate_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_OtherChangesInMembersBalances' xlink:label='concept_OtherChangesInMembersBalances_1' xlink:type='locator' />
+    <presentationArc order='8.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_MembersBalancesCarriedForwardPeriodEnd_1' xlink:to='concept_OtherChangesInMembersBalances_1' xlink:type='arc' />
+  </presentationLink>
+  <roleRef roleURI='https://www.lloyds.com/lloyds/roles/Statement-Changes-Balances' xlink:href='lloyds-2025-01-01.xsd#statementChangesBalances' xlink:type='simple' />
+  <presentationLink xlink:role='https://www.lloyds.com/lloyds/roles/Cash-Flow-Statement' xlink:type='extended'>
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_CashFlowsFromOperatingActivitiesInsuranceItemsHeading' xlink:label='concept_CashFlowsFromOperatingActivitiesInsuranceItemsHeading_1' xlink:type='locator' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_CashFlowStatementInsuranceItemsHeading' xlink:label='concept_CashFlowStatementInsuranceItemsHeading_1' xlink:type='locator' />
+    <presentationArc order='1.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_CashFlowStatementInsuranceItemsHeading_1' xlink:to='concept_CashFlowsFromOperatingActivitiesInsuranceItemsHeading_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_NetCashFlowsFromOperatingActivities' xlink:label='concept_NetCashFlowsFromOperatingActivities_1' xlink:type='locator' />
+    <presentationArc order='1.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_CashFlowsFromOperatingActivitiesInsuranceItemsHeading_1' xlink:to='concept_NetCashFlowsFromOperatingActivities_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_ProfitlossForFinancialPeriod-CFS' xlink:label='concept_ProfitlossForFinancialPeriod-CFS_1' xlink:type='locator' />
+    <presentationArc order='1.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_NetCashFlowsFromOperatingActivities_1' xlink:to='concept_ProfitlossForFinancialPeriod-CFS_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_DepreciationOtherMovementsInTangibleFixedAssets' xlink:label='concept_DepreciationOtherMovementsInTangibleFixedAssets_1' xlink:type='locator' />
+    <presentationArc order='2.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_NetCashFlowsFromOperatingActivities_1' xlink:to='concept_DepreciationOtherMovementsInTangibleFixedAssets_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_GainlossOnDisposalTangibleFixedAssets' xlink:label='concept_GainlossOnDisposalTangibleFixedAssets_1' xlink:type='locator' />
+    <presentationArc order='3.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_NetCashFlowsFromOperatingActivities_1' xlink:to='concept_GainlossOnDisposalTangibleFixedAssets_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_IncreasedecreaseInGrossTechnicalProvisions' xlink:label='concept_IncreasedecreaseInGrossTechnicalProvisions_1' xlink:type='locator' />
+    <presentationArc order='4.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_NetCashFlowsFromOperatingActivities_1' xlink:to='concept_IncreasedecreaseInGrossTechnicalProvisions_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_IncreasedecreaseInReinsurersGrossTechnicalProvisions' xlink:label='concept_IncreasedecreaseInReinsurersGrossTechnicalProvisions_1' xlink:type='locator' />
+    <presentationArc order='5.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_NetCashFlowsFromOperatingActivities_1' xlink:to='concept_IncreasedecreaseInReinsurersGrossTechnicalProvisions_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_IncreasedecreaseInDebtors' xlink:label='concept_IncreasedecreaseInDebtors_1' xlink:type='locator' />
+    <presentationArc order='6.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_NetCashFlowsFromOperatingActivities_1' xlink:to='concept_IncreasedecreaseInDebtors_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_IncreasedecreaseInCreditors' xlink:label='concept_IncreasedecreaseInCreditors_1' xlink:type='locator' />
+    <presentationArc order='7.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_NetCashFlowsFromOperatingActivities_1' xlink:to='concept_IncreasedecreaseInCreditors_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_IncreasedecreaseInDepositsReceivedFromReinsurers' xlink:label='concept_IncreasedecreaseInDepositsReceivedFromReinsurers_1' xlink:type='locator' />
+    <presentationArc order='8.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_NetCashFlowsFromOperatingActivities_1' xlink:to='concept_IncreasedecreaseInDepositsReceivedFromReinsurers_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_MovementInOtherAssetsliabilities' xlink:label='concept_MovementInOtherAssetsliabilities_1' xlink:type='locator' />
+    <presentationArc order='9.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_NetCashFlowsFromOperatingActivities_1' xlink:to='concept_MovementInOtherAssetsliabilities_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_InvestmentReturn' xlink:label='concept_InvestmentReturn_1' xlink:type='locator' />
+    <presentationArc order='10.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_NetCashFlowsFromOperatingActivities_1' xlink:to='concept_InvestmentReturn_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_CashFlowForeignExchange' xlink:label='concept_CashFlowForeignExchange_1' xlink:type='locator' />
+    <presentationArc order='11.0' preferredLabel='http://www.xbrl.org/2003/role/terseLabel' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_NetCashFlowsFromOperatingActivities_1' xlink:to='concept_CashFlowForeignExchange_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_OtherCashFlowsFromOperatingActivities' xlink:label='concept_OtherCashFlowsFromOperatingActivities_1' xlink:type='locator' />
+    <presentationArc order='12.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_NetCashFlowsFromOperatingActivities_1' xlink:to='concept_OtherCashFlowsFromOperatingActivities_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_CashFlowsFromInvestingActivitiesInsuranceItemsHeading' xlink:label='concept_CashFlowsFromInvestingActivitiesInsuranceItemsHeading_1' xlink:type='locator' />
+    <presentationArc order='2.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_CashFlowStatementInsuranceItemsHeading_1' xlink:to='concept_CashFlowsFromInvestingActivitiesInsuranceItemsHeading_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_NetCashFlowsFromInvestingActivities' xlink:label='concept_NetCashFlowsFromInvestingActivities_1' xlink:type='locator' />
+    <presentationArc order='1.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_CashFlowsFromInvestingActivitiesInsuranceItemsHeading_1' xlink:to='concept_NetCashFlowsFromInvestingActivities_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_PurchaseTangibleFixedAssets' xlink:label='concept_PurchaseTangibleFixedAssets_1' xlink:type='locator' />
+    <presentationArc order='1.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_NetCashFlowsFromInvestingActivities_1' xlink:to='concept_PurchaseTangibleFixedAssets_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_SalesTangibleFixedAssets' xlink:label='concept_SalesTangibleFixedAssets_1' xlink:type='locator' />
+    <presentationArc order='2.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_NetCashFlowsFromInvestingActivities_1' xlink:to='concept_SalesTangibleFixedAssets_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_PurchaseEquityDebtInstruments' xlink:label='concept_PurchaseEquityDebtInstruments_1' xlink:type='locator' />
+    <presentationArc order='3.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_NetCashFlowsFromInvestingActivities_1' xlink:to='concept_PurchaseEquityDebtInstruments_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_SaleEquityDebtInstruments' xlink:label='concept_SaleEquityDebtInstruments_1' xlink:type='locator' />
+    <presentationArc order='4.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_NetCashFlowsFromInvestingActivities_1' xlink:to='concept_SaleEquityDebtInstruments_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_PurchaseDerivatives' xlink:label='concept_PurchaseDerivatives_1' xlink:type='locator' />
+    <presentationArc order='5.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_NetCashFlowsFromInvestingActivities_1' xlink:to='concept_PurchaseDerivatives_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_SaleDerivatives' xlink:label='concept_SaleDerivatives_1' xlink:type='locator' />
+    <presentationArc order='6.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_NetCashFlowsFromInvestingActivities_1' xlink:to='concept_SaleDerivatives_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_InvestmentIncomeReceived' xlink:label='concept_InvestmentIncomeReceived_1' xlink:type='locator' />
+    <presentationArc order='7.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_NetCashFlowsFromInvestingActivities_1' xlink:to='concept_InvestmentIncomeReceived_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_OtherCashFlowsFromInvestingActivities' xlink:label='concept_OtherCashFlowsFromInvestingActivities_1' xlink:type='locator' />
+    <presentationArc order='8.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_NetCashFlowsFromInvestingActivities_1' xlink:to='concept_OtherCashFlowsFromInvestingActivities_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_CashFlowsFromFinancingActivitiesInsuranceItemsHeading' xlink:label='concept_CashFlowsFromFinancingActivitiesInsuranceItemsHeading_1' xlink:type='locator' />
+    <presentationArc order='3.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_CashFlowStatementInsuranceItemsHeading_1' xlink:to='concept_CashFlowsFromFinancingActivitiesInsuranceItemsHeading_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_NetCashFlowsFromFinancingActivities' xlink:label='concept_NetCashFlowsFromFinancingActivities_1' xlink:type='locator' />
+    <presentationArc order='1.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_CashFlowsFromFinancingActivitiesInsuranceItemsHeading_1' xlink:to='concept_NetCashFlowsFromFinancingActivities_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_DistributionProfit' xlink:label='concept_DistributionProfit_1' xlink:type='locator' />
+    <presentationArc order='1.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_NetCashFlowsFromFinancingActivities_1' xlink:to='concept_DistributionProfit_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_CollectionLosses' xlink:label='concept_CollectionLosses_1' xlink:type='locator' />
+    <presentationArc order='2.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_NetCashFlowsFromFinancingActivities_1' xlink:to='concept_CollectionLosses_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_OpenYearProfitRelease' xlink:label='concept_OpenYearProfitRelease_1' xlink:type='locator' />
+    <presentationArc order='3.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_NetCashFlowsFromFinancingActivities_1' xlink:to='concept_OpenYearProfitRelease_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_CapitalContributionsOpenYearCashCallsMade' xlink:label='concept_CapitalContributionsOpenYearCashCallsMade_1' xlink:type='locator' />
+    <presentationArc order='4.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_NetCashFlowsFromFinancingActivities_1' xlink:to='concept_CapitalContributionsOpenYearCashCallsMade_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_FundsInSyndicateReleasedToMembers' xlink:label='concept_FundsInSyndicateReleasedToMembers_1' xlink:type='locator' />
+    <presentationArc order='5.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_NetCashFlowsFromFinancingActivities_1' xlink:to='concept_FundsInSyndicateReleasedToMembers_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_OtherCashFlowsFromFinancingActivities' xlink:label='concept_OtherCashFlowsFromFinancingActivities_1' xlink:type='locator' />
+    <presentationArc order='6.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_NetCashFlowsFromFinancingActivities_1' xlink:to='concept_OtherCashFlowsFromFinancingActivities_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_NetIncreasedecreaseInCashCashEquivalentsSubtotal' xlink:label='concept_NetIncreasedecreaseInCashCashEquivalentsSubtotal_1' xlink:type='locator' />
+    <presentationArc order='4.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_CashFlowStatementInsuranceItemsHeading_1' xlink:to='concept_NetIncreasedecreaseInCashCashEquivalentsSubtotal_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_CashCashEquivalentsBeginningYear' xlink:label='concept_CashCashEquivalentsBeginningYear_1' xlink:type='locator' />
+    <presentationArc order='5.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_CashFlowStatementInsuranceItemsHeading_1' xlink:to='concept_CashCashEquivalentsBeginningYear_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_ForeignExchangeOnCashCashEquivalents' xlink:label='concept_ForeignExchangeOnCashCashEquivalents_1' xlink:type='locator' />
+    <presentationArc order='6.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_CashFlowStatementInsuranceItemsHeading_1' xlink:to='concept_ForeignExchangeOnCashCashEquivalents_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_CashCashEquivalentsEndPeriod' xlink:label='concept_CashCashEquivalentsEndPeriod_1' xlink:type='locator' />
+    <presentationArc order='7.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_CashFlowStatementInsuranceItemsHeading_1' xlink:to='concept_CashCashEquivalentsEndPeriod_1' xlink:type='arc' />
+  </presentationLink>
+  <roleRef roleURI='https://www.lloyds.com/lloyds/roles/Cash-Flow-Statement' xlink:href='lloyds-2025-01-01.xsd#cashFlowStatement' xlink:type='simple' />
+  <presentationLink xlink:role='https://www.lloyds.com/lloyds/roles/Notes-Financial-Statements' xlink:type='extended'>
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_RiskCapitalManagementHeading' xlink:label='concept_RiskCapitalManagementHeading_1' xlink:type='locator' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_NotesToFinancialStatementsInsuranceItemsHeading' xlink:label='concept_NotesToFinancialStatementsInsuranceItemsHeading_1' xlink:type='locator' />
+    <presentationArc order='1.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_NotesToFinancialStatementsInsuranceItemsHeading_1' xlink:to='concept_RiskCapitalManagementHeading_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_InsuranceRiskHeading' xlink:label='concept_InsuranceRiskHeading_1' xlink:type='locator' />
+    <presentationArc order='1.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_RiskCapitalManagementHeading_1' xlink:to='concept_InsuranceRiskHeading_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_SensitivityToInsuranceRisk' xlink:label='concept_SensitivityToInsuranceRisk_1' xlink:type='locator' />
+    <presentationArc order='1.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_InsuranceRiskHeading_1' xlink:to='concept_SensitivityToInsuranceRisk_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_CreditRiskHeading' xlink:label='concept_CreditRiskHeading_1' xlink:type='locator' />
+    <presentationArc order='2.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_RiskCapitalManagementHeading_1' xlink:to='concept_CreditRiskHeading_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_ExposureToCreditRiskHeading' xlink:label='concept_ExposureToCreditRiskHeading_1' xlink:type='locator' />
+    <presentationArc order='1.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_CreditRiskHeading_1' xlink:to='concept_ExposureToCreditRiskHeading_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_ExposureToCreditRisk' xlink:label='concept_ExposureToCreditRisk_1' xlink:type='locator' />
+    <presentationArc order='1.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_ExposureToCreditRiskHeading_1' xlink:to='concept_ExposureToCreditRisk_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_FinancialAssetsThatAreNotPastDuePastDueOrImpaired' xlink:label='concept_FinancialAssetsThatAreNotPastDuePastDueOrImpaired_1' xlink:type='locator' />
+    <presentationArc order='2.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_CreditRiskHeading_1' xlink:to='concept_FinancialAssetsThatAreNotPastDuePastDueOrImpaired_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_ReconciliationChangesInImpairmentAllowanceHeading' xlink:label='concept_ReconciliationChangesInImpairmentAllowanceHeading_1' xlink:type='locator' />
+    <presentationArc order='3.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_RiskCapitalManagementHeading_1' xlink:to='concept_ReconciliationChangesInImpairmentAllowanceHeading_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_ReconciliationChangesInImpairmentAllowanceMovement' xlink:label='concept_ReconciliationChangesInImpairmentAllowanceMovement_1' xlink:type='locator' />
+    <presentationArc order='1.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_ReconciliationChangesInImpairmentAllowanceHeading_1' xlink:to='concept_ReconciliationChangesInImpairmentAllowanceMovement_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_ReconciliationChangesInImpairmentAllowanceBalances' xlink:label='concept_ReconciliationChangesInImpairmentAllowanceBalances_1' xlink:type='locator' />
+    <presentationArc order='2.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_ReconciliationChangesInImpairmentAllowanceHeading_1' xlink:to='concept_ReconciliationChangesInImpairmentAllowanceBalances_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_AgeAnalysisFinancialAssetsThatArePastDueButNotImpaired' xlink:label='concept_AgeAnalysisFinancialAssetsThatArePastDueButNotImpaired_1' xlink:type='locator' />
+    <presentationArc order='3.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_ReconciliationChangesInImpairmentAllowanceHeading_1' xlink:to='concept_AgeAnalysisFinancialAssetsThatArePastDueButNotImpaired_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_LiquidityRiskHeading' xlink:label='concept_LiquidityRiskHeading_1' xlink:type='locator' />
+    <presentationArc order='4.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_RiskCapitalManagementHeading_1' xlink:to='concept_LiquidityRiskHeading_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_ManagementLiquidityRisksHeading' xlink:label='concept_ManagementLiquidityRisksHeading_1' xlink:type='locator' />
+    <presentationArc order='1.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_LiquidityRiskHeading_1' xlink:to='concept_ManagementLiquidityRisksHeading_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_MaturityAnalysisSyndicateLiabilitiesHeading' xlink:label='concept_MaturityAnalysisSyndicateLiabilitiesHeading_1' xlink:type='locator' />
+    <presentationArc order='1.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_ManagementLiquidityRisksHeading_1' xlink:to='concept_MaturityAnalysisSyndicateLiabilitiesHeading_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_MaturityAnalysisSyndicateLiabilities' xlink:label='concept_MaturityAnalysisSyndicateLiabilities_1' xlink:type='locator' />
+    <presentationArc order='1.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_MaturityAnalysisSyndicateLiabilitiesHeading_1' xlink:to='concept_MaturityAnalysisSyndicateLiabilities_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_MarketRiskHeading' xlink:label='concept_MarketRiskHeading_1' xlink:type='locator' />
+    <presentationArc order='5.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_RiskCapitalManagementHeading_1' xlink:to='concept_MarketRiskHeading_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_CurrencyRiskHeading' xlink:label='concept_CurrencyRiskHeading_1' xlink:type='locator' />
+    <presentationArc order='1.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_MarketRiskHeading_1' xlink:to='concept_CurrencyRiskHeading_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_CurrencyRisk' xlink:label='concept_CurrencyRisk_1' xlink:type='locator' />
+    <presentationArc order='1.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_CurrencyRiskHeading_1' xlink:to='concept_CurrencyRisk_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_SensitivityAnalysisToMarketRisksHeading' xlink:label='concept_SensitivityAnalysisToMarketRisksHeading_1' xlink:type='locator' />
+    <presentationArc order='2.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_MarketRiskHeading_1' xlink:to='concept_SensitivityAnalysisToMarketRisksHeading_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_SensitivityAnalysisToMarketRisks' xlink:label='concept_SensitivityAnalysisToMarketRisks_1' xlink:type='locator' />
+    <presentationArc order='1.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_SensitivityAnalysisToMarketRisksHeading_1' xlink:to='concept_SensitivityAnalysisToMarketRisks_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_AnalysisUnderwritingResultHeading' xlink:label='concept_AnalysisUnderwritingResultHeading_1' xlink:type='locator' />
+    <presentationArc order='2.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_NotesToFinancialStatementsInsuranceItemsHeading_1' xlink:to='concept_AnalysisUnderwritingResultHeading_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_DescriptionAnalysisUnderwritingResults' xlink:label='concept_DescriptionAnalysisUnderwritingResults_1' xlink:type='locator' />
+    <presentationArc order='1.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_AnalysisUnderwritingResultHeading_1' xlink:to='concept_DescriptionAnalysisUnderwritingResults_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_GrossWrittenPremiumByOrigin' xlink:label='concept_GrossWrittenPremiumByOrigin_1' xlink:type='locator' />
+    <presentationArc order='2.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_AnalysisUnderwritingResultHeading_1' xlink:to='concept_GrossWrittenPremiumByOrigin_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_AnalysisUnderwritingResult' xlink:label='concept_AnalysisUnderwritingResult_1' xlink:type='locator' />
+    <presentationArc order='3.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_AnalysisUnderwritingResultHeading_1' xlink:to='concept_AnalysisUnderwritingResult_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_AdditionalAnalysisUnderwritingResultsHeading' xlink:label='concept_AdditionalAnalysisUnderwritingResultsHeading_1' xlink:type='locator' />
+    <presentationArc order='3.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_NotesToFinancialStatementsInsuranceItemsHeading_1' xlink:to='concept_AdditionalAnalysisUnderwritingResultsHeading_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_AdditionalAnalysisUnderwritingResults' xlink:label='concept_AdditionalAnalysisUnderwritingResults_1' xlink:type='locator' />
+    <presentationArc order='1.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_AdditionalAnalysisUnderwritingResultsHeading_1' xlink:to='concept_AdditionalAnalysisUnderwritingResults_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_PriorYearDevelopmentHeading' xlink:label='concept_PriorYearDevelopmentHeading_1' xlink:type='locator' />
+    <presentationArc order='4.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_NotesToFinancialStatementsInsuranceItemsHeading_1' xlink:to='concept_PriorYearDevelopmentHeading_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_PriorYearDevelopment' xlink:label='concept_PriorYearDevelopment_1' xlink:type='locator' />
+    <presentationArc order='1.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_PriorYearDevelopmentHeading_1' xlink:to='concept_PriorYearDevelopment_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_NetOperatingExpensesHeading' xlink:label='concept_NetOperatingExpensesHeading_1' xlink:type='locator' />
+    <presentationArc order='5.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_NotesToFinancialStatementsInsuranceItemsHeading_1' xlink:to='concept_NetOperatingExpensesHeading_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_NetOperatingExpensesNote' xlink:label='concept_NetOperatingExpensesNote_1' xlink:type='locator' />
+    <presentationArc order='1.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_NetOperatingExpensesHeading_1' xlink:to='concept_NetOperatingExpensesNote_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_TotalCommissionForDirectInsuranceBusinessHeading' xlink:label='concept_TotalCommissionForDirectInsuranceBusinessHeading_1' xlink:type='locator' />
+    <presentationArc order='2.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_NetOperatingExpensesHeading_1' xlink:to='concept_TotalCommissionForDirectInsuranceBusinessHeading_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_TotalCommissionForDirectInsuranceBusiness' xlink:label='concept_TotalCommissionForDirectInsuranceBusiness_1' xlink:type='locator' />
+    <presentationArc order='1.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_TotalCommissionForDirectInsuranceBusinessHeading_1' xlink:to='concept_TotalCommissionForDirectInsuranceBusiness_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_AdministrativeExpensesIncludeHeading' xlink:label='concept_AdministrativeExpensesIncludeHeading_1' xlink:type='locator' />
+    <presentationArc order='3.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_NetOperatingExpensesHeading_1' xlink:to='concept_AdministrativeExpensesIncludeHeading_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_AdministrativeExpensesInclude' xlink:label='concept_AdministrativeExpensesInclude_1' xlink:type='locator' />
+    <presentationArc order='1.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_AdministrativeExpensesIncludeHeading_1' xlink:to='concept_AdministrativeExpensesInclude_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_KeyManagementPersonnelCompensationHeading' xlink:label='concept_KeyManagementPersonnelCompensationHeading_1' xlink:type='locator' />
+    <presentationArc order='6.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_NotesToFinancialStatementsInsuranceItemsHeading_1' xlink:to='concept_KeyManagementPersonnelCompensationHeading_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_DirectorsEmoluments' xlink:label='concept_DirectorsEmoluments_1' xlink:type='locator' />
+    <presentationArc order='1.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_KeyManagementPersonnelCompensationHeading_1' xlink:to='concept_DirectorsEmoluments_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_Fees' xlink:label='concept_Fees_1' xlink:type='locator' />
+    <presentationArc order='2.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_KeyManagementPersonnelCompensationHeading_1' xlink:to='concept_Fees_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_EmolumentsActiveUnderwriterHeading' xlink:label='concept_EmolumentsActiveUnderwriterHeading_1' xlink:type='locator' />
+    <presentationArc order='3.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_KeyManagementPersonnelCompensationHeading_1' xlink:to='concept_EmolumentsActiveUnderwriterHeading_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_EmolumentsActiveUnderwriter' xlink:label='concept_EmolumentsActiveUnderwriter_1' xlink:type='locator' />
+    <presentationArc order='1.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_EmolumentsActiveUnderwriterHeading_1' xlink:to='concept_EmolumentsActiveUnderwriter_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_EmolumentsRun-offManagerHeading' xlink:label='concept_EmolumentsRun-offManagerHeading_1' xlink:type='locator' />
+    <presentationArc order='4.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_KeyManagementPersonnelCompensationHeading_1' xlink:to='concept_EmolumentsRun-offManagerHeading_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_EmolumentsRun-offManager' xlink:label='concept_EmolumentsRun-offManager_1' xlink:type='locator' />
+    <presentationArc order='1.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_EmolumentsRun-offManagerHeading_1' xlink:to='concept_EmolumentsRun-offManager_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_StaffNumbersCostsHeading' xlink:label='concept_StaffNumbersCostsHeading_1' xlink:type='locator' />
+    <presentationArc order='7.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_NotesToFinancialStatementsInsuranceItemsHeading_1' xlink:to='concept_StaffNumbersCostsHeading_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_NumberEmployees' xlink:label='concept_NumberEmployees_1' xlink:type='locator' />
+    <presentationArc order='1.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_StaffNumbersCostsHeading_1' xlink:to='concept_NumberEmployees_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_PayrollCosts' xlink:label='concept_PayrollCosts_1' xlink:type='locator' />
+    <presentationArc order='2.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_StaffNumbersCostsHeading_1' xlink:to='concept_PayrollCosts_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_InvestmentReturnHeading' xlink:label='concept_InvestmentReturnHeading_1' xlink:type='locator' />
+    <presentationArc order='8.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_NotesToFinancialStatementsInsuranceItemsHeading_1' xlink:to='concept_InvestmentReturnHeading_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_TotalInvestmentReturnNote' xlink:label='concept_TotalInvestmentReturnNote_1' xlink:type='locator' />
+    <presentationArc order='1.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_InvestmentReturnHeading_1' xlink:to='concept_TotalInvestmentReturnNote_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_InterestSimilarIncomeHeading' xlink:label='concept_InterestSimilarIncomeHeading_1' xlink:type='locator' />
+    <presentationArc order='1.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_TotalInvestmentReturnNote_1' xlink:to='concept_InterestSimilarIncomeHeading_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_FinancialInstrumentsFVTPL-InterestSimilarIncome' xlink:label='concept_FinancialInstrumentsFVTPL-InterestSimilarIncome_1' xlink:type='locator' />
+    <presentationArc order='1.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_InterestSimilarIncomeHeading_1' xlink:to='concept_FinancialInstrumentsFVTPL-InterestSimilarIncome_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_FinancialInstrumentsAmortisedCost-InterestSimilarIncome' xlink:label='concept_FinancialInstrumentsAmortisedCost-InterestSimilarIncome_1' xlink:type='locator' />
+    <presentationArc order='2.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_InterestSimilarIncomeHeading_1' xlink:to='concept_FinancialInstrumentsAmortisedCost-InterestSimilarIncome_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_FinancialInstrumentsClassifiedAsAvailableForSale' xlink:label='concept_FinancialInstrumentsClassifiedAsAvailableForSale_1' xlink:type='locator' />
+    <presentationArc order='3.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_InterestSimilarIncomeHeading_1' xlink:to='concept_FinancialInstrumentsClassifiedAsAvailableForSale_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_InterestOnCashBank' xlink:label='concept_InterestOnCashBank_1' xlink:type='locator' />
+    <presentationArc order='4.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_InterestSimilarIncomeHeading_1' xlink:to='concept_InterestOnCashBank_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_InvestmentManagementExpensesHeading' xlink:label='concept_InvestmentManagementExpensesHeading_1' xlink:type='locator' />
+    <presentationArc order='2.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_InvestmentReturnHeading_1' xlink:to='concept_InvestmentManagementExpensesHeading_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_InvestmentManagementExpenses' xlink:label='concept_InvestmentManagementExpenses_1' xlink:type='locator' />
+    <presentationArc order='1.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_InvestmentManagementExpensesHeading_1' xlink:to='concept_InvestmentManagementExpenses_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_OtherIncomeFromInvestmentsHeading' xlink:label='concept_OtherIncomeFromInvestmentsHeading_1' xlink:type='locator' />
+    <presentationArc order='3.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_InvestmentReturnHeading_1' xlink:to='concept_OtherIncomeFromInvestmentsHeading_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_FinancialInstrumentsFVTPL-Gainslosses' xlink:label='concept_FinancialInstrumentsFVTPL-Gainslosses_1' xlink:type='locator' />
+    <presentationArc order='1.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_OtherIncomeFromInvestmentsHeading_1' xlink:to='concept_FinancialInstrumentsFVTPL-Gainslosses_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_FinancialInstrumentsAmortisedCost-Gainslosses' xlink:label='concept_FinancialInstrumentsAmortisedCost-Gainslosses_1' xlink:type='locator' />
+    <presentationArc order='2.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_OtherIncomeFromInvestmentsHeading_1' xlink:to='concept_FinancialInstrumentsAmortisedCost-Gainslosses_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_FinancialLiabilitiesAmortisedCost' xlink:label='concept_FinancialLiabilitiesAmortisedCost_1' xlink:type='locator' />
+    <presentationArc order='3.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_OtherIncomeFromInvestmentsHeading_1' xlink:to='concept_FinancialLiabilitiesAmortisedCost_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_TransferredToTechnicalAccountFromNon-technicalAccount' xlink:label='concept_TransferredToTechnicalAccountFromNon-technicalAccount_1' xlink:type='locator' />
+    <presentationArc order='4.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_OtherIncomeFromInvestmentsHeading_1' xlink:to='concept_TransferredToTechnicalAccountFromNon-technicalAccount_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_InvestmentReturnOnFundsInSyndicate' xlink:label='concept_InvestmentReturnOnFundsInSyndicate_1' xlink:type='locator' />
+    <presentationArc order='5.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_OtherIncomeFromInvestmentsHeading_1' xlink:to='concept_InvestmentReturnOnFundsInSyndicate_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_ImpairmentLossesOnDebtorsRecognisedInAdministrativeExpenses' xlink:label='concept_ImpairmentLossesOnDebtorsRecognisedInAdministrativeExpenses_1' xlink:type='locator' />
+    <presentationArc order='6.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_OtherIncomeFromInvestmentsHeading_1' xlink:to='concept_ImpairmentLossesOnDebtorsRecognisedInAdministrativeExpenses_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_DistributionOpenYearsAccountHeading' xlink:label='concept_DistributionOpenYearsAccountHeading_1' xlink:type='locator' />
+    <presentationArc order='9.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_NotesToFinancialStatementsInsuranceItemsHeading_1' xlink:to='concept_DistributionOpenYearsAccountHeading_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_DistributionOpenYearsAccount' xlink:label='concept_DistributionOpenYearsAccount_1' xlink:type='locator' />
+    <presentationArc order='1.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_DistributionOpenYearsAccountHeading_1' xlink:to='concept_DistributionOpenYearsAccount_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_FinancialInvestmentsHeading' xlink:label='concept_FinancialInvestmentsHeading_1' xlink:type='locator' />
+    <presentationArc order='10.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_NotesToFinancialStatementsInsuranceItemsHeading_1' xlink:to='concept_FinancialInvestmentsHeading_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_FinancialInvestmentsCarryingValueCostHeading' xlink:label='concept_FinancialInvestmentsCarryingValueCostHeading_1' xlink:type='locator' />
+    <presentationArc order='1.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_FinancialInvestmentsHeading_1' xlink:to='concept_FinancialInvestmentsCarryingValueCostHeading_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_FinancialInvestmentsNote' xlink:label='concept_FinancialInvestmentsNote_1' xlink:type='locator' />
+    <presentationArc order='1.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_FinancialInvestmentsCarryingValueCostHeading_1' xlink:to='concept_FinancialInvestmentsNote_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_ListedInvestmentsHeading' xlink:label='concept_ListedInvestmentsHeading_1' xlink:type='locator' />
+    <presentationArc order='2.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_FinancialInvestmentsHeading_1' xlink:to='concept_ListedInvestmentsHeading_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_ListedInvestments' xlink:label='concept_ListedInvestments_1' xlink:type='locator' />
+    <presentationArc order='1.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_ListedInvestmentsHeading_1' xlink:to='concept_ListedInvestments_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_DerivativeAssetsLiabilitiesByTypeHeading' xlink:label='concept_DerivativeAssetsLiabilitiesByTypeHeading_1' xlink:type='locator' />
+    <presentationArc order='3.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_FinancialInvestmentsHeading_1' xlink:to='concept_DerivativeAssetsLiabilitiesByTypeHeading_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_DerivativeAssetsLiabilitiesByType' xlink:label='concept_DerivativeAssetsLiabilitiesByType_1' xlink:type='locator' />
+    <presentationArc order='1.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_DerivativeAssetsLiabilitiesByTypeHeading_1' xlink:to='concept_DerivativeAssetsLiabilitiesByType_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_TotalFundsInSyndicate' xlink:label='concept_TotalFundsInSyndicate_1' xlink:type='locator' />
+    <presentationArc order='4.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_FinancialInvestmentsHeading_1' xlink:to='concept_TotalFundsInSyndicate_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_FundsInSyndicateFIS' xlink:label='concept_FundsInSyndicateFIS_1' xlink:type='locator' />
+    <presentationArc order='1.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_TotalFundsInSyndicate_1' xlink:to='concept_FundsInSyndicateFIS_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_TotalFinancialInvestmentsFVTPLAFSAmortisedCost' xlink:label='concept_TotalFinancialInvestmentsFVTPLAFSAmortisedCost_1' xlink:type='locator' />
+    <presentationArc order='5.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_FinancialInvestmentsHeading_1' xlink:to='concept_TotalFinancialInvestmentsFVTPLAFSAmortisedCost_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_FinancialAssetsMeasuredFairValueThroughProfitOrLoss' xlink:label='concept_FinancialAssetsMeasuredFairValueThroughProfitOrLoss_1' xlink:type='locator' />
+    <presentationArc order='1.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_TotalFinancialInvestmentsFVTPLAFSAmortisedCost_1' xlink:to='concept_FinancialAssetsMeasuredFairValueThroughProfitOrLoss_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_FinancialAssetsMeasuredAmortisedCost' xlink:label='concept_FinancialAssetsMeasuredAmortisedCost_1' xlink:type='locator' />
+    <presentationArc order='2.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_TotalFinancialInvestmentsFVTPLAFSAmortisedCost_1' xlink:to='concept_FinancialAssetsMeasuredAmortisedCost_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_FinancialAssetsMeasuredFairValueAsAvailableForSale' xlink:label='concept_FinancialAssetsMeasuredFairValueAsAvailableForSale_1' xlink:type='locator' />
+    <presentationArc order='3.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_TotalFinancialInvestmentsFVTPLAFSAmortisedCost_1' xlink:to='concept_FinancialAssetsMeasuredFairValueAsAvailableForSale_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_FairValueHierarchyForFinancialInstrumentsHeading' xlink:label='concept_FairValueHierarchyForFinancialInstrumentsHeading_1' xlink:type='locator' />
+    <presentationArc order='6.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_FinancialInvestmentsHeading_1' xlink:to='concept_FairValueHierarchyForFinancialInstrumentsHeading_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_TotalAssetsFVHierarchy' xlink:label='concept_TotalAssetsFVHierarchy_1' xlink:type='locator' />
+    <presentationArc order='1.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_FairValueHierarchyForFinancialInstrumentsHeading_1' xlink:to='concept_TotalAssetsFVHierarchy_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_DerivativeLiabilitiesByFairValueHierarchy' xlink:label='concept_DerivativeLiabilitiesByFairValueHierarchy_1' xlink:type='locator' />
+    <presentationArc order='2.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_FairValueHierarchyForFinancialInstrumentsHeading_1' xlink:to='concept_DerivativeLiabilitiesByFairValueHierarchy_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_FairValueHierarchyForFinancialInstruments' xlink:label='concept_FairValueHierarchyForFinancialInstruments_1' xlink:type='locator' />
+    <presentationArc order='3.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_FairValueHierarchyForFinancialInstrumentsHeading_1' xlink:to='concept_FairValueHierarchyForFinancialInstruments_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_DebtorsArisingOutDirectInsuranceOperationsNote' xlink:label='concept_DebtorsArisingOutDirectInsuranceOperationsNote_1' xlink:type='locator' />
+    <presentationArc order='11.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_NotesToFinancialStatementsInsuranceItemsHeading_1' xlink:to='concept_DebtorsArisingOutDirectInsuranceOperationsNote_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_DebtorsArisingOutReinsuranceOperationsNote' xlink:label='concept_DebtorsArisingOutReinsuranceOperationsNote_1' xlink:type='locator' />
+    <presentationArc order='12.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_NotesToFinancialStatementsInsuranceItemsHeading_1' xlink:to='concept_DebtorsArisingOutReinsuranceOperationsNote_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_DeferredAcquisitionCostsNote' xlink:label='concept_DeferredAcquisitionCostsNote_1' xlink:type='locator' />
+    <presentationArc order='13.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_NotesToFinancialStatementsInsuranceItemsHeading_1' xlink:to='concept_DeferredAcquisitionCostsNote_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_OtherDebtorsHeading' xlink:label='concept_OtherDebtorsHeading_1' xlink:type='locator' />
+    <presentationArc order='14.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_NotesToFinancialStatementsInsuranceItemsHeading_1' xlink:to='concept_OtherDebtorsHeading_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_OtherDebtorsNote' xlink:label='concept_OtherDebtorsNote_1' xlink:type='locator' />
+    <presentationArc order='1.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_OtherDebtorsHeading_1' xlink:to='concept_OtherDebtorsNote_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_TangibleFixedAssetsHeading' xlink:label='concept_TangibleFixedAssetsHeading_1' xlink:type='locator' />
+    <presentationArc order='15.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_NotesToFinancialStatementsInsuranceItemsHeading_1' xlink:to='concept_TangibleFixedAssetsHeading_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_TangibleFixedAssets' xlink:label='concept_TangibleFixedAssets_1' xlink:type='locator' />
+    <presentationArc order='1.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_TangibleFixedAssetsHeading_1' xlink:to='concept_TangibleFixedAssets_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_ClaimsDevelopmentHeading' xlink:label='concept_ClaimsDevelopmentHeading_1' xlink:type='locator' />
+    <presentationArc order='16.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_NotesToFinancialStatementsInsuranceItemsHeading_1' xlink:to='concept_ClaimsDevelopmentHeading_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_EstimateIncurredClaimsCDT' xlink:label='concept_EstimateIncurredClaimsCDT_1' xlink:type='locator' />
+    <presentationArc order='1.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_ClaimsDevelopmentHeading_1' xlink:to='concept_EstimateIncurredClaimsCDT_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_EstimateClaimsReserveCDT' xlink:label='concept_EstimateClaimsReserveCDT_1' xlink:type='locator' />
+    <presentationArc order='2.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_ClaimsDevelopmentHeading_1' xlink:to='concept_EstimateClaimsReserveCDT_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_ClaimsPaidCDT' xlink:label='concept_ClaimsPaidCDT_1' xlink:type='locator' />
+    <presentationArc order='3.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_ClaimsDevelopmentHeading_1' xlink:to='concept_ClaimsPaidCDT_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_ProvisionInRespectOlderYearsCDT' xlink:label='concept_ProvisionInRespectOlderYearsCDT_1' xlink:type='locator' />
+    <presentationArc order='4.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_ClaimsDevelopmentHeading_1' xlink:to='concept_ProvisionInRespectOlderYearsCDT_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_ClaimsReservesCDT' xlink:label='concept_ClaimsReservesCDT_1' xlink:type='locator' />
+    <presentationArc order='5.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_ClaimsDevelopmentHeading_1' xlink:to='concept_ClaimsReservesCDT_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_TechnicalProvisionsHeading' xlink:label='concept_TechnicalProvisionsHeading_1' xlink:type='locator' />
+    <presentationArc order='17.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_NotesToFinancialStatementsInsuranceItemsHeading_1' xlink:to='concept_TechnicalProvisionsHeading_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_ClaimsTechnicalProvisions' xlink:label='concept_ClaimsTechnicalProvisions_1' xlink:type='locator' />
+    <presentationArc order='1.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_TechnicalProvisionsHeading_1' xlink:to='concept_ClaimsTechnicalProvisions_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_UnearnedPremiumsTechnicalProvisions' xlink:label='concept_UnearnedPremiumsTechnicalProvisions_1' xlink:type='locator' />
+    <presentationArc order='2.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_TechnicalProvisionsHeading_1' xlink:to='concept_UnearnedPremiumsTechnicalProvisions_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_LongTermBusinessProvisions' xlink:label='concept_LongTermBusinessProvisions_1' xlink:type='locator' />
+    <presentationArc order='3.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_TechnicalProvisionsHeading_1' xlink:to='concept_LongTermBusinessProvisions_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_ProvisionsForOtherRisksHeading' xlink:label='concept_ProvisionsForOtherRisksHeading_1' xlink:type='locator' />
+    <presentationArc order='4.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_TechnicalProvisionsHeading_1' xlink:to='concept_ProvisionsForOtherRisksHeading_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_ProvisionsForOtherRisksNote' xlink:label='concept_ProvisionsForOtherRisksNote_1' xlink:type='locator' />
+    <presentationArc order='1.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_ProvisionsForOtherRisksHeading_1' xlink:to='concept_ProvisionsForOtherRisksNote_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_DiscountedClaimsHeading' xlink:label='concept_DiscountedClaimsHeading_1' xlink:type='locator' />
+    <presentationArc order='18.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_NotesToFinancialStatementsInsuranceItemsHeading_1' xlink:to='concept_DiscountedClaimsHeading_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_DescriptionWhenDiscountingMaybeAppliedToClaims' xlink:label='concept_DescriptionWhenDiscountingMaybeAppliedToClaims_1' xlink:type='locator' />
+    <presentationArc order='1.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_DiscountedClaimsHeading_1' xlink:to='concept_DescriptionWhenDiscountingMaybeAppliedToClaims_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_DiscountedClaimsAverageDiscountedRate' xlink:label='concept_DiscountedClaimsAverageDiscountedRate_1' xlink:type='locator' />
+    <presentationArc order='2.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_DiscountedClaimsHeading_1' xlink:to='concept_DiscountedClaimsAverageDiscountedRate_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_DiscountedClaimsMeanTermLiabilities' xlink:label='concept_DiscountedClaimsMeanTermLiabilities_1' xlink:type='locator' />
+    <presentationArc order='3.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_DiscountedClaimsHeading_1' xlink:to='concept_DiscountedClaimsMeanTermLiabilities_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_ClaimsProvisionsBeforeAfterDiscounting' xlink:label='concept_ClaimsProvisionsBeforeAfterDiscounting_1' xlink:type='locator' />
+    <presentationArc order='4.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_DiscountedClaimsHeading_1' xlink:to='concept_ClaimsProvisionsBeforeAfterDiscounting_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_CreditorsArisingOutDirectInsuranceOperationsHeading' xlink:label='concept_CreditorsArisingOutDirectInsuranceOperationsHeading_1' xlink:type='locator' />
+    <presentationArc order='19.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_NotesToFinancialStatementsInsuranceItemsHeading_1' xlink:to='concept_CreditorsArisingOutDirectInsuranceOperationsHeading_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_CreditorsArisingOutDirectInsuranceOperationsNote' xlink:label='concept_CreditorsArisingOutDirectInsuranceOperationsNote_1' xlink:type='locator' />
+    <presentationArc order='1.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_CreditorsArisingOutDirectInsuranceOperationsHeading_1' xlink:to='concept_CreditorsArisingOutDirectInsuranceOperationsNote_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_CreditorsArisingOutReinsuranceOperationsHeading' xlink:label='concept_CreditorsArisingOutReinsuranceOperationsHeading_1' xlink:type='locator' />
+    <presentationArc order='20.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_NotesToFinancialStatementsInsuranceItemsHeading_1' xlink:to='concept_CreditorsArisingOutReinsuranceOperationsHeading_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_CreditorsArisingOutReinsuranceOperationsNote' xlink:label='concept_CreditorsArisingOutReinsuranceOperationsNote_1' xlink:type='locator' />
+    <presentationArc order='1.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_CreditorsArisingOutReinsuranceOperationsHeading_1' xlink:to='concept_CreditorsArisingOutReinsuranceOperationsNote_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_OtherCreditorsHeading' xlink:label='concept_OtherCreditorsHeading_1' xlink:type='locator' />
+    <presentationArc order='21.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_NotesToFinancialStatementsInsuranceItemsHeading_1' xlink:to='concept_OtherCreditorsHeading_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_OtherCreditorsNote' xlink:label='concept_OtherCreditorsNote_1' xlink:type='locator' />
+    <presentationArc order='1.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_OtherCreditorsHeading_1' xlink:to='concept_OtherCreditorsNote_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_AnalysisNetDebtHeading' xlink:label='concept_AnalysisNetDebtHeading_1' xlink:type='locator' />
+    <presentationArc order='22.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_NotesToFinancialStatementsInsuranceItemsHeading_1' xlink:to='concept_AnalysisNetDebtHeading_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_AnalysisNetDebt' xlink:label='concept_AnalysisNetDebt_1' xlink:type='locator' />
+    <presentationArc order='1.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_AnalysisNetDebtHeading_1' xlink:to='concept_AnalysisNetDebt_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_CashCashEquivalentsHeading' xlink:label='concept_CashCashEquivalentsHeading_1' xlink:type='locator' />
+    <presentationArc order='23.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_NotesToFinancialStatementsInsuranceItemsHeading_1' xlink:to='concept_CashCashEquivalentsHeading_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_NotesCashCashEquivalents' xlink:label='concept_NotesCashCashEquivalents_1' xlink:type='locator' />
+    <presentationArc order='1.0' preferredLabel='http://www.xbrl.org/2003/role/terseLabel' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_CashCashEquivalentsHeading_1' xlink:to='concept_NotesCashCashEquivalents_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_TotalCashCashEquivalentsNotAvailableForUseBySyndicateHeading' xlink:label='concept_TotalCashCashEquivalentsNotAvailableForUseBySyndicateHeading_1' xlink:type='locator' />
+    <presentationArc order='2.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_CashCashEquivalentsHeading_1' xlink:to='concept_TotalCashCashEquivalentsNotAvailableForUseBySyndicateHeading_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_CashCashEquivalentsNotAvailableForUseBySyndicate' xlink:label='concept_CashCashEquivalentsNotAvailableForUseBySyndicate_1' xlink:type='locator' />
+    <presentationArc order='1.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_TotalCashCashEquivalentsNotAvailableForUseBySyndicateHeading_1' xlink:to='concept_CashCashEquivalentsNotAvailableForUseBySyndicate_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_ForeignExchangeRatesHeading' xlink:label='concept_ForeignExchangeRatesHeading_1' xlink:type='locator' />
+    <presentationArc order='24.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_NotesToFinancialStatementsInsuranceItemsHeading_1' xlink:to='concept_ForeignExchangeRatesHeading_1' xlink:type='arc' />
+    <loc xlink:href='lloyds-2025-01-01.xsd#lloyds_ForeignExchangeRates' xlink:label='concept_ForeignExchangeRates_1' xlink:type='locator' />
+    <presentationArc order='1.0' xlink:arcrole='http://www.xbrl.org/2003/arcrole/parent-child' xlink:from='concept_ForeignExchangeRatesHeading_1' xlink:to='concept_ForeignExchangeRates_1' xlink:type='arc' />
+  </presentationLink>
+  <roleRef roleURI='https://www.lloyds.com/lloyds/roles/Notes-Financial-Statements' xlink:href='lloyds-2025-01-01.xsd#notesFinancialStatements' xlink:type='simple' />
+</linkbase>

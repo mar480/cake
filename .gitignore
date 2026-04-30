@@ -1,0 +1,63 @@
+# ------------------------------
+# Dependencies
+# ------------------------------
+**/node_modules/
+
+# ------------------------------
+# Frontend build/cache outputs
+# ------------------------------
+**/dist/
+**/build/
+**/.vite/
+**/.cache/
+
+# Generated frontend asset bundles copied into backend static folders
+backend/static/assets/
+backend/static/assetscls/
+
+
+# ------------------------------
+# Python artifacts
+# ------------------------------
+**/__pycache__/
+**/*.py[cod]
+**/.pytest_cache/
+**/.mypy_cache/
+**/.ruff_cache/
+**/.coverage
+**/.coverage.*
+**/htmlcov/
+**/.venv/
+**/venv/
+
+# ------------------------------
+# Taxonomy backup/output folders
+# ------------------------------
+backend/taxonomies/backup/
+old_app_before_refactor/
+
+# ------------------------------
+# Logs
+# ------------------------------
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ------------------------------
+# Environment files (secrets/config)
+# ------------------------------
+.env
+.env.*
+!.env.example
+
+# ------------------------------
+# OS/editor cruft
+# ------------------------------
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+# Optional archive scratch workspace (not for versioning)
+archive/.tmp/
