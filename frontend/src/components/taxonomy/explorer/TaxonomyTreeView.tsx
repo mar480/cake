@@ -1,4 +1,5 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { Search, X } from "lucide-react";
 import { Tree } from "primereact/tree";
 import { TreeNode } from "./tree_utils";
 
@@ -23,11 +24,16 @@ const TaxonomyTreeView = ({
   network,
 }: TaxonomyTreeViewProps) => {
   const nodeRefs = useRef<{ [key: string]: HTMLSpanElement | null }>({});
+  const [treeFilter, setTreeFilter] = useState("");
 
   // Clear refs on dataset change to avoid stale elements
   useEffect(() => {
     nodeRefs.current = {};
   }, [network, treeNodes]);
+
+  useEffect(() => {
+    setTreeFilter("");
+  }, [network]);
 
   // Smooth scroll once the highlighted node exists in the DOM
   useEffect(() => {
@@ -163,6 +169,48 @@ const TaxonomyTreeView = ({
           );
         }}
         filter
+        filterValue={treeFilter}
+        onFilterValueChange={(e) => setTreeFilter(e.value ?? "")}
+        filterTemplate={(options) => (
+          <div className="taxonomy-tree-filter-shell">
+            <input
+              type="text"
+              value={treeFilter}
+              onChange={(e) => {
+                setTreeFilter(e.target.value);
+                options.filterOptions?.filter?.(e);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Escape") {
+                  e.preventDefault();
+                  setTreeFilter("");
+                  options.filterOptions?.reset?.();
+                } else {
+                  options.filterInputKeyDown?.(e);
+                }
+              }}
+              placeholder="Search..."
+              className="taxonomy-tree-filter-input"
+            />
+            {treeFilter ? (
+              <button
+                type="button"
+                className="taxonomy-tree-filter-clear"
+                onClick={() => {
+                  setTreeFilter("");
+                  options.filterOptions?.reset?.();
+                }}
+                aria-label="Clear tree search"
+                title="Clear"
+              >
+                <X size={14} />
+              </button>
+            ) : null}
+            <span className="taxonomy-tree-filter-icon" aria-hidden="true">
+              <Search size={16} />
+            </span>
+          </div>
+        )}
         filterPlaceholder="Search..."
         filterMode="lenient"
         showHeader={true}
