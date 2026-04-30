@@ -3,7 +3,7 @@ setlocal
 
 REM Step 1: Build the frontend
 echo === Building frontend... ===
-cd /d "C:\Users\r.marks\OneDrive - Financial Reporting Council\Desktop\cake\frontend"
+cd /d "C:\Users\rmarks\OneDrive - Companies House\Desktop\dev\cake-advanced-search\frontend"
 
 call npm run build
 IF %ERRORLEVEL% NEQ 0 (
@@ -13,7 +13,7 @@ IF %ERRORLEVEL% NEQ 0 (
 echo --- Build completed successfully. ---
 
 REM Step 2: Copy files and log what changed
-cd /d "C:\Users\r.marks\OneDrive - Financial Reporting Council\Desktop\cake"
+cd /d "C:\Users\rmarks\OneDrive - Companies House\Desktop\dev\cake-advanced-search\"
 echo === Copying files to backend ===
 
 set "logfile=%TEMP%\xcopy_log_%RANDOM%.txt"

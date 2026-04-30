@@ -12,8 +12,15 @@ import { AdvancedSearchFilters, AdvancedSearchState } from "@/types/advancedSear
 type FilterChip = {
   key: string;
   label: string;
-  field: "balance" | "periodType" | "xbrlType" | "isDimension";
+  field:
+    | "balance"
+    | "periodType"
+    | "xbrlType"
+    | "isDimension"
+    | "referenceSource"
+    | "referenceParagraph";
   value: string | boolean;
+  source?: string | null;
 };
 
 const FACET_CHIP_PALETTE = [
@@ -90,6 +97,23 @@ const SearchResultsTab: React.FC<SearchResultsTabProps> = ({
       ...withString("balance", filters.balance, "Balance"),
       ...withString("periodType", filters.periodType, "Period type"),
       ...withString("xbrlType", filters.xbrlType, "XBRL type"),
+      ...(filters.referenceSource
+        ? [
+            {
+              key: `referenceSource:${filters.referenceSource}`,
+              label: `Reference source: ${filters.referenceSource}`,
+              field: "referenceSource" as const,
+              value: filters.referenceSource,
+            },
+          ]
+        : []),
+      ...filters.referenceParagraph.map((value) => ({
+        key: `referenceParagraph:${filters.referenceSource ?? ""}:${value}`,
+        label: `Reference paragraph: ${value}`,
+        field: "referenceParagraph" as const,
+        value,
+        source: filters.referenceSource,
+      })),
       ...filters.isDimension.map((value) => ({
         key: `isDimension:${String(value)}`,
         label: value ? "Dimension: yes" : "Dimension: no",
@@ -97,7 +121,14 @@ const SearchResultsTab: React.FC<SearchResultsTabProps> = ({
         value,
       })),
     ];
-  }, [filters.balance, filters.isDimension, filters.periodType, filters.xbrlType]);
+  }, [
+    filters.balance,
+    filters.isDimension,
+    filters.periodType,
+    filters.referenceParagraph,
+    filters.referenceSource,
+    filters.xbrlType,
+  ]);
 
   const chipRegistryRef = useRef(new Map<string, FilterChip>());
   activeChips.forEach((chip) => {
@@ -139,6 +170,15 @@ const SearchResultsTab: React.FC<SearchResultsTabProps> = ({
     if (chip.field === "isDimension") {
       return filters.isDimension.includes(Boolean(chip.value));
     }
+    if (chip.field === "referenceSource") {
+      return filters.referenceSource === String(chip.value);
+    }
+    if (chip.field === "referenceParagraph") {
+      return (
+        filters.referenceParagraph.includes(String(chip.value)) &&
+        (!chip.source || filters.referenceSource === chip.source)
+      );
+    }
     return filters[chip.field].includes(String(chip.value));
   };
 
@@ -149,6 +189,31 @@ const SearchResultsTab: React.FC<SearchResultsTabProps> = ({
         ? filters.isDimension.filter((value) => value !== Boolean(chip.value))
         : [...filters.isDimension, Boolean(chip.value)];
       onFiltersChange({ ...filters, isDimension: Array.from(new Set(nextValues)) });
+      onRunSearch(0);
+      return;
+    }
+
+    if (chip.field === "referenceSource") {
+      onFiltersChange({
+        ...filters,
+        referenceSource: currentlyActive ? null : String(chip.value),
+        referenceParagraph: currentlyActive ? [] : filters.referenceParagraph,
+      });
+      onRunSearch(0);
+      return;
+    }
+
+    if (chip.field === "referenceParagraph") {
+      const typedValue = String(chip.value);
+      const nextValues = currentlyActive
+        ? filters.referenceParagraph.filter((value) => value !== typedValue)
+        : [...filters.referenceParagraph, typedValue];
+
+      onFiltersChange({
+        ...filters,
+        referenceSource: chip.source ?? filters.referenceSource,
+        referenceParagraph: Array.from(new Set(nextValues)),
+      });
       onRunSearch(0);
       return;
     }
