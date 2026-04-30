@@ -163,6 +163,7 @@ const XBRLTaxonomyExplorer: React.FC<Props> = ({
             onNavigateToNode={onNavigateToNode}
             onNavigateToSearchNode={onNavigateToSearchNode}
             year={year}
+            entrypoint={entrypoint}
             onNavigateToCrossReference={(qname) => onNavigateToNode(qname, { preserveDetails: true })}
             onNavigateToLocation={onNavigateToLocation}
             treeLocations={treeLocations}

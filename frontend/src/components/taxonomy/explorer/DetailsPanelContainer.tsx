@@ -33,6 +33,7 @@ interface DetailPanelProps {
   language: "en" | "cy";
   network: string;
   year: string | null;
+  entrypoint?: string | null;
   advancedSearchState: AdvancedSearchState;
   advancedSearchFilterOptions: AdvancedSearchFilterOptions;
   referenceParagraphsBySource: Record<string, string[]>;
@@ -56,6 +57,7 @@ const DetailPanelContainer: React.FC<DetailPanelProps> = ({
   language,
   network,
   year,
+  entrypoint,
   advancedSearchState,
   advancedSearchFilterOptions,
   referenceParagraphsBySource,
@@ -189,6 +191,10 @@ const DetailPanelContainer: React.FC<DetailPanelProps> = ({
       setActiveTab("Details");
     }
   }, [selectedNode]);
+
+  useEffect(() => {
+    setActiveTab("Details");
+  }, [year, entrypoint]);
 
   const renderNoSelection = () => (
     <div className="p-4 text-gray-500 text-center">Please select a concept.</div>
