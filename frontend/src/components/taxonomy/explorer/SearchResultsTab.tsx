@@ -12,13 +12,7 @@ import { AdvancedSearchFilters, AdvancedSearchState } from "@/types/advancedSear
 type FilterChip = {
   key: string;
   label: string;
-  field:
-    | "balance"
-    | "periodType"
-    | "xbrlType"
-    | "isDimension"
-    | "referenceSource"
-    | "referenceParagraph";
+  field: "balance" | "periodType" | "xbrlType" | "isDimension" | "referenceParagraph";
   value: string | boolean;
   source?: string | null;
 };
@@ -97,19 +91,9 @@ const SearchResultsTab: React.FC<SearchResultsTabProps> = ({
       ...withString("balance", filters.balance, "Balance"),
       ...withString("periodType", filters.periodType, "Period type"),
       ...withString("xbrlType", filters.xbrlType, "XBRL type"),
-      ...(filters.referenceSource
-        ? [
-            {
-              key: `referenceSource:${filters.referenceSource}`,
-              label: `Reference source: ${filters.referenceSource}`,
-              field: "referenceSource" as const,
-              value: filters.referenceSource,
-            },
-          ]
-        : []),
       ...filters.referenceParagraph.map((value) => ({
         key: `referenceParagraph:${filters.referenceSource ?? ""}:${value}`,
-        label: `Reference paragraph: ${value}`,
+        label: `Reference: ${filters.referenceSource ?? ""}, ${value}`,
         field: "referenceParagraph" as const,
         value,
         source: filters.referenceSource,
@@ -170,9 +154,6 @@ const SearchResultsTab: React.FC<SearchResultsTabProps> = ({
     if (chip.field === "isDimension") {
       return filters.isDimension.includes(Boolean(chip.value));
     }
-    if (chip.field === "referenceSource") {
-      return filters.referenceSource === String(chip.value);
-    }
     if (chip.field === "referenceParagraph") {
       return (
         filters.referenceParagraph.includes(String(chip.value)) &&
@@ -193,16 +174,6 @@ const SearchResultsTab: React.FC<SearchResultsTabProps> = ({
       return;
     }
 
-    if (chip.field === "referenceSource") {
-      onFiltersChange({
-        ...filters,
-        referenceSource: currentlyActive ? null : String(chip.value),
-        referenceParagraph: currentlyActive ? [] : filters.referenceParagraph,
-      });
-      onRunSearch(0);
-      return;
-    }
-
     if (chip.field === "referenceParagraph") {
       const typedValue = String(chip.value);
       const nextValues = currentlyActive
@@ -211,7 +182,7 @@ const SearchResultsTab: React.FC<SearchResultsTabProps> = ({
 
       onFiltersChange({
         ...filters,
-        referenceSource: chip.source ?? filters.referenceSource,
+        referenceSource: nextValues.length > 0 ? chip.source ?? filters.referenceSource : null,
         referenceParagraph: Array.from(new Set(nextValues)),
       });
       onRunSearch(0);
