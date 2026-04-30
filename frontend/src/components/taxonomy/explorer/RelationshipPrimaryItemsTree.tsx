@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Tree } from "primereact/tree";
 
 import type { RelationshipTreeNode } from "./apiTypes";
@@ -18,6 +18,24 @@ const RelationshipPrimaryItemsTree: React.FC<RelationshipPrimaryItemsTreeProps> 
     [language, nodes]
   );
   const [expandedKeys, setExpandedKeys] = useState<Record<string, boolean>>({});
+
+  useEffect(() => {
+    const nextExpandedKeys: Record<string, boolean> = {};
+
+    const expandSinglePath = (node: TreeNode | undefined) => {
+      if (!node?.children?.length) return;
+      nextExpandedKeys[String(node.key)] = true;
+      if (node.children.length === 1) {
+        expandSinglePath(node.children[0]);
+      }
+    };
+
+    if (treeNodes.length === 1) {
+      expandSinglePath(treeNodes[0]);
+    }
+
+    setExpandedKeys(nextExpandedKeys);
+  }, [treeNodes]);
 
   if (treeNodes.length === 0) {
     return <p className="text-sm text-slate-500">No primary items available for this hypercube.</p>;

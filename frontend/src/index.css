@@ -72,11 +72,18 @@
 }
 
 .hypercube-member-select-panel {
-  max-height: min(70vh, 420px);
-  overflow: auto;
+  overflow: visible;
 }
 
-.hypercube-member-select-panel .p-treeselect-items-wrapper,
+.hypercube-member-select-panel .p-treeselect-header {
+  display: none;
+}
+
+.hypercube-member-select-panel .p-treeselect-items-wrapper {
+  max-height: none !important;
+  overflow: hidden !important;
+}
+
 .hypercube-member-select-panel .p-tree-container {
   max-height: min(70vh, 420px);
   overflow: auto;

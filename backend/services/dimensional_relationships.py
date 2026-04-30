@@ -46,6 +46,30 @@ def _build_member_tree(member_node: dict, concepts: dict) -> dict:
     }
 
 
+def _enrich_primary_item_tree(node: dict, concepts: dict) -> dict:
+    qname = node.get("qname") or node.get("concept_id") or ""
+    concept_entry = concepts.get(qname, {}) if isinstance(concepts, dict) else {}
+    concept = concept_entry.get("concept", {}) if isinstance(concept_entry, dict) else {}
+    label, label_cy = _standard_labels_from_entry(concept_entry or {})
+
+    return {
+        "qname": qname,
+        "concept_id": qname,
+        "label": node.get("label") or label or qname,
+        "name": node.get("label") or label or qname,
+        "label_cy": node.get("label_cy") or label_cy or label or qname,
+        "xbrl_type": concept.get("xbrl_type"),
+        "full_type": concept.get("full_type"),
+        "substitution_group": concept.get("substitution_group"),
+        "abstract": concept.get("abstract") is True or str(concept.get("abstract")).lower() == "true",
+        "children": [
+            _enrich_primary_item_tree(child, concepts)
+            for child in (node.get("children") or [])
+            if isinstance(child, dict)
+        ],
+    }
+
+
 def _walk_primary_items(nodes: list[dict], hypercube_qname: str, primary_item_to_hypercubes: dict):
     for node in nodes or []:
         qname = node.get("qname") or node.get("concept_id")
@@ -148,7 +172,12 @@ def load_dimensional_relationship_index(taxonomy_base_dir: str, year: str, href:
         if not hypercube_qname:
             continue
 
-        primary_tree = (primary_items_by_elr.get(hypercube.get("elr")) or {}).get("primary_items_tree") or []
+        raw_primary_tree = (primary_items_by_elr.get(hypercube.get("elr")) or {}).get("primary_items_tree") or []
+        primary_tree = [
+            _enrich_primary_item_tree(node, concepts)
+            for node in raw_primary_tree
+            if isinstance(node, dict)
+        ]
         _walk_primary_items(primary_tree, hypercube_qname, primary_item_to_hypercubes)
 
         enriched_dimensions = []

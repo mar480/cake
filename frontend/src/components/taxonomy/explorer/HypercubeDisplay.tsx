@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   Accordion,
   AccordionContent,
@@ -29,6 +29,7 @@ const HypercubeDisplay: React.FC<HypercubeDisplayProps> = ({
   selectionType = "concept",
 }) => {
   const [openSections, setOpenSections] = useState<string[]>([]);
+  const [showAllDimensions, setShowAllDimensions] = useState(false);
   const showPrimaryItemsFirst = selectionType !== "concept";
 
   const getDimensionCode = (d: { definition: string; dimensionName: string }) => {
@@ -40,10 +41,20 @@ const HypercubeDisplay: React.FC<HypercubeDisplayProps> = ({
   const sortedDimensions = useMemo(
     () =>
       [...hypercube.dimensions].sort(
-        (a, b) => getDimensionCode(b) - getDimensionCode(a)
+        (a, b) => getDimensionCode(a) - getDimensionCode(b)
       ),
     [hypercube.dimensions]
   );
+
+  const visibleDimensions = showAllDimensions ? sortedDimensions : sortedDimensions.slice(0, 4);
+  const hiddenDimensionCount = Math.max(sortedDimensions.length - visibleDimensions.length, 0);
+
+  useEffect(() => {
+    setOpenSections(
+      showPrimaryItemsFirst ? ["primary-items", "dimensions"] : ["dimensions"]
+    );
+    setShowAllDimensions(false);
+  }, [hypercube.hypercubeName, selectionType, showPrimaryItemsFirst]);
 
   return (
     <div
@@ -118,11 +129,24 @@ const HypercubeDisplay: React.FC<HypercubeDisplayProps> = ({
                   </thead>
 
                   <tbody className="divide-y divide-slate-100 [&_tr:hover]:bg-blue-50/40 transition-colors">
-                    {sortedDimensions.map((dim, idx) => (
+                    {visibleDimensions.map((dim, idx) => (
                       <DimensionRow key={idx} dimension={dim} language={language} />
                     ))}
                   </tbody>
                 </table>
+                {sortedDimensions.length > 4 ? (
+                  <div className="mt-3 flex justify-center">
+                    <button
+                      type="button"
+                      className="inline-flex items-center rounded-full border border-slate-300 bg-white px-4 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                      onClick={() => setShowAllDimensions((current) => !current)}
+                    >
+                      {showAllDimensions
+                        ? "Show fewer dimensions"
+                        : `Show ${hiddenDimensionCount} more dimension${hiddenDimensionCount === 1 ? "" : "s"}`}
+                    </button>
+                  </div>
+                ) : null}
               </AccordionContent>
             </AccordionItem>
           </>
@@ -146,11 +170,24 @@ const HypercubeDisplay: React.FC<HypercubeDisplayProps> = ({
                   </thead>
 
                   <tbody className="divide-y divide-slate-100 [&_tr:hover]:bg-blue-50/40 transition-colors">
-                    {sortedDimensions.map((dim, idx) => (
+                    {visibleDimensions.map((dim, idx) => (
                       <DimensionRow key={idx} dimension={dim} language={language} />
                     ))}
                   </tbody>
                 </table>
+                {sortedDimensions.length > 4 ? (
+                  <div className="mt-3 flex justify-center">
+                    <button
+                      type="button"
+                      className="inline-flex items-center rounded-full border border-slate-300 bg-white px-4 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                      onClick={() => setShowAllDimensions((current) => !current)}
+                    >
+                      {showAllDimensions
+                        ? "Show fewer dimensions"
+                        : `Show ${hiddenDimensionCount} more dimension${hiddenDimensionCount === 1 ? "" : "s"}`}
+                    </button>
+                  </div>
+                ) : null}
               </AccordionContent>
             </AccordionItem>
 
