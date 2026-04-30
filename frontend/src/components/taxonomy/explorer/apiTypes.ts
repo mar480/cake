@@ -100,6 +100,13 @@ export interface DimensionalRelationshipsResponse {
   hypercubes: DimensionalRelationshipHypercube[];
 }
 
+export interface PrefetchedDimensionalRelationshipsState {
+  key: string;
+  data: DimensionalRelationshipsResponse | null;
+  loading: boolean;
+  error: string | null;
+}
+
 export interface PopOutPayload {
   hypercube: DimensionalRelationshipHypercube;
   language: "en" | "cy";

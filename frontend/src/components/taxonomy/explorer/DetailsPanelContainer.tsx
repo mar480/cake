@@ -9,7 +9,11 @@ import {
   AdvancedSearchFilterOptions,
   AdvancedSearchFilters,
 } from "@/types/advancedSearch";
-import { ConceptDetailsResponse } from "./apiTypes";
+import {
+  ConceptDetailsResponse,
+  DimensionalRelationshipsResponse,
+  PrefetchedDimensionalRelationshipsState,
+} from "./apiTypes";
 import { TreeNode } from "./tree_utils";
 
 type DetailsTabName =
@@ -70,6 +74,8 @@ const DetailPanelContainer: React.FC<DetailPanelProps> = ({
   const [concept, setConcept] = useState<ConceptDetailsResponse | null>(null);
   const [isConceptLoading, setIsConceptLoading] = useState(false);
   const [conceptError, setConceptError] = useState<string | null>(null);
+  const [prefetchedRelationships, setPrefetchedRelationships] =
+    useState<PrefetchedDimensionalRelationshipsState | null>(null);
 
   const showHypercubeTab = Boolean(year && entrypoint);
 
@@ -196,6 +202,58 @@ const DetailPanelContainer: React.FC<DetailPanelProps> = ({
     setActiveTab("Details");
   }, [year, entrypoint]);
 
+  useEffect(() => {
+    if (!selectedNode?.data?.qname || !year || !entrypoint) {
+      setPrefetchedRelationships(null);
+      return;
+    }
+
+    const qname = selectedNode.data.qname;
+    const requestKey = `${year}::${entrypoint}::${qname}`;
+    const controller = new AbortController();
+
+    setPrefetchedRelationships({
+      key: requestKey,
+      data: null,
+      loading: true,
+      error: null,
+    });
+
+    fetch("/api/dimensional-relationships", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ qname, year, href: entrypoint }),
+      signal: controller.signal,
+    })
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+        return response.json();
+      })
+      .then((payload: DimensionalRelationshipsResponse) => {
+        setPrefetchedRelationships({
+          key: requestKey,
+          data: payload,
+          loading: false,
+          error: null,
+        });
+      })
+      .catch((err) => {
+        if (err instanceof DOMException && err.name === "AbortError") {
+          return;
+        }
+        setPrefetchedRelationships({
+          key: requestKey,
+          data: null,
+          loading: false,
+          error: "Failed to fetch data from backend.",
+        });
+      });
+
+    return () => controller.abort();
+  }, [entrypoint, selectedNode, year]);
+
   const renderNoSelection = () => (
     <div className="p-4 text-gray-500 text-center">Please select a concept.</div>
   );
@@ -271,19 +329,20 @@ const DetailPanelContainer: React.FC<DetailPanelProps> = ({
             />
           ))}
 
-        {activeTab === "Hypercube Relationships" &&
-          (showHypercubeTab ? (
-            !selectedNode || !concept ? (
-              renderNoSelection()
-            ) : (
+        {showHypercubeTab &&
+          (!selectedNode || !concept ? (
+            activeTab === "Hypercube Relationships" ? renderNoSelection() : null
+          ) : (
+            <div className={activeTab === "Hypercube Relationships" ? "block" : "hidden"}>
               <HypercubeRelationshipsTab
                 qname={concept.concept.qname}
                 language={language}
                 year={year ?? ""}
                 href={entrypoint ?? ""}
+                prefetchedState={prefetchedRelationships}
               />
-            )
-          ) : null)}
+            </div>
+          ))}
 
         {activeTab === "Tree Locations" &&
           (!selectedNode || !concept ? (

@@ -4,6 +4,7 @@ import HypercubeDisplay from "./HypercubeDisplay";
 import {
   DimensionalRelationshipHypercube,
   DimensionalRelationshipsResponse,
+  PrefetchedDimensionalRelationshipsState,
 } from "./apiTypes";
 
 interface Props {
@@ -11,6 +12,7 @@ interface Props {
   language: "en" | "cy";
   year: string;
   href: string;
+  prefetchedState?: PrefetchedDimensionalRelationshipsState | null;
 }
 
 const HypercubeRelationshipsPanel: React.FC<Props> = ({
@@ -18,6 +20,7 @@ const HypercubeRelationshipsPanel: React.FC<Props> = ({
   language,
   year,
   href,
+  prefetchedState,
 }) => {
   const [response, setResponse] = useState<DimensionalRelationshipHypercube[] | null>(null);
   const [selectionType, setSelectionType] = useState("");
@@ -33,6 +36,40 @@ const HypercubeRelationshipsPanel: React.FC<Props> = ({
       setError("No active taxonomy context.");
       setLoading(false);
       return;
+    }
+
+    const requestKey = `${year}::${href}::${qname}`;
+    if (prefetchedState?.key === requestKey) {
+      if (prefetchedState.loading) {
+        setLoading(true);
+        setError(null);
+        return;
+      }
+
+      if (prefetchedState.error) {
+        setResponse([]);
+        setSelectionType("");
+        setMatchedDimensions([]);
+        setError(prefetchedState.error);
+        setLoading(false);
+        return;
+      }
+
+      if (prefetchedState.data) {
+        const sortedHypercubes = Array.isArray(prefetchedState.data.hypercubes)
+          ? [...prefetchedState.data.hypercubes].sort((a, b) => {
+              const left = typeof a.elr_id === "number" ? a.elr_id : Number.POSITIVE_INFINITY;
+              const right = typeof b.elr_id === "number" ? b.elr_id : Number.POSITIVE_INFINITY;
+              return left - right;
+            })
+          : [];
+        setResponse(sortedHypercubes);
+        setSelectionType(prefetchedState.data.selection?.concept_type ?? "");
+        setMatchedDimensions(prefetchedState.data.selection?.matched_dimensions ?? []);
+        setError(null);
+        setLoading(false);
+        return;
+      }
     }
 
     setLoading(true);
@@ -65,7 +102,7 @@ const HypercubeRelationshipsPanel: React.FC<Props> = ({
         setError("Failed to fetch data from backend.");
         setLoading(false);
       });
-  }, [href, qname, year]);
+  }, [href, prefetchedState, qname, year]);
 
   const contextLabel =
     selectionType === "hypercube"
