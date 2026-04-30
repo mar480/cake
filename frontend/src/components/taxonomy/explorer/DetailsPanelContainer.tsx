@@ -27,7 +27,8 @@ interface DetailPanelProps {
   onNavigateToLocation?: (target: TreeLocationTarget) => void;
   networkLabels?: Record<string, string>;
   resultNetworks?: Record<string, string[]>;
-  resultElrDefinitions?: Record<string, string[]>;
+  resultPresentationElrs?: Record<string, string[]>;
+  hypercubeElrDefinitionsByQname?: Record<string, string[]>;
   treeLocations: TreeLocationTarget[];
   language: "en" | "cy";
   network: string;
@@ -49,7 +50,8 @@ const DetailPanelContainer: React.FC<DetailPanelProps> = ({
   onNavigateToLocation,
   networkLabels,
   resultNetworks,
-  resultElrDefinitions,
+  resultPresentationElrs,
+  hypercubeElrDefinitionsByQname,
   treeLocations,
   language,
   network,
@@ -246,7 +248,8 @@ const DetailPanelContainer: React.FC<DetailPanelProps> = ({
             onReturnToSearch={() => setActiveTab("Advanced Search")}
             networkLabels={networkLabels}
             resultNetworks={resultNetworks}
-            resultElrDefinitions={resultElrDefinitions}
+            resultPresentationElrs={resultPresentationElrs}
+            hypercubeElrDefinitionsByQname={hypercubeElrDefinitionsByQname}
           />
         )}
 

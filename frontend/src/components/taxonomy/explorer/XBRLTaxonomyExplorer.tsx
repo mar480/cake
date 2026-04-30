@@ -41,7 +41,8 @@ interface Props {
   onResetAdvancedSearch: () => void;
   networkLabels: Record<string, string>;
   resultNetworks: Record<string, string[]>;
-  resultElrDefinitions: Record<string, string[]>;
+  resultPresentationElrs: Record<string, string[]>;
+  hypercubeElrDefinitionsByQname: Record<string, string[]>;
 }
 
 const XBRLTaxonomyExplorer: React.FC<Props> = ({
@@ -75,7 +76,8 @@ const XBRLTaxonomyExplorer: React.FC<Props> = ({
   onResetAdvancedSearch,
   networkLabels,
   resultNetworks,
-  resultElrDefinitions,
+  resultPresentationElrs,
+  hypercubeElrDefinitionsByQname,
 }) => {
   return (
     <div className="flex flex-col h-screen bg-white">
@@ -175,7 +177,8 @@ const XBRLTaxonomyExplorer: React.FC<Props> = ({
             onResetAdvancedSearch={onResetAdvancedSearch}
             networkLabels={networkLabels}
             resultNetworks={resultNetworks}
-            resultElrDefinitions={resultElrDefinitions}
+            resultPresentationElrs={resultPresentationElrs}
+            hypercubeElrDefinitionsByQname={hypercubeElrDefinitionsByQname}
           />
         </div>
 

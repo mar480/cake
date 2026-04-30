@@ -35,6 +35,7 @@ export type SearchConceptApiResult = {
   xbrl_type?: string;
   substitution_group?: string;
   is_dimension?: boolean;
+  hypercubes?: string[];
   reference_displays?: string[];
   score?: number;
   matched_fields?: string[];

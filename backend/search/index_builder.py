@@ -133,6 +133,11 @@ def build_search_index(concepts: dict) -> SearchIndex:
             nillable=_normalize_bool(concept.get("nillable")),
             reference_sources=reference_sources,
             reference_paragraphs_by_source=reference_paragraphs_by_source,
+            hypercubes=[
+                str(hypercube).strip()
+                for hypercube in (entry.get("hypercubes") or [])
+                if str(hypercube).strip()
+            ],
             reference_displays=reference_displays,
             is_commentary=is_commentary,
         )

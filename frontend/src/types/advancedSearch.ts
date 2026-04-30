@@ -22,6 +22,7 @@ export interface AdvancedSearchResult {
   xbrlType?: string;
   substitutionGroup?: string;
   isDimension?: boolean;
+  hypercubes?: string[];
   referenceDisplays?: string[];
   score?: number;
   matchedFields?: string[];

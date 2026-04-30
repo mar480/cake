@@ -49,7 +49,8 @@ interface SearchResultsTabProps {
   onReturnToSearch?: () => void;
   networkLabels?: Record<string, string>;
   resultNetworks?: Record<string, string[]>;
-  resultElrDefinitions?: Record<string, string[]>;
+  resultPresentationElrs?: Record<string, string[]>;
+  hypercubeElrDefinitionsByQname?: Record<string, string[]>;
 }
 
 const SearchResultsTab: React.FC<SearchResultsTabProps> = ({
@@ -61,7 +62,8 @@ const SearchResultsTab: React.FC<SearchResultsTabProps> = ({
   onReturnToSearch,
   networkLabels,
   resultNetworks,
-  resultElrDefinitions,
+  resultPresentationElrs,
+  hypercubeElrDefinitionsByQname,
 }) => {
   const safeState: AdvancedSearchState = {
     query: state?.query ?? "",
@@ -374,7 +376,8 @@ const SearchResultsTab: React.FC<SearchResultsTabProps> = ({
           <ul className="divide-y">
             {filteredResults.map((result) => {
               const associatedNetworks = resultNetworks?.[result.qname] ?? [];
-              const associatedElrs = resultElrDefinitions?.[result.qname] ?? [];
+              const presentationElrs = resultPresentationElrs?.[result.qname] ?? [];
+              const definitionHypercubeElrs = hypercubeElrDefinitionsByQname?.[result.qname] ?? [];
               const isDimensionMember = associatedNetworks.includes("definition_dommem");
               const goToNodeLabel = networkLabels?.presentation ?? "Presentation";
 
@@ -383,9 +386,14 @@ const SearchResultsTab: React.FC<SearchResultsTabProps> = ({
                   <div className="min-w-0 flex-1 space-y-1">
                     <div className="font-medium text-sm break-words">{result.label || result.qname}</div>
                     <div className="text-xs text-gray-500 break-all">{result.qname}</div>
-                    {associatedElrs.length > 0 && (
+                    {presentationElrs.length > 0 && (
                       <div className="text-xs text-gray-500 break-words">
-                        ELR: {associatedElrs.join(", ")}
+                        Presentation ELR: {presentationElrs.join(", ")}
+                      </div>
+                    )}
+                    {definitionHypercubeElrs.length > 0 && (
+                      <div className="text-xs text-gray-500 break-words">
+                        Definition ELR: {definitionHypercubeElrs.join(", ")}
                       </div>
                     )}
                     <div className="flex flex-wrap gap-1 pt-1">
