@@ -38,6 +38,7 @@ export interface AdvancedSearchState {
   query: string;
   filters: AdvancedSearchFilters;
   results: AdvancedSearchResult[];
+  allResults: AdvancedSearchResult[];
   loading: boolean;
   error: string | null;
   pagination: AdvancedSearchPagination;

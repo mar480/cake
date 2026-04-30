@@ -174,7 +174,7 @@ const XBRLTaxonomyExplorerContainer: React.FC = () => {
   const hypercubeElrDefinitionsByQname = useMemo(() => {
     const mapped: Record<string, string[]> = {};
 
-    advancedSearchState.results.forEach((result) => {
+    advancedSearchState.allResults.forEach((result) => {
       const elrs = new Set<string>();
       (result.hypercubes ?? []).forEach((hypercubeQname) => {
         (hypercubeToDefinitionElrs[hypercubeQname] ?? []).forEach((elrDefinition) => {
@@ -185,7 +185,7 @@ const XBRLTaxonomyExplorerContainer: React.FC = () => {
     });
 
     return mapped;
-  }, [advancedSearchState.results, hypercubeToDefinitionElrs]);
+  }, [advancedSearchState.allResults, hypercubeToDefinitionElrs]);
 
   const navigateFromSearch = useCallback(
     (qname: string, targetNetwork?: string) => {

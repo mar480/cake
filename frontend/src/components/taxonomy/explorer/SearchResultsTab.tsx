@@ -69,18 +69,15 @@ const SearchResultsTab: React.FC<SearchResultsTabProps> = ({
     query: state?.query ?? "",
     filters: state?.filters ?? EMPTY_FILTERS,
     results: state?.results ?? [],
+    allResults: state?.allResults ?? [],
     loading: state?.loading ?? false,
     error: state?.error ?? null,
     pagination: state?.pagination ?? { limit: 25, offset: 0, total: 0 },
     lastRunAt: state?.lastRunAt ?? null,
   };
 
-  const { filters, results, loading, error, lastRunAt, pagination } = safeState;
+  const { filters, results, allResults, loading, error, lastRunAt, pagination } = safeState;
   const { limit, offset, total } = pagination;
-  const hasPrev = offset > 0;
-  const hasNext = offset + limit < total;
-  const from = total === 0 ? 0 : offset + 1;
-  const to = total === 0 ? 0 : Math.min(offset + limit, total);
 
   const activeChips: FilterChip[] = useMemo(() => {
     const withString = (field: "balance" | "periodType" | "xbrlType", values: string[], labelPrefix: string) =>
@@ -129,12 +126,15 @@ const SearchResultsTab: React.FC<SearchResultsTabProps> = ({
     periodType: string[];
     xbrlType: string[];
   }>({ balance: [], periodType: [], xbrlType: [] });
+  const [localResultOffset, setLocalResultOffset] = useState(0);
+
+  const resultFilterSource = allResults.length > 0 ? allResults : results;
 
   const resultFilterOptions = useMemo(() => {
     const balance = new Set<string>();
     const periodType = new Set<string>();
     const xbrlType = new Set<string>();
-    results.forEach((result) => {
+    resultFilterSource.forEach((result) => {
       if (result.balance) balance.add(result.balance);
       if (result.periodType) periodType.add(result.periodType);
       if (result.xbrlType) xbrlType.add(result.xbrlType);
@@ -144,7 +144,7 @@ const SearchResultsTab: React.FC<SearchResultsTabProps> = ({
       periodType: Array.from(periodType).sort(),
       xbrlType: Array.from(xbrlType).sort(),
     };
-  }, [results]);
+  }, [resultFilterSource]);
 
   useEffect(() => {
     setResultFilter((prev) => ({
@@ -221,7 +221,7 @@ const SearchResultsTab: React.FC<SearchResultsTabProps> = ({
     facetColorMapRef.current.get(facetKey) ?? "bg-gray-100 border-gray-300 text-gray-700";
 
   const filteredResults = useMemo(() => {
-    return results.filter((result) => {
+    return resultFilterSource.filter((result) => {
       if (resultFilter.balance.length > 0 && (!result.balance || !resultFilter.balance.includes(result.balance))) {
         return false;
       }
@@ -236,7 +236,37 @@ const SearchResultsTab: React.FC<SearchResultsTabProps> = ({
       }
       return true;
     });
-  }, [resultFilter.balance, resultFilter.periodType, resultFilter.xbrlType, results]);
+  }, [resultFilter.balance, resultFilter.periodType, resultFilter.xbrlType, resultFilterSource]);
+
+  const hasLocalResultFilter =
+    resultFilter.balance.length > 0 ||
+    resultFilter.periodType.length > 0 ||
+    resultFilter.xbrlType.length > 0;
+  const localFilteredTotal = filteredResults.length;
+  const visibleResults = hasLocalResultFilter
+    ? filteredResults.slice(localResultOffset, localResultOffset + limit)
+    : results;
+  const displayedTotal = hasLocalResultFilter ? localFilteredTotal : total;
+  const from = displayedTotal === 0 ? 0 : hasLocalResultFilter ? localResultOffset + 1 : offset + 1;
+  const to = displayedTotal === 0 ? 0 : hasLocalResultFilter ? Math.min(localResultOffset + limit, localFilteredTotal) : Math.min(offset + limit, displayedTotal);
+  const hasPrev = hasLocalResultFilter ? localResultOffset > 0 : offset > 0;
+  const hasNext = hasLocalResultFilter ? localResultOffset + limit < localFilteredTotal : offset + limit < total;
+
+  useEffect(() => {
+    setLocalResultOffset(0);
+  }, [resultFilter.balance, resultFilter.periodType, resultFilter.xbrlType, state?.lastRunAt]);
+
+  useEffect(() => {
+    if (!hasLocalResultFilter) {
+      setLocalResultOffset(0);
+      return;
+    }
+    if (localResultOffset >= localFilteredTotal) {
+      const lastPageOffset =
+        localFilteredTotal > 0 ? Math.floor((localFilteredTotal - 1) / limit) * limit : 0;
+      setLocalResultOffset(lastPageOffset);
+    }
+  }, [hasLocalResultFilter, limit, localFilteredTotal, localResultOffset]);
 
   const toggleResultFilterValue = (field: "balance" | "periodType" | "xbrlType", value: string) => {
     setResultFilter((prev) => ({
@@ -255,7 +285,7 @@ const SearchResultsTab: React.FC<SearchResultsTabProps> = ({
             <div>
               <div className="font-bold text-base text-gray-700">Search results</div>
               <div className="mt-1">
-                Showing {from}-{to} of {total}
+                Showing {from}-{to} of {displayedTotal}
               </div>
             </div>
             <div className="flex items-center gap-2">
@@ -370,11 +400,11 @@ const SearchResultsTab: React.FC<SearchResultsTabProps> = ({
           </div>
         </div>
 
-        {filteredResults.length === 0 ? (
+        {visibleResults.length === 0 ? (
           <div className="p-4 text-sm text-gray-500">No results.</div>
         ) : (
           <ul className="divide-y">
-            {filteredResults.map((result) => {
+            {visibleResults.map((result) => {
               const associatedNetworks = resultNetworks?.[result.qname] ?? [];
               const presentationElrs = resultPresentationElrs?.[result.qname] ?? [];
               const definitionHypercubeElrs = hypercubeElrDefinitionsByQname?.[result.qname] ?? [];
@@ -502,7 +532,11 @@ const SearchResultsTab: React.FC<SearchResultsTabProps> = ({
               type="button"
               className="px-2 py-1 rounded border bg-white disabled:opacity-50"
               disabled={loading || !hasPrev}
-              onClick={() => onRunSearch(Math.max(0, offset - limit))}
+              onClick={() =>
+                hasLocalResultFilter
+                  ? setLocalResultOffset(Math.max(0, localResultOffset - limit))
+                  : onRunSearch(Math.max(0, offset - limit))
+              }
             >
               Previous
             </button>
@@ -510,7 +544,11 @@ const SearchResultsTab: React.FC<SearchResultsTabProps> = ({
               type="button"
               className="px-2 py-1 rounded border bg-white disabled:opacity-50"
               disabled={loading || !hasNext}
-              onClick={() => onRunSearch(offset + limit)}
+              onClick={() =>
+                hasLocalResultFilter
+                  ? setLocalResultOffset(localResultOffset + limit)
+                  : onRunSearch(offset + limit)
+              }
             >
               Next
             </button>

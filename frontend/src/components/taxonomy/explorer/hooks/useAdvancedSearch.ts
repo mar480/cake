@@ -30,6 +30,7 @@ export function useAdvancedSearch(
   const [advancedSearchFilters, setAdvancedSearchFilters] =
     useState<AdvancedSearchFilters>(EMPTY_ADVANCED_FILTERS);
   const [advancedSearchResults, setAdvancedSearchResults] = useState<AdvancedSearchResult[]>([]);
+  const [advancedSearchAllResults, setAdvancedSearchAllResults] = useState<AdvancedSearchResult[]>([]);
   const [advancedSearchLoading, setAdvancedSearchLoading] = useState(false);
   const [advancedSearchError, setAdvancedSearchError] = useState<string | null>(null);
   const [advancedSearchPagination, setAdvancedSearchPagination] = useState<AdvancedSearchPagination>({
@@ -50,6 +51,7 @@ export function useAdvancedSearch(
     latestAdvancedFiltersRef.current = EMPTY_ADVANCED_FILTERS;
     lastRunCriteriaKeyRef.current = null;
     setAdvancedSearchResults([]);
+    setAdvancedSearchAllResults([]);
     setAdvancedSearchLoading(false);
     setAdvancedSearchError(null);
     setAdvancedSearchPagination({ limit: 25, offset: 0, total: 0 });
@@ -102,13 +104,31 @@ export function useAdvancedSearch(
         });
 
         const results = mapSearchResultsPayload(payload.results || [], requestedOffset);
+        const totalResults = payload.total ?? results.length;
+
+        const allResultsPayloads: AdvancedSearchResult[] = [];
+        const fullFetchBatchSize = 100;
+        for (let batchOffset = 0; batchOffset < totalResults; batchOffset += fullFetchBatchSize) {
+          const batchPayload = await searchConcepts({
+            year,
+            href: entrypoint,
+            q: trimmedQuery,
+            filters: latestAdvancedFiltersRef.current,
+            limit: fullFetchBatchSize,
+            offset: batchOffset,
+          });
+          allResultsPayloads.push(
+            ...mapSearchResultsPayload(batchPayload.results || [], batchOffset)
+          );
+        }
 
         setAdvancedSearchResults(results);
+        setAdvancedSearchAllResults(allResultsPayloads);
         setAdvancedSearchPagination((prev) => ({
           ...prev,
           limit: payload.limit ?? prev.limit,
           offset: payload.offset ?? requestedOffset,
-          total: payload.total ?? results.length,
+          total: totalResults,
         }));
 
         setAdvancedSearchLastRunAt(new Date().toISOString());
@@ -128,6 +148,7 @@ export function useAdvancedSearch(
       query: advancedSearchQuery,
       filters: advancedSearchFilters,
       results: advancedSearchResults,
+      allResults: advancedSearchAllResults,
       loading: advancedSearchLoading,
       error: advancedSearchError,
       pagination: advancedSearchPagination,
@@ -137,6 +158,7 @@ export function useAdvancedSearch(
       advancedSearchQuery,
       advancedSearchFilters,
       advancedSearchResults,
+      advancedSearchAllResults,
       advancedSearchLoading,
       advancedSearchError,
       advancedSearchPagination,
