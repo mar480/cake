@@ -41,6 +41,7 @@ const HypercubePopOut = () => {
         hypercube={payload.hypercube}
         language={payload.language}
         sourceQName={payload.sourceQName}
+        standalone
       />
     </div>
   );

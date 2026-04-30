@@ -71,7 +71,7 @@ const DetailPanelContainer: React.FC<DetailPanelProps> = ({
   const [isConceptLoading, setIsConceptLoading] = useState(false);
   const [conceptError, setConceptError] = useState<string | null>(null);
 
-  const showHypercubeTab = network === "presentation";
+  const showHypercubeTab = Boolean(year && entrypoint);
 
   const tabs = useMemo(
     () =>
@@ -276,7 +276,12 @@ const DetailPanelContainer: React.FC<DetailPanelProps> = ({
             !selectedNode || !concept ? (
               renderNoSelection()
             ) : (
-              <HypercubeRelationshipsTab qname={concept.concept.qname} language={language} />
+              <HypercubeRelationshipsTab
+                qname={concept.concept.qname}
+                language={language}
+                year={year ?? ""}
+                href={entrypoint ?? ""}
+              />
             )
           ) : null)}
 

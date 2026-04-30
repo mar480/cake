@@ -1,7 +1,8 @@
 import React from "react";
+import { DimensionalRelationshipHypercube } from "./apiTypes";
 
 interface PopOutButtonProps {
-  hypercube: unknown;
+  hypercube: DimensionalRelationshipHypercube;
   language: "en" | "cy";
   sourceQName?: string;
 }

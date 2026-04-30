@@ -7,6 +7,7 @@ from flask import g, jsonify, request
 from search.cache import get_search_index, set_search_index
 from search.index_builder import build_search_index
 from search.query_engine import search_index
+from services.dimensional_relationships import resolve_dimensional_relationships
 from services.search_filters import (
     build_search_filter_options_from_concepts,
     entrypoint_cache_key,
@@ -59,6 +60,31 @@ def register_api_routes(app, taxonomy_base_dir: str):
         )
 
         return jsonify({"hypercubes": results})
+
+    @app.route("/api/dimensional-relationships", methods=["POST"])
+    def dimensional_relationships():
+        data = request.get_json() or {}
+        year = (data.get("year") or "").strip()
+        href = (data.get("href") or "").strip()
+        qname = (data.get("qname") or "").strip()
+
+        if not year or not href or not qname:
+            return jsonify({"error": "Missing year, href, or qname"}), 400
+
+        try:
+            payload = resolve_dimensional_relationships(
+                taxonomy_base_dir=taxonomy_base_dir,
+                year=year,
+                href=href,
+                qname=qname,
+            )
+        except FileNotFoundError as exc:
+            return jsonify({"error": str(exc)}), 404
+        except Exception as exc:
+            print(f"[dimensional-relationships] ERROR: {exc}")
+            return jsonify({"error": "Failed to resolve dimensional relationships"}), 500
+
+        return jsonify(payload)
 
     @app.route("/api/concept-details")
     def concept_details():
