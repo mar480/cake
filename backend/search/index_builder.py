@@ -60,6 +60,19 @@ def _extract_label_texts(entry: dict) -> tuple[str, list[str]]:
     return (all_labels[0] if all_labels else ""), all_labels
 
 
+def _build_reference_display(ref: dict) -> str | None:
+    source_name = (ref.get("name") or "").strip()
+    source_number = (ref.get("number") or "").strip()
+    source = f"{source_name} {source_number}".strip()
+    paragraph = (ref.get("paragraph") or "").strip()
+
+    if source and paragraph:
+        return f"{source}, {paragraph}"
+    if source:
+        return source
+    return None
+
+
 def build_search_index(concepts: dict) -> SearchIndex:
     concepts_by_qname: dict[str, IndexedConcept] = {}
     token_index: dict[str, set[str]] = defaultdict(set)
@@ -74,6 +87,7 @@ def build_search_index(concepts: dict) -> SearchIndex:
 
         reference_sources: set[str] = set()
         reference_paragraphs_by_source: dict[str, set[str]] = {}
+        reference_displays: list[str] = []
         for ref in entry.get("references") or []:
             if not isinstance(ref, dict):
                 continue
@@ -88,6 +102,9 @@ def build_search_index(concepts: dict) -> SearchIndex:
             reference_paragraphs_by_source.setdefault(source, set())
             if paragraph:
                 reference_paragraphs_by_source[source].add(paragraph)
+            display = _build_reference_display(ref)
+            if display and display not in reference_displays:
+                reference_displays.append(display)
 
         normalized_all_labels = _normalize(" ".join(all_labels))
         local_name_lower = local_name.lower()
@@ -116,6 +133,7 @@ def build_search_index(concepts: dict) -> SearchIndex:
             nillable=_normalize_bool(concept.get("nillable")),
             reference_sources=reference_sources,
             reference_paragraphs_by_source=reference_paragraphs_by_source,
+            reference_displays=reference_displays,
             is_commentary=is_commentary,
         )
         concepts_by_qname[qname] = indexed

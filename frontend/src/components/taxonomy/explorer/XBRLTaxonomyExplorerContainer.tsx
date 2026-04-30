@@ -116,6 +116,38 @@ const XBRLTaxonomyExplorerContainer: React.FC = () => {
     return mapped;
   }, [rawTreeData]);
 
+  const resultElrDefinitions = useMemo(() => {
+    const elrsByQname = new Map<string, string[]>();
+
+    const addElr = (qname: string, elrDefinition: string) => {
+      if (!qname || !elrDefinition) return;
+      const existing = elrsByQname.get(qname) ?? [];
+      if (!existing.includes(elrDefinition)) {
+        existing.push(elrDefinition);
+        elrsByQname.set(qname, existing);
+      }
+    };
+
+    const walk = (
+      elrDefinition: string,
+      node: { qname?: string; children?: { qname?: string; children?: unknown[] }[] }
+    ) => {
+      if (node.qname) {
+        addElr(node.qname, elrDefinition);
+      }
+      (node.children ?? []).forEach((child) => walk(elrDefinition, child as never));
+    };
+
+    Object.values(rawTreeData).forEach((groups) => {
+      (groups ?? []).forEach((group) => {
+        const elrDefinition = group.definition ?? group.elr ?? "";
+        (group.root_tree ?? []).forEach((root) => walk(elrDefinition, root));
+      });
+    });
+
+    return Object.fromEntries(elrsByQname);
+  }, [rawTreeData]);
+
   const navigateFromSearch = useCallback(
     (qname: string, targetNetwork?: string) => {
       const destinationNetwork = targetNetwork || "presentation";
@@ -184,6 +216,7 @@ const XBRLTaxonomyExplorerContainer: React.FC = () => {
         onResetAdvancedSearch={resetAdvancedSearch}
         networkLabels={NETWORK_LABELS}
         resultNetworks={resultNetworks}
+        resultElrDefinitions={resultElrDefinitions}
       />
     </>
   );

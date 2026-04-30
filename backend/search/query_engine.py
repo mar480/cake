@@ -190,6 +190,7 @@ def search_index(
             "xbrl_type": concept.xbrl_type,
             "substitution_group": concept.substitution_group,
             "is_dimension": concept.substitution_group == "xbrldt:dimensionItem",
+            "reference_displays": concept.reference_displays,
             "score": score,
             "matched_fields": matched_fields,
             "score_breakdown": score_breakdown,

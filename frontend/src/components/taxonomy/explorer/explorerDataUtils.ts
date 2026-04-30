@@ -74,6 +74,7 @@ export function mapSearchResultsPayload(
     xbrlType: result.xbrl_type,
     substitutionGroup: result.substitution_group,
     isDimension: result.is_dimension,
+    referenceDisplays: result.reference_displays ?? [],
     score: result.score,
     matchedFields: result.matched_fields ?? [],
   }));

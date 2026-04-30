@@ -49,6 +49,7 @@ interface SearchResultsTabProps {
   onReturnToSearch?: () => void;
   networkLabels?: Record<string, string>;
   resultNetworks?: Record<string, string[]>;
+  resultElrDefinitions?: Record<string, string[]>;
 }
 
 const SearchResultsTab: React.FC<SearchResultsTabProps> = ({
@@ -60,6 +61,7 @@ const SearchResultsTab: React.FC<SearchResultsTabProps> = ({
   onReturnToSearch,
   networkLabels,
   resultNetworks,
+  resultElrDefinitions,
 }) => {
   const safeState: AdvancedSearchState = {
     query: state?.query ?? "",
@@ -372,6 +374,8 @@ const SearchResultsTab: React.FC<SearchResultsTabProps> = ({
           <ul className="divide-y">
             {filteredResults.map((result) => {
               const associatedNetworks = resultNetworks?.[result.qname] ?? [];
+              const associatedElrs = resultElrDefinitions?.[result.qname] ?? [];
+              const isDimensionMember = associatedNetworks.includes("definition_dommem");
               const goToNodeLabel = networkLabels?.presentation ?? "Presentation";
 
               return (
@@ -379,6 +383,11 @@ const SearchResultsTab: React.FC<SearchResultsTabProps> = ({
                   <div className="min-w-0 flex-1 space-y-1">
                     <div className="font-medium text-sm break-words">{result.label || result.qname}</div>
                     <div className="text-xs text-gray-500 break-all">{result.qname}</div>
+                    {associatedElrs.length > 0 && (
+                      <div className="text-xs text-gray-500 break-words">
+                        ELR: {associatedElrs.join(", ")}
+                      </div>
+                    )}
                     <div className="flex flex-wrap gap-1 pt-1">
                       {result.balance && (
                         <span className={`text-xs px-2 py-0.5 rounded-full border ${metadataChipClass(`balance:${result.balance}`)}`}>
@@ -396,10 +405,22 @@ const SearchResultsTab: React.FC<SearchResultsTabProps> = ({
                         </span>
                       )}
                       <span
-                        className={`text-xs px-2 py-0.5 rounded-full border ${metadataChipClass(`isDimension:${String(Boolean(result.isDimension))}`)}`}
+                        className={`text-xs px-2 py-0.5 rounded-full border ${
+                          isDimensionMember
+                            ? "bg-emerald-100 border-emerald-300 text-emerald-800"
+                            : "bg-gray-100 border-gray-300 text-gray-700"
+                        }`}
                       >
-                        Dimension: {result.isDimension ? "yes" : "no"}
+                        Dimension member: {isDimensionMember ? "yes" : "no"}
                       </span>
+                      {(result.referenceDisplays ?? []).map((referenceDisplay) => (
+                        <span
+                          key={`${result.id}-reference-${referenceDisplay}`}
+                          className="text-xs px-2 py-0.5 rounded-full border bg-amber-50 border-amber-300 text-amber-800"
+                        >
+                          Reference: {referenceDisplay}
+                        </span>
+                      ))}
                     </div>
                   </div>
                   <div className="flex items-center">

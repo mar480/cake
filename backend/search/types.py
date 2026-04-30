@@ -34,6 +34,7 @@ class SearchResult(TypedDict):
     xbrl_type: str
     substitution_group: str
     is_dimension: bool
+    reference_displays: List[str]
     score: int
     matched_fields: List[str]
     score_breakdown: dict[str, int]
@@ -66,6 +67,7 @@ class IndexedConcept:
     nillable: bool | None
     reference_sources: set[str]
     reference_paragraphs_by_source: dict[str, set[str]]
+    reference_displays: List[str]
     is_commentary: bool
 
 
