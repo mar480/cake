@@ -12,7 +12,7 @@ import { AdvancedSearchFilters, AdvancedSearchState } from "@/types/advancedSear
 type FilterChip = {
   key: string;
   label: string;
-  field: "balance" | "periodType" | "xbrlType" | "isDimension" | "referenceParagraph";
+  field: "balance" | "periodType" | "xbrlType" | "conceptType" | "referenceParagraph";
   value: string | boolean;
   source?: string | null;
 };
@@ -31,7 +31,7 @@ const EMPTY_FILTERS: AdvancedSearchFilters = {
   balance: [],
   periodType: [],
   xbrlType: [],
-  isDimension: [],
+  conceptType: [],
   fullType: [],
   abstract: [],
   nillable: [],
@@ -80,7 +80,11 @@ const SearchResultsTab: React.FC<SearchResultsTabProps> = ({
   const { limit, offset, total } = pagination;
 
   const activeChips: FilterChip[] = useMemo(() => {
-    const withString = (field: "balance" | "periodType" | "xbrlType", values: string[], labelPrefix: string) =>
+    const withString = (
+      field: "balance" | "periodType" | "xbrlType" | "conceptType",
+      values: string[],
+      labelPrefix: string
+    ) =>
       values.map((value) => ({
         key: `${field}:${value}`,
         label: `${labelPrefix}: ${value}`,
@@ -92,6 +96,7 @@ const SearchResultsTab: React.FC<SearchResultsTabProps> = ({
       ...withString("balance", filters.balance, "Balance"),
       ...withString("periodType", filters.periodType, "Period type"),
       ...withString("xbrlType", filters.xbrlType, "XBRL type"),
+      ...withString("conceptType", filters.conceptType, "Concept type"),
       ...filters.referenceParagraph.map((value) => ({
         key: `referenceParagraph:${filters.referenceSource ?? ""}:${value}`,
         label: `Reference: ${filters.referenceSource ?? ""}, ${value}`,
@@ -99,16 +104,10 @@ const SearchResultsTab: React.FC<SearchResultsTabProps> = ({
         value,
         source: filters.referenceSource,
       })),
-      ...filters.isDimension.map((value) => ({
-        key: `isDimension:${String(value)}`,
-        label: value ? "Dimension: yes" : "Dimension: no",
-        field: "isDimension" as const,
-        value,
-      })),
     ];
   }, [
     filters.balance,
-    filters.isDimension,
+    filters.conceptType,
     filters.periodType,
     filters.referenceParagraph,
     filters.referenceSource,
@@ -125,7 +124,8 @@ const SearchResultsTab: React.FC<SearchResultsTabProps> = ({
     balance: string[];
     periodType: string[];
     xbrlType: string[];
-  }>({ balance: [], periodType: [], xbrlType: [] });
+    conceptType: string[];
+  }>({ balance: [], periodType: [], xbrlType: [], conceptType: [] });
   const [localResultOffset, setLocalResultOffset] = useState(0);
 
   const resultFilterSource = allResults.length > 0 ? allResults : results;
@@ -134,15 +134,20 @@ const SearchResultsTab: React.FC<SearchResultsTabProps> = ({
     const balance = new Set<string>();
     const periodType = new Set<string>();
     const xbrlType = new Set<string>();
+    const conceptType = new Set<string>();
     resultFilterSource.forEach((result) => {
       if (result.balance) balance.add(result.balance);
       if (result.periodType) periodType.add(result.periodType);
       if (result.xbrlType) xbrlType.add(result.xbrlType);
+      if (result.conceptType) conceptType.add(result.conceptType);
     });
     return {
       balance: Array.from(balance).sort(),
       periodType: Array.from(periodType).sort(),
       xbrlType: Array.from(xbrlType).sort(),
+      conceptType: ["concept", "dimension member", "dimension", "hypercube"].filter((value) =>
+        conceptType.has(value)
+      ),
     };
   }, [resultFilterSource]);
 
@@ -151,13 +156,11 @@ const SearchResultsTab: React.FC<SearchResultsTabProps> = ({
       balance: prev.balance.filter((value) => resultFilterOptions.balance.includes(value)),
       periodType: prev.periodType.filter((value) => resultFilterOptions.periodType.includes(value)),
       xbrlType: prev.xbrlType.filter((value) => resultFilterOptions.xbrlType.includes(value)),
+      conceptType: prev.conceptType.filter((value) => resultFilterOptions.conceptType.includes(value)),
     }));
   }, [resultFilterOptions]);
 
   const isChipActive = (chip: FilterChip) => {
-    if (chip.field === "isDimension") {
-      return filters.isDimension.includes(Boolean(chip.value));
-    }
     if (chip.field === "referenceParagraph") {
       return (
         filters.referenceParagraph.includes(String(chip.value)) &&
@@ -169,15 +172,6 @@ const SearchResultsTab: React.FC<SearchResultsTabProps> = ({
 
   const toggleChip = (chip: FilterChip) => {
     const currentlyActive = isChipActive(chip);
-    if (chip.field === "isDimension") {
-      const nextValues = currentlyActive
-        ? filters.isDimension.filter((value) => value !== Boolean(chip.value))
-        : [...filters.isDimension, Boolean(chip.value)];
-      onFiltersChange({ ...filters, isDimension: Array.from(new Set(nextValues)) });
-      onRunSearch(0);
-      return;
-    }
-
     if (chip.field === "referenceParagraph") {
       const typedValue = String(chip.value);
       const nextValues = currentlyActive
@@ -234,14 +228,21 @@ const SearchResultsTab: React.FC<SearchResultsTabProps> = ({
       if (resultFilter.xbrlType.length > 0 && (!result.xbrlType || !resultFilter.xbrlType.includes(result.xbrlType))) {
         return false;
       }
+      if (
+        resultFilter.conceptType.length > 0 &&
+        (!result.conceptType || !resultFilter.conceptType.includes(result.conceptType))
+      ) {
+        return false;
+      }
       return true;
     });
-  }, [resultFilter.balance, resultFilter.periodType, resultFilter.xbrlType, resultFilterSource]);
+  }, [resultFilter.balance, resultFilter.conceptType, resultFilter.periodType, resultFilter.xbrlType, resultFilterSource]);
 
   const hasLocalResultFilter =
     resultFilter.balance.length > 0 ||
     resultFilter.periodType.length > 0 ||
-    resultFilter.xbrlType.length > 0;
+    resultFilter.xbrlType.length > 0 ||
+    resultFilter.conceptType.length > 0;
   const localFilteredTotal = filteredResults.length;
   const visibleResults = hasLocalResultFilter
     ? filteredResults.slice(localResultOffset, localResultOffset + limit)
@@ -254,7 +255,7 @@ const SearchResultsTab: React.FC<SearchResultsTabProps> = ({
 
   useEffect(() => {
     setLocalResultOffset(0);
-  }, [resultFilter.balance, resultFilter.periodType, resultFilter.xbrlType, state?.lastRunAt]);
+  }, [resultFilter.balance, resultFilter.conceptType, resultFilter.periodType, resultFilter.xbrlType, state?.lastRunAt]);
 
   useEffect(() => {
     if (!hasLocalResultFilter) {
@@ -268,7 +269,7 @@ const SearchResultsTab: React.FC<SearchResultsTabProps> = ({
     }
   }, [hasLocalResultFilter, limit, localFilteredTotal, localResultOffset]);
 
-  const toggleResultFilterValue = (field: "balance" | "periodType" | "xbrlType", value: string) => {
+  const toggleResultFilterValue = (field: "balance" | "periodType" | "xbrlType" | "conceptType", value: string) => {
     setResultFilter((prev) => ({
       ...prev,
       [field]: prev[field].includes(value)
@@ -373,11 +374,17 @@ const SearchResultsTab: React.FC<SearchResultsTabProps> = ({
 
         <div className="p-3 border-b bg-white space-y-2">
           <div className="text-sm font-medium">Filter these results</div>
-          <div className="grid grid-cols-3 gap-3">
-            {(["balance", "periodType", "xbrlType"] as const).map((field) => (
+          <div className="grid grid-cols-4 gap-3">
+            {(["balance", "periodType", "xbrlType", "conceptType"] as const).map((field) => (
               <div key={field} className="space-y-1">
                 <div className="text-xs font-medium text-gray-600">
-                  {field === "periodType" ? "Period type" : field === "xbrlType" ? "XBRL type" : "Balance"}
+                  {field === "periodType"
+                    ? "Period type"
+                    : field === "xbrlType"
+                      ? "XBRL type"
+                      : field === "conceptType"
+                        ? "Concept type"
+                        : "Balance"}
                 </div>
                 <div className="border rounded p-2 max-h-24 overflow-auto space-y-1">
                   {resultFilterOptions[field].length === 0 ? (
@@ -408,7 +415,7 @@ const SearchResultsTab: React.FC<SearchResultsTabProps> = ({
               const associatedNetworks = resultNetworks?.[result.qname] ?? [];
               const presentationElrs = resultPresentationElrs?.[result.qname] ?? [];
               const definitionHypercubeElrs = hypercubeElrDefinitionsByQname?.[result.qname] ?? [];
-              const isDimensionMember = associatedNetworks.includes("definition_dommem");
+              const conceptType = result.conceptType ?? "concept";
               const goToNodeLabel = networkLabels?.presentation ?? "Presentation";
 
               return (
@@ -443,13 +450,23 @@ const SearchResultsTab: React.FC<SearchResultsTabProps> = ({
                         </span>
                       )}
                       <span
-                        className={`text-xs px-2 py-0.5 rounded-full border ${
-                          isDimensionMember
+                        className={`text-xs px-2 py-0.5 rounded-full border ${metadataChipClass(`conceptType:${conceptType}`)} ${
+                          conceptType === "dimension member"
                             ? "bg-emerald-100 border-emerald-300 text-emerald-800"
-                            : "bg-gray-100 border-gray-300 text-gray-700"
+                            : conceptType === "dimension"
+                              ? "bg-sky-100 border-sky-300 text-sky-800"
+                              : conceptType === "hypercube"
+                                ? "bg-rose-100 border-rose-300 text-rose-800"
+                                : "bg-gray-100 border-gray-300 text-gray-700"
                         }`}
                       >
-                        Dimension member: {isDimensionMember ? "yes" : "no"}
+                        {conceptType === "dimension member"
+                          ? "Dimension member"
+                          : conceptType === "dimension"
+                            ? "Dimension"
+                            : conceptType === "hypercube"
+                              ? "Hypercube"
+                              : "Concept"}
                       </span>
                       {(result.referenceDisplays ?? []).map((referenceDisplay) => (
                         <span

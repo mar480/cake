@@ -33,8 +33,8 @@ export type SearchConceptApiResult = {
   balance?: string;
   period_type?: string;
   xbrl_type?: string;
+  concept_type?: string;
   substitution_group?: string;
-  is_dimension?: boolean;
   hypercubes?: string[];
   reference_displays?: string[];
   score?: number;
@@ -46,7 +46,7 @@ export const EMPTY_ADVANCED_FILTERS: AdvancedSearchFilters = {
   balance: [],
   periodType: [],
   xbrlType: [],
-  isDimension: [],
+  conceptType: [],
   fullType: [],
   abstract: [],
   nillable: [],
@@ -60,7 +60,7 @@ export const EMPTY_ADVANCED_FILTER_OPTIONS: AdvancedSearchFilterOptions = {
   balance: [],
   periodType: [],
   xbrlType: [],
-  isDimension: [true, false],
+  conceptType: [],
   fullType: [],
   abstract: [true, false],
   nillable: [true, false],

@@ -121,11 +121,25 @@ def load_concepts_json_for_entrypoint(taxonomy_base_dir: str, year: str, href: s
         return json.load(f)
 
 
+def classify_concept_type(full_type: str | None, substitution_group: str | None) -> str:
+    substitution_group_normalized = (substitution_group or "").strip().lower()
+    full_type_normalized = (full_type or "").strip().lower()
+
+    if substitution_group_normalized.endswith("dimensionitem"):
+        return "dimension"
+    if substitution_group_normalized.endswith("hypercubeitem"):
+        return "hypercube"
+    if full_type_normalized.endswith("domainitemtype"):
+        return "dimension member"
+    return "concept"
+
+
 def build_search_filter_options_from_concepts(concepts: dict) -> dict:
     namespaces = set()
     balances = set()
     periods = set()
     xbrl_types = set()
+    concept_types = set()
     full_types = set()
     substitution_groups = set()
 
@@ -153,6 +167,7 @@ def build_search_filter_options_from_concepts(concepts: dict) -> dict:
             periods.add(str(period_type))
         if xbrl_type:
             xbrl_types.add(str(xbrl_type))
+        concept_types.add(classify_concept_type(full_type, substitution_group))
         if full_type:
             full_types.add(str(full_type))
         if substitution_group:
@@ -188,7 +203,11 @@ def build_search_filter_options_from_concepts(concepts: dict) -> dict:
         "balance": sorted(balances, key=natural_sort_key),
         "periodType": sorted(periods, key=natural_sort_key),
         "xbrlType": sorted(xbrl_types, key=natural_sort_key),
-        "isDimension": [True, False],
+        "conceptType": [
+            value
+            for value in ["concept", "dimension member", "dimension", "hypercube"]
+            if value in concept_types
+        ],
         "fullType": sorted(full_types, key=natural_sort_key),
         "abstract": sorted(abstract_values),  # [False, True]
         "nillable": sorted(nillable_values),  # [False, True]

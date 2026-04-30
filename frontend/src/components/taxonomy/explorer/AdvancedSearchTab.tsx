@@ -31,7 +31,7 @@ const EMPTY_FILTERS: AdvancedSearchFilters = {
   balance: [],
   periodType: [],
   xbrlType: [],
-  isDimension: [],
+  conceptType: [],
   fullType: [],
   abstract: [],
   nillable: [],
@@ -45,7 +45,7 @@ const EMPTY_FILTER_OPTIONS: AdvancedSearchFilterOptions = {
   balance: [],
   periodType: [],
   xbrlType: [],
-  isDimension: [true, false],
+  conceptType: [],
   fullType: [],
   abstract: [true, false],
   nillable: [true, false],
@@ -194,6 +194,7 @@ const AdvancedSearchTab: React.FC<AdvancedSearchTabProps> = ({
     query: state?.query ?? "",
     filters: normalizedFilters,
     results: state?.results ?? [],
+    allResults: state?.allResults ?? [],
     loading: state?.loading ?? false,
     error: state?.error ?? null,
     pagination: state?.pagination ?? { limit: 25, offset: 0, total: 0 },
@@ -285,11 +286,12 @@ const AdvancedSearchTab: React.FC<AdvancedSearchTabProps> = ({
                   selected={filters.xbrlType}
                   onChange={(next) => onFiltersChange({ ...filters, xbrlType: next })}
                 />
-                <BooleanCheckboxGroup
-                  label="Dimension"
-                  help="Filter concepts by substitution group xbrldt:dimensionItem."
-                  selected={filters.isDimension}
-                  onChange={(next) => onFiltersChange({ ...filters, isDimension: next })}
+                <StringCheckboxGroup
+                  label="Concept type"
+                  help="Filter concepts as concept, dimension member, dimension, or hypercube."
+                  options={safeFilterOptions.conceptType}
+                  selected={filters.conceptType}
+                  onChange={(next) => onFiltersChange({ ...filters, conceptType: next })}
                 />
               </div>
             </AccordionContent>

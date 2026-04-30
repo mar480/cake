@@ -29,6 +29,19 @@ def _normalize_bool(value):
     return None
 
 
+def _classify_concept_type(full_type: str | None, substitution_group: str | None) -> str:
+    substitution_group_normalized = (substitution_group or "").strip().lower()
+    full_type_normalized = (full_type or "").strip().lower()
+
+    if substitution_group_normalized.endswith("dimensionitem"):
+        return "dimension"
+    if substitution_group_normalized.endswith("hypercubeitem"):
+        return "hypercube"
+    if full_type_normalized.endswith("domainitemtype"):
+        return "dimension member"
+    return "concept"
+
+
 def _extract_label_texts(entry: dict) -> tuple[str, list[str]]:
     labels = entry.get("labels") or []
     preferred_en = ""
@@ -127,6 +140,9 @@ def build_search_index(concepts: dict) -> SearchIndex:
             xbrl_type=str(concept.get("xbrl_type") or ""),
             full_type=str(concept.get("full_type") or ""),
             substitution_group=str(concept.get("substitution_group") or ""),
+            concept_type=_classify_concept_type(
+                concept.get("full_type"), concept.get("substitution_group")
+            ),
             balance=str(concept.get("balance") or ""),
             period_type=str(concept.get("period_type") or ""),
             abstract=_normalize_bool(concept.get("abstract")),

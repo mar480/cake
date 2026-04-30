@@ -7,7 +7,7 @@ class SearchFilters(TypedDict, total=False):
     balance: List[str]
     periodType: List[str]
     xbrlType: List[str]
-    isDimension: List[bool]
+    conceptType: List[str]
     fullType: List[str]
     abstract: List[bool]
     nillable: List[bool]
@@ -33,7 +33,7 @@ class SearchResult(TypedDict):
     period_type: str
     xbrl_type: str
     substitution_group: str
-    is_dimension: bool
+    concept_type: str
     hypercubes: List[str]
     reference_displays: List[str]
     score: int
@@ -62,6 +62,7 @@ class IndexedConcept:
     xbrl_type: str
     full_type: str
     substitution_group: str
+    concept_type: str
     balance: str
     period_type: str
     abstract: bool | None

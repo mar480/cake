@@ -42,10 +42,7 @@ def _matches_filters(concept, filters: SearchFilters | None) -> bool:
         return False
     if not _matches_list_filter(concept.xbrl_type, filters.get("xbrlType", [])):
         return False
-    is_dimension_allowed = [_normalize_bool(v) for v in filters.get("isDimension", [])]
-    is_dimension_allowed = [v for v in is_dimension_allowed if v is not None]
-    concept_is_dimension = concept.substitution_group == "xbrldt:dimensionItem"
-    if is_dimension_allowed and concept_is_dimension not in is_dimension_allowed:
+    if not _matches_list_filter(concept.concept_type, filters.get("conceptType", [])):
         return False
     if not _matches_list_filter(concept.full_type, filters.get("fullType", [])):
         return False
@@ -189,7 +186,7 @@ def search_index(
             "period_type": concept.period_type,
             "xbrl_type": concept.xbrl_type,
             "substitution_group": concept.substitution_group,
-            "is_dimension": concept.substitution_group == "xbrldt:dimensionItem",
+            "concept_type": concept.concept_type,
             "hypercubes": concept.hypercubes,
             "reference_displays": concept.reference_displays,
             "score": score,
