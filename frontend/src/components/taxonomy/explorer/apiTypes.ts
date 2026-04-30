@@ -1,3 +1,5 @@
+import type { TreeLocationTarget } from "./TreeLocationsTab";
+
 export interface ConceptCore {
   qname: string;
   local_name: string;
@@ -48,4 +50,9 @@ export interface PopOutPayload {
   hypercube: unknown;
   language: "en" | "cy";
   sourceQName?: string;
+}
+
+export interface TreeLocationsPopOutPayload {
+  qname: string;
+  locations: TreeLocationTarget[];
 }

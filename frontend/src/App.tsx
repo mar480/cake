@@ -4,6 +4,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import HypercubePopOut from "./components/taxonomy/explorer/HypercubePopOut";
+import TreeLocationsPopOut from "./components/taxonomy/explorer/TreeLocationsPopOut";
 
 
 
@@ -18,6 +19,7 @@ const App = () => (
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */
           }
           <Route path="/hypercube-popout" element={<HypercubePopOut />} />
+          <Route path="/tree-locations-popout" element={<TreeLocationsPopOut />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

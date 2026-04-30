@@ -25,6 +25,7 @@ interface Props {
   qname: string;
   locations: TreeLocationTarget[];
   onNavigateToLocation: (target: TreeLocationTarget) => void;
+  showPopOutButton?: boolean;
 }
 
 const NETWORK_LABELS: Record<string, string> = {
@@ -98,7 +99,45 @@ const TreeLocationsTab: React.FC<Props> = ({
   qname,
   locations,
   onNavigateToLocation,
+  showPopOutButton = true,
 }) => {
+  const openPopoutWindow = () => {
+    const popout = window.open(
+      "/tree-locations-popout",
+      "_blank",
+      "width=900,height=700,resizable,scrollbars"
+    );
+
+    if (!popout) {
+      return;
+    }
+
+    const sendData = (event: MessageEvent) => {
+      const fromPopout = event.source === popout;
+      const ready = event.data?.type === "TREE_LOCATIONS_POPOUT_READY";
+
+      if (fromPopout && ready) {
+        popout.postMessage(
+          {
+            type: "SET_TREE_LOCATIONS",
+            payload: {
+              qname,
+              locations,
+            },
+          },
+          window.location.origin
+        );
+        window.removeEventListener("message", sendData);
+        window.clearTimeout(cleanupTimeout);
+      }
+    };
+
+    window.addEventListener("message", sendData);
+    const cleanupTimeout = window.setTimeout(() => {
+      window.removeEventListener("message", sendData);
+    }, 10000);
+  };
+
   const { treeValue, allExpandedKeys } = useMemo(() => {
     const byNetwork = new Map<string, TreeLocationTarget[]>();
 
@@ -236,9 +275,21 @@ const TreeLocationsTab: React.FC<Props> = ({
 
   return (
     <div className="p-2">
-      <div className="text-sm text-gray-600 mb-2">
-        Locations for <span className="font-semibold">{qname}</span> (
-        {locations.length})
+      <div className="mb-2 flex items-center justify-between gap-3">
+        <div className="text-sm text-gray-600">
+          Locations for <span className="font-semibold">{qname}</span> (
+          {locations.length})
+        </div>
+        {showPopOutButton ? (
+          <button
+            type="button"
+            onClick={openPopoutWindow}
+            className="text-sm text-blue-600 hover:underline"
+            title="Open tree locations in new window"
+          >
+            Open in new window
+          </button>
+        ) : null}
       </div>
 
       <Tree
