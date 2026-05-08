@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -12,7 +12,7 @@ import { AdvancedSearchFilters, AdvancedSearchState } from "@/types/advancedSear
 type FilterChip = {
   key: string;
   label: string;
-  field: "balance" | "periodType" | "xbrlType" | "conceptType" | "referenceParagraph";
+  field: "balance" | "periodType" | "xbrlType" | "conceptType" | "referenceParagraph" | "excludeNotInPresentationTree";
   value: string | boolean;
   source?: string | null;
 };
@@ -38,6 +38,7 @@ const EMPTY_FILTERS: AdvancedSearchFilters = {
   substitutionGroup: [],
   referenceSource: null,
   referenceParagraph: [],
+  excludeNotInPresentationTree: false,
 };
 
 interface SearchResultsTabProps {
@@ -104,6 +105,14 @@ const SearchResultsTab: React.FC<SearchResultsTabProps> = ({
         value,
         source: filters.referenceSource,
       })),
+      ...(filters.excludeNotInPresentationTree
+        ? [{
+            key: "excludeNotInPresentationTree:true",
+            label: "Presentation: in entrypoint tree only",
+            field: "excludeNotInPresentationTree" as const,
+            value: true,
+          }]
+        : []),
     ];
   }, [
     filters.balance,
@@ -112,6 +121,7 @@ const SearchResultsTab: React.FC<SearchResultsTabProps> = ({
     filters.referenceParagraph,
     filters.referenceSource,
     filters.xbrlType,
+    filters.excludeNotInPresentationTree,
   ]);
 
   const chipRegistryRef = useRef(new Map<string, FilterChip>());
@@ -154,6 +164,7 @@ const SearchResultsTab: React.FC<SearchResultsTabProps> = ({
 
   useEffect(() => {
     setResultFilter((prev) => ({
+      ...prev,
       balance: prev.balance.filter((value) => resultFilterOptions.balance.includes(value)),
       periodType: prev.periodType.filter((value) => resultFilterOptions.periodType.includes(value)),
       xbrlType: prev.xbrlType.filter((value) => resultFilterOptions.xbrlType.includes(value)),
@@ -179,11 +190,19 @@ const SearchResultsTab: React.FC<SearchResultsTabProps> = ({
         (!chip.source || filters.referenceSource === chip.source)
       );
     }
+    if (chip.field === "excludeNotInPresentationTree") {
+      return filters.excludeNotInPresentationTree;
+    }
     return filters[chip.field].includes(String(chip.value));
   };
 
   const toggleChip = (chip: FilterChip) => {
     const currentlyActive = isChipActive(chip);
+    if (chip.field === "excludeNotInPresentationTree") {
+      onFiltersChange({ ...filters, excludeNotInPresentationTree: !filters.excludeNotInPresentationTree });
+      onRunSearch(0);
+      return;
+    }
     if (chip.field === "referenceParagraph") {
       const typedValue = String(chip.value);
       const nextValues = currentlyActive
@@ -246,15 +265,19 @@ const SearchResultsTab: React.FC<SearchResultsTabProps> = ({
       ) {
         return false;
       }
+      if (filters.excludeNotInPresentationTree && (resultPresentationElrs?.[result.qname] ?? []).length === 0) {
+        return false;
+      }
       return true;
     });
-  }, [resultFilter.balance, resultFilter.conceptType, resultFilter.periodType, resultFilter.xbrlType, resultFilterSource]);
+  }, [filters.excludeNotInPresentationTree, resultFilter.balance, resultFilter.conceptType, resultFilter.periodType, resultFilter.xbrlType, resultFilterSource, resultPresentationElrs]);
 
   const hasLocalResultFilter =
     resultFilter.balance.length > 0 ||
     resultFilter.periodType.length > 0 ||
     resultFilter.xbrlType.length > 0 ||
-    resultFilter.conceptType.length > 0;
+    resultFilter.conceptType.length > 0 ||
+    filters.excludeNotInPresentationTree;
   const localFilteredTotal = filteredResults.length;
   const visibleResults = hasLocalResultFilter
     ? filteredResults.slice(localResultOffset, localResultOffset + limit)
@@ -267,7 +290,7 @@ const SearchResultsTab: React.FC<SearchResultsTabProps> = ({
 
   useEffect(() => {
     setLocalResultOffset(0);
-  }, [resultFilter.balance, resultFilter.conceptType, resultFilter.periodType, resultFilter.xbrlType, state?.lastRunAt]);
+  }, [filters.excludeNotInPresentationTree, resultFilter.balance, resultFilter.conceptType, resultFilter.periodType, resultFilter.xbrlType, state?.lastRunAt]);
 
   useEffect(() => {
     if (!hasLocalResultFilter) {
@@ -417,6 +440,22 @@ const SearchResultsTab: React.FC<SearchResultsTabProps> = ({
               </div>
             ))}
           </div>
+          <label className="flex items-center gap-2 text-xs text-gray-700">
+            <input
+              type="checkbox"
+              checked={filters.excludeNotInPresentationTree}
+              onChange={() =>
+                (() => {
+                  onFiltersChange({
+                    ...filters,
+                    excludeNotInPresentationTree: !filters.excludeNotInPresentationTree,
+                  });
+                  onRunSearch(0);
+                })()
+              }
+            />
+            <span>Exclude results not in entrypoint Presentation tree</span>
+          </label>
         </div>
 
         {visibleResults.length === 0 ? (
@@ -435,11 +474,22 @@ const SearchResultsTab: React.FC<SearchResultsTabProps> = ({
                   <div className="min-w-0 flex-1 space-y-1">
                     <div className="font-medium text-sm break-words">{result.label || result.qname}</div>
                     <div className="text-xs text-gray-500 break-all">{result.qname}</div>
-                    {presentationElrs.length > 0 && (
-                      <div className="text-xs text-gray-500 break-words">
-                        Presentation ELR: {presentationElrs.join(", ")}
-                      </div>
-                    )}
+                    <div
+                      className={`text-xs break-words rounded px-2 py-1 flex items-center ${
+                        presentationElrs.length > 0
+                          ? "text-gray-500"
+                          : "text-amber-800 bg-amber-50 border border-amber-200"
+                      }`}
+                    >
+                      {presentationElrs.length > 0 ? (
+                        <span>Presentation ELR: {presentationElrs.join(", ")}</span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1.5 leading-none">
+                          <Info className="h-3.5 w-3.5" aria-hidden="true" />
+                          <span>Presentation: Not in this entrypoint’s Presentation tree</span>
+                        </span>
+                      )}
+                    </div>
                     {definitionHypercubeElrs.length > 0 && (
                       <div className="text-xs text-gray-500 break-words">
                         Definition ELR: {definitionHypercubeElrs.join(", ")}
@@ -509,8 +559,9 @@ const SearchResultsTab: React.FC<SearchResultsTabProps> = ({
                           occurrences: presentationOccurrences,
                         },
                         ...definitionMenuGroups,
-                      ].filter((group) => group.occurrences.length > 0);
+                      ].filter((group) => group.network === "presentation" || group.occurrences.length > 0);
 
+                      const presentationUnavailableNoteId = `presentation-note-${result.id}`;
                       const hasSinglePresentationTarget = presentationOccurrences.length === 1;
 
                       return (
@@ -522,6 +573,7 @@ const SearchResultsTab: React.FC<SearchResultsTabProps> = ({
                             type="button"
                             size="sm"
                             variant="outline"
+                            aria-describedby={presentationElrs.length === 0 ? presentationUnavailableNoteId : undefined}
                             className="
                               rounded-r-none
                               border-2 border-slate-400
@@ -561,25 +613,42 @@ const SearchResultsTab: React.FC<SearchResultsTabProps> = ({
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end" className="bg-white opacity-100">
-                            {menuGroups.length === 0 ? (
-                              <DropdownMenuItem disabled>No locations available</DropdownMenuItem>
-                            ) : (
-                              menuGroups.flatMap((group) => [
-                                <DropdownMenuItem key={`${result.id}-${group.network}-heading`} disabled className="font-semibold text-xs">
+                            {menuGroups.flatMap((group) => {
+                              const isPresentationGroup = group.network === "presentation";
+                              const showUnavailablePresentation = isPresentationGroup && group.occurrences.length === 0;
+
+                              return [
+                                <DropdownMenuItem
+                                  key={`${result.id}-${group.network}-heading`}
+                                  disabled
+                                  className={`font-semibold text-xs ${showUnavailablePresentation ? "text-amber-700 bg-amber-50" : ""}`}
+                                >
                                   {group.label}
                                 </DropdownMenuItem>,
-                                ...group.occurrences.map((occurrence) => (
-                                  <DropdownMenuItem
-                                    key={`${result.id}-${group.network}-${occurrence.elr}-${occurrence.entrypoint ?? ""}`}
-                                    onClick={() =>
-                                      onNavigateToSearchNode?.(result.qname, group.network, occurrence.elr, occurrence.entrypoint)
-                                    }
-                                  >
-                                    {occurrence.elr}
-                                  </DropdownMenuItem>
-                                )),
-                              ])
-                            )}
+                                ...(showUnavailablePresentation
+                                  ? [
+                                      <DropdownMenuItem
+                                        key={`${result.id}-${group.network}-unavailable`}
+                                        disabled
+                                        className="text-xs text-amber-700"
+                                      >
+                                        <span id={presentationUnavailableNoteId}>
+                                          Not in this entrypoint’s Presentation tree
+                                        </span>
+                                      </DropdownMenuItem>,
+                                    ]
+                                  : group.occurrences.map((occurrence) => (
+                                      <DropdownMenuItem
+                                        key={`${result.id}-${group.network}-${occurrence.elr}-${occurrence.entrypoint ?? ""}`}
+                                        onClick={() =>
+                                          onNavigateToSearchNode?.(result.qname, group.network, occurrence.elr, occurrence.entrypoint)
+                                        }
+                                      >
+                                        {occurrence.elr}
+                                      </DropdownMenuItem>
+                                    ))),
+                              ];
+                            })}
                           </DropdownMenuContent>
                         </DropdownMenu>
                       );
