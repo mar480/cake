@@ -10,6 +10,7 @@ export interface AdvancedSearchFilters {
   substitutionGroup: string[];
   referenceSource: string | null;
   referenceParagraph: string[];
+  excludeNotInPresentationTree: boolean;
 }
 
 export interface AdvancedSearchResult {

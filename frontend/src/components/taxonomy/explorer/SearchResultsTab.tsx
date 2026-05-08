@@ -12,7 +12,7 @@ import { AdvancedSearchFilters, AdvancedSearchState } from "@/types/advancedSear
 type FilterChip = {
   key: string;
   label: string;
-  field: "balance" | "periodType" | "xbrlType" | "conceptType" | "referenceParagraph";
+  field: "balance" | "periodType" | "xbrlType" | "conceptType" | "referenceParagraph" | "excludeNotInPresentationTree";
   value: string | boolean;
   source?: string | null;
 };
@@ -38,6 +38,7 @@ const EMPTY_FILTERS: AdvancedSearchFilters = {
   substitutionGroup: [],
   referenceSource: null,
   referenceParagraph: [],
+  excludeNotInPresentationTree: false,
 };
 
 interface SearchResultsTabProps {
@@ -104,6 +105,14 @@ const SearchResultsTab: React.FC<SearchResultsTabProps> = ({
         value,
         source: filters.referenceSource,
       })),
+      ...(filters.excludeNotInPresentationTree
+        ? [{
+            key: "excludeNotInPresentationTree:true",
+            label: "Presentation: in entrypoint tree only",
+            field: "excludeNotInPresentationTree" as const,
+            value: true,
+          }]
+        : []),
     ];
   }, [
     filters.balance,
@@ -112,6 +121,7 @@ const SearchResultsTab: React.FC<SearchResultsTabProps> = ({
     filters.referenceParagraph,
     filters.referenceSource,
     filters.xbrlType,
+    filters.excludeNotInPresentationTree,
   ]);
 
   const chipRegistryRef = useRef(new Map<string, FilterChip>());
@@ -154,6 +164,7 @@ const SearchResultsTab: React.FC<SearchResultsTabProps> = ({
 
   useEffect(() => {
     setResultFilter((prev) => ({
+      ...prev,
       balance: prev.balance.filter((value) => resultFilterOptions.balance.includes(value)),
       periodType: prev.periodType.filter((value) => resultFilterOptions.periodType.includes(value)),
       xbrlType: prev.xbrlType.filter((value) => resultFilterOptions.xbrlType.includes(value)),
@@ -179,11 +190,19 @@ const SearchResultsTab: React.FC<SearchResultsTabProps> = ({
         (!chip.source || filters.referenceSource === chip.source)
       );
     }
+    if (chip.field === "excludeNotInPresentationTree") {
+      return filters.excludeNotInPresentationTree;
+    }
     return filters[chip.field].includes(String(chip.value));
   };
 
   const toggleChip = (chip: FilterChip) => {
     const currentlyActive = isChipActive(chip);
+    if (chip.field === "excludeNotInPresentationTree") {
+      onFiltersChange({ ...filters, excludeNotInPresentationTree: !filters.excludeNotInPresentationTree });
+      onRunSearch(0);
+      return;
+    }
     if (chip.field === "referenceParagraph") {
       const typedValue = String(chip.value);
       const nextValues = currentlyActive
@@ -246,15 +265,19 @@ const SearchResultsTab: React.FC<SearchResultsTabProps> = ({
       ) {
         return false;
       }
+      if (filters.excludeNotInPresentationTree && (resultPresentationElrs?.[result.qname] ?? []).length === 0) {
+        return false;
+      }
       return true;
     });
-  }, [resultFilter.balance, resultFilter.conceptType, resultFilter.periodType, resultFilter.xbrlType, resultFilterSource]);
+  }, [filters.excludeNotInPresentationTree, resultFilter.balance, resultFilter.conceptType, resultFilter.periodType, resultFilter.xbrlType, resultFilterSource, resultPresentationElrs]);
 
   const hasLocalResultFilter =
     resultFilter.balance.length > 0 ||
     resultFilter.periodType.length > 0 ||
     resultFilter.xbrlType.length > 0 ||
-    resultFilter.conceptType.length > 0;
+    resultFilter.conceptType.length > 0 ||
+    filters.excludeNotInPresentationTree;
   const localFilteredTotal = filteredResults.length;
   const visibleResults = hasLocalResultFilter
     ? filteredResults.slice(localResultOffset, localResultOffset + limit)
@@ -267,7 +290,7 @@ const SearchResultsTab: React.FC<SearchResultsTabProps> = ({
 
   useEffect(() => {
     setLocalResultOffset(0);
-  }, [resultFilter.balance, resultFilter.conceptType, resultFilter.periodType, resultFilter.xbrlType, state?.lastRunAt]);
+  }, [filters.excludeNotInPresentationTree, resultFilter.balance, resultFilter.conceptType, resultFilter.periodType, resultFilter.xbrlType, state?.lastRunAt]);
 
   useEffect(() => {
     if (!hasLocalResultFilter) {
@@ -417,6 +440,22 @@ const SearchResultsTab: React.FC<SearchResultsTabProps> = ({
               </div>
             ))}
           </div>
+          <label className="flex items-center gap-2 text-xs text-gray-700">
+            <input
+              type="checkbox"
+              checked={filters.excludeNotInPresentationTree}
+              onChange={() =>
+                (() => {
+                  onFiltersChange({
+                    ...filters,
+                    excludeNotInPresentationTree: !filters.excludeNotInPresentationTree,
+                  });
+                  onRunSearch(0);
+                })()
+              }
+            />
+            <span>Exclude results not in entrypoint Presentation tree</span>
+          </label>
         </div>
 
         {visibleResults.length === 0 ? (
@@ -439,7 +478,7 @@ const SearchResultsTab: React.FC<SearchResultsTabProps> = ({
                       className={`text-xs break-words rounded px-2 py-1 flex items-center ${
                         presentationElrs.length > 0
                           ? "text-gray-500"
-                          : "text-red-800 bg-red-100 border border-red-300"
+                          : "text-red-800 bg-red-50 border border-red-200"
                       }`}
                     >
                       {presentationElrs.length > 0 ? (
