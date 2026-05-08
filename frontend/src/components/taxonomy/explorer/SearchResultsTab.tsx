@@ -436,18 +436,18 @@ const SearchResultsTab: React.FC<SearchResultsTabProps> = ({
                     <div className="font-medium text-sm break-words">{result.label || result.qname}</div>
                     <div className="text-xs text-gray-500 break-all">{result.qname}</div>
                     <div
-                      className={`text-xs break-words rounded px-2 py-1 ${
+                      className={`text-xs break-words rounded px-2 py-1 flex items-center ${
                         presentationElrs.length > 0
                           ? "text-gray-500"
-                          : "text-amber-800 bg-amber-50 border border-amber-200"
+                          : "text-red-800 bg-red-100 border border-red-300"
                       }`}
                     >
                       {presentationElrs.length > 0 ? (
                         <span>Presentation ELR: {presentationElrs.join(", ")}</span>
                       ) : (
-                        <span className="inline-flex items-center gap-1">
+                        <span className="inline-flex items-center gap-1.5 leading-none">
                           <Info className="h-3.5 w-3.5" aria-hidden="true" />
-                          <span>Presentation: Not in this entrypoint’s Presentation tree</span>
+                          <span>Not in this entrypoint’s presentation tree</span>
                         </span>
                       )}
                     </div>
