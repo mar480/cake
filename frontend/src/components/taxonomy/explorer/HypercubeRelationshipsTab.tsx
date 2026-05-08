@@ -13,6 +13,7 @@ interface Props {
   year: string;
   href: string;
   prefetchedState?: PrefetchedDimensionalRelationshipsState | null;
+  onNavigateToNode?: (qname: string) => void;
 }
 
 const HypercubeRelationshipsPanel: React.FC<Props> = ({
@@ -21,6 +22,7 @@ const HypercubeRelationshipsPanel: React.FC<Props> = ({
   year,
   href,
   prefetchedState,
+  onNavigateToNode,
 }) => {
   const [response, setResponse] = useState<DimensionalRelationshipHypercube[] | null>(null);
   const [selectionType, setSelectionType] = useState("");
@@ -144,6 +146,7 @@ const HypercubeRelationshipsPanel: React.FC<Props> = ({
               language={language}
               sourceQName={qname}
               selectionType={selectionType}
+              onNavigateToNode={onNavigateToNode}
             />
           ))}
         </div>

@@ -17,6 +17,7 @@ interface HypercubeDisplayProps {
   standalone?: boolean;
   sourceQName?: string;
   selectionType?: string;
+  onNavigateToNode?: (qname: string) => void;
 }
 
 export type DomainMember = RelationshipDomainMember;
@@ -27,21 +28,22 @@ const HypercubeDisplay: React.FC<HypercubeDisplayProps> = ({
   standalone = false,
   sourceQName,
   selectionType = "concept",
+  onNavigateToNode,
 }) => {
   const [openSections, setOpenSections] = useState<string[]>([]);
   const [showAllDimensions, setShowAllDimensions] = useState(false);
   const showPrimaryItemsFirst = selectionType !== "concept";
 
-  const getDimensionCode = (d: { definition: string; dimensionName: string }) => {
-    const source = d.definition || d.dimensionName || "";
-    const match = source.match(/^(\d+)/);
+  const getDimensionElrNumber = (d: { elr_id: number | null; dimensionELR?: string | null }) => {
+    if (typeof d.elr_id === "number") return d.elr_id;
+    const match = d.dimensionELR?.match(/(\d+)(?!.*\d)/);
     return match ? Number(match[1]) : Number.NEGATIVE_INFINITY;
   };
 
   const sortedDimensions = useMemo(
     () =>
       [...hypercube.dimensions].sort(
-        (a, b) => getDimensionCode(a) - getDimensionCode(b)
+        (a, b) => getDimensionElrNumber(b) - getDimensionElrNumber(a)
       ),
     [hypercube.dimensions]
   );
@@ -106,6 +108,7 @@ const HypercubeDisplay: React.FC<HypercubeDisplayProps> = ({
                   <RelationshipPrimaryItemsTree
                     nodes={hypercube.primaryItemsTree ?? []}
                     language={language}
+                    onNavigateToNode={onNavigateToNode}
                   />
                 ) : null}
               </AccordionContent>
@@ -200,6 +203,7 @@ const HypercubeDisplay: React.FC<HypercubeDisplayProps> = ({
                   <RelationshipPrimaryItemsTree
                     nodes={hypercube.primaryItemsTree ?? []}
                     language={language}
+                    onNavigateToNode={onNavigateToNode}
                   />
                 ) : null}
               </AccordionContent>

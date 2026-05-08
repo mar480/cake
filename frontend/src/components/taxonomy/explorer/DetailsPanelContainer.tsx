@@ -25,7 +25,7 @@ type DetailsTabName =
 
 interface DetailPanelProps {
   selectedNode: TreeNode | null;
-  onNavigateToNode?: (qname: string) => void;
+  onNavigateToNode?: (qname: string, options?: { preserveDetails?: boolean }) => void;
   onNavigateToSearchNode?: (qname: string, network?: string) => void;
   onNavigateToCrossReference?: (qname: string) => void;
   onNavigateToLocation?: (target: TreeLocationTarget) => void;
@@ -340,6 +340,9 @@ const DetailPanelContainer: React.FC<DetailPanelProps> = ({
                 year={year ?? ""}
                 href={entrypoint ?? ""}
                 prefetchedState={prefetchedRelationships}
+                onNavigateToNode={(qname) =>
+                  onNavigateToNode?.(qname, { preserveDetails: true })
+                }
               />
             </div>
           ))}

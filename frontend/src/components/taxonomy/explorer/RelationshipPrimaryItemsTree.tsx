@@ -7,11 +7,13 @@ import { mapRawConceptTreeToTreeNodes, TreeNode } from "./tree_utils";
 interface RelationshipPrimaryItemsTreeProps {
   nodes: RelationshipTreeNode[];
   language: "en" | "cy";
+  onNavigateToNode?: (qname: string) => void;
 }
 
 const RelationshipPrimaryItemsTree: React.FC<RelationshipPrimaryItemsTreeProps> = ({
   nodes,
   language,
+  onNavigateToNode,
 }) => {
   const treeNodes = useMemo(
     () => mapRawConceptTreeToTreeNodes(nodes, language, "relationship-primary-items"),
@@ -46,6 +48,10 @@ const RelationshipPrimaryItemsTree: React.FC<RelationshipPrimaryItemsTreeProps> 
       value={treeNodes}
       expandedKeys={expandedKeys}
       onToggle={(e) => setExpandedKeys((e.value ?? {}) as Record<string, boolean>)}
+      onNodeClick={(e) => {
+        const qname = (e.node as TreeNode | undefined)?.data?.qname;
+        if (qname) onNavigateToNode?.(qname);
+      }}
       nodeTemplate={(node) => {
         const fullType = node.data?.full_type;
         const xbrlType = node.data?.xbrl_type;
