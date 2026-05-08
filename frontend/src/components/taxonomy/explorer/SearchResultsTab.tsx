@@ -45,7 +45,7 @@ interface SearchResultsTabProps {
   onFiltersChange: (next: AdvancedSearchFilters) => void;
   onRunSearch: (nextOffset?: number) => void;
   onResetSearch: () => void;
-  onNavigateToSearchNode?: (qname: string, network?: string) => void;
+  onNavigateToSearchNode?: (qname: string, network?: string, elr?: string, entrypoint?: string) => void;
   onReturnToSearch?: () => void;
   networkLabels?: Record<string, string>;
   resultNetworks?: Record<string, string[]>;
@@ -127,6 +127,7 @@ const SearchResultsTab: React.FC<SearchResultsTabProps> = ({
     conceptType: string[];
   }>({ balance: [], periodType: [], xbrlType: [], conceptType: [] });
   const [localResultOffset, setLocalResultOffset] = useState(0);
+  const [openMenuResultId, setOpenMenuResultId] = useState<string | null>(null);
 
   const resultFilterSource = allResults.length > 0 ? allResults : results;
 
@@ -159,6 +160,17 @@ const SearchResultsTab: React.FC<SearchResultsTabProps> = ({
       conceptType: prev.conceptType.filter((value) => resultFilterOptions.conceptType.includes(value)),
     }));
   }, [resultFilterOptions]);
+
+  type ResultMenuOccurrence = {
+    elr: string;
+    entrypoint?: string;
+  };
+
+  type ResultMenuGroup = {
+    network: string;
+    label: string;
+    occurrences: ResultMenuOccurrence[];
+  };
 
   const isChipActive = (chip: FilterChip) => {
     if (chip.field === "referenceParagraph") {
@@ -479,63 +491,99 @@ const SearchResultsTab: React.FC<SearchResultsTabProps> = ({
                     </div>
                   </div>
                   <div className="flex items-center">
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="outline"
-                      className="
-                        rounded-r-none
-                        border-2 border-slate-400
-                        border-r border-r-slate-300
-                        bg-sky-50
-                        text-slate-800
-                        hover:bg-sky-100
-                        focus-visible:ring-1 focus-visible:ring-sky-300
-                      "
-                      onClick={() => onNavigateToSearchNode?.(result.qname, "presentation")}
-                    >
-                      Go to node
-                    </Button>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                          type="button"
-                          size="sm"
-                          variant="outline"
-                          className="
-                            rounded-l-none
-                            -ml-px px-2
-                            border-2 border-slate-400
-                            border-l border-l-slate-300
-                            bg-sky-200
-                            text-slate-800
-                            hover:bg-sky-300
-                            focus-visible:ring-1 focus-visible:ring-sky-300
-                          "
+                    {(() => {
+                      const presentationOccurrences = presentationElrs.map((elr) => ({ elr }));
+                      const definitionMenuGroups: ResultMenuGroup[] = associatedNetworks
+                        .filter((networkKey) => networkKey !== "presentation")
+                        .map((networkKey) => ({
+                          network: networkKey,
+                          label: networkLabels?.[networkKey] ?? networkKey,
+                          occurrences: definitionHypercubeElrs.map((elr) => ({ elr })),
+                        }))
+                        .filter((group) => group.occurrences.length > 0);
+
+                      const menuGroups: ResultMenuGroup[] = [
+                        {
+                          network: "presentation",
+                          label: goToNodeLabel,
+                          occurrences: presentationOccurrences,
+                        },
+                        ...definitionMenuGroups,
+                      ].filter((group) => group.occurrences.length > 0);
+
+                      const hasSinglePresentationTarget = presentationOccurrences.length === 1;
+
+                      return (
+                        <DropdownMenu
+                          open={openMenuResultId === result.id}
+                          onOpenChange={(open) => setOpenMenuResultId(open ? result.id : null)}
                         >
-                          <ChevronDown className="h-3.5 w-3.5" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="bg-white opacity-100">
-                        {associatedNetworks.length === 0 ? (
-                          <DropdownMenuItem disabled>No networks available</DropdownMenuItem>
-                        ) : (
-                          associatedNetworks.map((networkKey) => (
-                            <DropdownMenuItem
-                              key={`${result.id}-${networkKey}`}
-                              onClick={() => onNavigateToSearchNode?.(result.qname, networkKey)}
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            className="
+                              rounded-r-none
+                              border-2 border-slate-400
+                              border-r border-r-slate-300
+                              bg-sky-50
+                              text-slate-800
+                              hover:bg-sky-100
+                              focus-visible:ring-1 focus-visible:ring-sky-300
+                            "
+                            onClick={() => {
+                              if (hasSinglePresentationTarget) {
+                                onNavigateToSearchNode?.(result.qname, "presentation", presentationOccurrences[0].elr);
+                                return;
+                              }
+                              setOpenMenuResultId(result.id);
+                            }}
+                          >
+                            Go to node
+                          </Button>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="outline"
+                              className="
+                                rounded-l-none
+                                -ml-px px-2
+                                border-2 border-slate-400
+                                border-l border-l-slate-300
+                                bg-sky-200
+                                text-slate-800
+                                hover:bg-sky-300
+                                focus-visible:ring-1 focus-visible:ring-sky-300
+                              "
                             >
-                              {networkLabels?.[networkKey] ?? networkKey}
-                            </DropdownMenuItem>
-                          ))
-                        )}
-                        {associatedNetworks.length > 0 && !associatedNetworks.includes("presentation") && (
-                          <DropdownMenuItem onClick={() => onNavigateToSearchNode?.(result.qname, "presentation")}>
-                            {goToNodeLabel}
-                          </DropdownMenuItem>
-                        )}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                              <ChevronDown className="h-3.5 w-3.5" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="bg-white opacity-100">
+                            {menuGroups.length === 0 ? (
+                              <DropdownMenuItem disabled>No locations available</DropdownMenuItem>
+                            ) : (
+                              menuGroups.flatMap((group) => [
+                                <DropdownMenuItem key={`${result.id}-${group.network}-heading`} disabled className="font-semibold text-xs">
+                                  {group.label}
+                                </DropdownMenuItem>,
+                                ...group.occurrences.map((occurrence) => (
+                                  <DropdownMenuItem
+                                    key={`${result.id}-${group.network}-${occurrence.elr}-${occurrence.entrypoint ?? ""}`}
+                                    onClick={() =>
+                                      onNavigateToSearchNode?.(result.qname, group.network, occurrence.elr, occurrence.entrypoint)
+                                    }
+                                  >
+                                    {occurrence.elr}
+                                  </DropdownMenuItem>
+                                )),
+                              ])
+                            )}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      );
+                    })()}
                   </div>
                 </li>
               );
