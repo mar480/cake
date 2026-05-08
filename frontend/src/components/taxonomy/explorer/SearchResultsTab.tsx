@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -435,11 +435,22 @@ const SearchResultsTab: React.FC<SearchResultsTabProps> = ({
                   <div className="min-w-0 flex-1 space-y-1">
                     <div className="font-medium text-sm break-words">{result.label || result.qname}</div>
                     <div className="text-xs text-gray-500 break-all">{result.qname}</div>
-                    {presentationElrs.length > 0 && (
-                      <div className="text-xs text-gray-500 break-words">
-                        Presentation ELR: {presentationElrs.join(", ")}
-                      </div>
-                    )}
+                    <div
+                      className={`text-xs break-words rounded px-2 py-1 ${
+                        presentationElrs.length > 0
+                          ? "text-gray-500"
+                          : "text-amber-800 bg-amber-50 border border-amber-200"
+                      }`}
+                    >
+                      {presentationElrs.length > 0 ? (
+                        <span>Presentation ELR: {presentationElrs.join(", ")}</span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1">
+                          <Info className="h-3.5 w-3.5" aria-hidden="true" />
+                          <span>Presentation: Not in this entrypoint’s Presentation tree</span>
+                        </span>
+                      )}
+                    </div>
                     {definitionHypercubeElrs.length > 0 && (
                       <div className="text-xs text-gray-500 break-words">
                         Definition ELR: {definitionHypercubeElrs.join(", ")}
@@ -509,8 +520,9 @@ const SearchResultsTab: React.FC<SearchResultsTabProps> = ({
                           occurrences: presentationOccurrences,
                         },
                         ...definitionMenuGroups,
-                      ].filter((group) => group.occurrences.length > 0);
+                      ].filter((group) => group.network === "presentation" || group.occurrences.length > 0);
 
+                      const presentationUnavailableNoteId = `presentation-note-${result.id}`;
                       const hasSinglePresentationTarget = presentationOccurrences.length === 1;
 
                       return (
@@ -522,6 +534,7 @@ const SearchResultsTab: React.FC<SearchResultsTabProps> = ({
                             type="button"
                             size="sm"
                             variant="outline"
+                            aria-describedby={presentationElrs.length === 0 ? presentationUnavailableNoteId : undefined}
                             className="
                               rounded-r-none
                               border-2 border-slate-400
@@ -561,25 +574,42 @@ const SearchResultsTab: React.FC<SearchResultsTabProps> = ({
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end" className="bg-white opacity-100">
-                            {menuGroups.length === 0 ? (
-                              <DropdownMenuItem disabled>No locations available</DropdownMenuItem>
-                            ) : (
-                              menuGroups.flatMap((group) => [
-                                <DropdownMenuItem key={`${result.id}-${group.network}-heading`} disabled className="font-semibold text-xs">
+                            {menuGroups.flatMap((group) => {
+                              const isPresentationGroup = group.network === "presentation";
+                              const showUnavailablePresentation = isPresentationGroup && group.occurrences.length === 0;
+
+                              return [
+                                <DropdownMenuItem
+                                  key={`${result.id}-${group.network}-heading`}
+                                  disabled
+                                  className={`font-semibold text-xs ${showUnavailablePresentation ? "text-amber-700 bg-amber-50" : ""}`}
+                                >
                                   {group.label}
                                 </DropdownMenuItem>,
-                                ...group.occurrences.map((occurrence) => (
-                                  <DropdownMenuItem
-                                    key={`${result.id}-${group.network}-${occurrence.elr}-${occurrence.entrypoint ?? ""}`}
-                                    onClick={() =>
-                                      onNavigateToSearchNode?.(result.qname, group.network, occurrence.elr, occurrence.entrypoint)
-                                    }
-                                  >
-                                    {occurrence.elr}
-                                  </DropdownMenuItem>
-                                )),
-                              ])
-                            )}
+                                ...(showUnavailablePresentation
+                                  ? [
+                                      <DropdownMenuItem
+                                        key={`${result.id}-${group.network}-unavailable`}
+                                        disabled
+                                        className="text-xs text-amber-700"
+                                      >
+                                        <span id={presentationUnavailableNoteId}>
+                                          Not in this entrypoint’s Presentation tree
+                                        </span>
+                                      </DropdownMenuItem>,
+                                    ]
+                                  : group.occurrences.map((occurrence) => (
+                                      <DropdownMenuItem
+                                        key={`${result.id}-${group.network}-${occurrence.elr}-${occurrence.entrypoint ?? ""}`}
+                                        onClick={() =>
+                                          onNavigateToSearchNode?.(result.qname, group.network, occurrence.elr, occurrence.entrypoint)
+                                        }
+                                      >
+                                        {occurrence.elr}
+                                      </DropdownMenuItem>
+                                    ))),
+                              ];
+                            })}
                           </DropdownMenuContent>
                         </DropdownMenu>
                       );
