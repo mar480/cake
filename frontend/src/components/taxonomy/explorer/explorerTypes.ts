@@ -53,6 +53,7 @@ export const EMPTY_ADVANCED_FILTERS: AdvancedSearchFilters = {
   substitutionGroup: [],
   referenceSource: null,
   referenceParagraph: [],
+  excludeNotInPresentationTree: false,
 };
 
 export const EMPTY_ADVANCED_FILTER_OPTIONS: AdvancedSearchFilterOptions = {
