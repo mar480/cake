@@ -38,6 +38,7 @@ const EMPTY_FILTERS: AdvancedSearchFilters = {
   substitutionGroup: [],
   referenceSource: null,
   referenceParagraph: [],
+  excludeNotInPresentationTree: false,
 };
 
 const EMPTY_FILTER_OPTIONS: AdvancedSearchFilterOptions = {
@@ -293,6 +294,20 @@ const AdvancedSearchTab: React.FC<AdvancedSearchTabProps> = ({
                   selected={filters.conceptType}
                   onChange={(next) => onFiltersChange({ ...filters, conceptType: next })}
                 />
+                <div className="border rounded p-2">
+                  <label className="flex items-center gap-2 text-sm">
+                    <Checkbox
+                      checked={filters.excludeNotInPresentationTree}
+                      onCheckedChange={(checked) =>
+                        onFiltersChange({
+                          ...filters,
+                          excludeNotInPresentationTree: checked === true,
+                        })
+                      }
+                    />
+                    <span>Exclude concepts not in entrypoint Presentation tree</span>
+                  </label>
+                </div>
               </div>
             </AccordionContent>
           </AccordionItem>
