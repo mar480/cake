@@ -19,7 +19,7 @@ interface Props {
   onSelectNode: (node: TreeNode) => void;
   onExpandedKeysChange: (keys: { [key: string]: boolean }) => void;
   onNavigateToNode: (qname: string, options?: { preserveDetails?: boolean }) => void;
-  onNavigateToSearchNode: (qname: string, network?: string) => void;
+  onNavigateToSearchNode: (qname: string, network?: string, elr?: string, entrypoint?: string) => void;
   onNavigateToLocation: (target: TreeLocationTarget) => void;
   onLanguageChange: (lang: "en" | "cy") => void;
   network: string;

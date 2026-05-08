@@ -99,12 +99,13 @@ export function useTreeNavigation({
   );
 
   const navigateToQNameInNetwork = useCallback(
-    (targetQName: string, targetNetwork: string, options?: { preserveDetails?: boolean }) => {
+    (targetQName: string, targetNetwork: string, targetElr?: string, options?: { preserveDetails?: boolean }) => {
       if (!targetQName || !targetNetwork) return;
       if (!rawTreeData[targetNetwork]) return;
 
       setPendingNavigation({
         network: targetNetwork,
+        elr: targetElr,
         qname: targetQName,
         updateDetails: options?.preserveDetails ? false : true,
       });

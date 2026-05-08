@@ -212,9 +212,9 @@ const XBRLTaxonomyExplorerContainer: React.FC = () => {
   }, [advancedSearchState.allResults, directDefinitionElrsByQname, hypercubeToDefinitionElrs]);
 
   const navigateFromSearch = useCallback(
-    (qname: string, targetNetwork?: string) => {
+    (qname: string, targetNetwork?: string, elr?: string) => {
       const destinationNetwork = targetNetwork || "presentation";
-      navigateToQNameInNetwork(qname, destinationNetwork);
+      navigateToQNameInNetwork(qname, destinationNetwork, elr);
     },
     [navigateToQNameInNetwork]
   );
