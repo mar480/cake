@@ -94,6 +94,12 @@ const SearchResultsTab: React.FC<SearchResultsTabProps> = ({
       }));
 
     return [
+      {
+        key: "excludeNotInPresentationTree:true",
+        label: "Presentation: in entrypoint tree only",
+        field: "excludeNotInPresentationTree" as const,
+        value: true,
+      },
       ...withString("balance", filters.balance, "Balance"),
       ...withString("periodType", filters.periodType, "Period type"),
       ...withString("xbrlType", filters.xbrlType, "XBRL type"),
@@ -105,14 +111,6 @@ const SearchResultsTab: React.FC<SearchResultsTabProps> = ({
         value,
         source: filters.referenceSource,
       })),
-      ...(filters.excludeNotInPresentationTree
-        ? [{
-            key: "excludeNotInPresentationTree:true",
-            label: "Presentation: in entrypoint tree only",
-            field: "excludeNotInPresentationTree" as const,
-            value: true,
-          }]
-        : []),
     ];
   }, [
     filters.balance,
@@ -121,7 +119,6 @@ const SearchResultsTab: React.FC<SearchResultsTabProps> = ({
     filters.referenceParagraph,
     filters.referenceSource,
     filters.xbrlType,
-    filters.excludeNotInPresentationTree,
   ]);
 
   const chipRegistryRef = useRef(new Map<string, FilterChip>());
@@ -242,6 +239,14 @@ const SearchResultsTab: React.FC<SearchResultsTabProps> = ({
     onRunSearch(0);
   };
 
+  const hasActiveSharedFacetFilters =
+    filters.balance.length > 0 ||
+    filters.periodType.length > 0 ||
+    filters.xbrlType.length > 0 ||
+    filters.conceptType.length > 0 ||
+    filters.referenceParagraph.length > 0 ||
+    filters.excludeNotInPresentationTree;
+
   const metadataChipClass = (facetKey: string) =>
     facetColorMapRef.current.get(facetKey) ?? "bg-gray-100 border-gray-300 text-gray-700";
 
@@ -356,7 +361,7 @@ const SearchResultsTab: React.FC<SearchResultsTabProps> = ({
                   focus-visible:ring-1 focus-visible:ring-sky-300
                 "
                 onClick={clearAllFilters}
-                disabled={chips.length === 0}
+                disabled={!hasActiveSharedFacetFilters}
               >
                 Clear active facet filters
               </Button>
@@ -383,28 +388,24 @@ const SearchResultsTab: React.FC<SearchResultsTabProps> = ({
         </div>
 
         <div className="p-3 border-b bg-white">
-          <div className="text-sm font-medium mb-2">Active facet filters (toggle on/off)</div>
-          {chips.length === 0 ? (
-            <div className="text-xs text-gray-500">No facet filters selected.</div>
-          ) : (
-            <div className="flex flex-wrap gap-2">
-              {chips.map((chip) => (
-                <button
-                  key={chip.key}
-                  type="button"
-                  className={`text-xs px-2 py-1 rounded-full border ${
-                    isChipActive(chip)
-                      ? facetColorMapRef.current.get(chip.key)
-                      : "bg-gray-100 border-gray-300 text-gray-500 line-through"
-                  }`}
-                  onClick={() => toggleChip(chip)}
-                  title="Toggle filter and refresh results"
-                >
-                  {chip.label}
-                </button>
-              ))}
-            </div>
-          )}
+          <div className="text-sm font-medium mb-2">Facet filters (toggle on/off)</div>
+          <div className="flex flex-wrap gap-2">
+            {chips.map((chip) => (
+              <button
+                key={chip.key}
+                type="button"
+                className={`text-xs px-2 py-1 rounded-full border ${
+                  isChipActive(chip)
+                    ? facetColorMapRef.current.get(chip.key)
+                    : "bg-gray-100 border-gray-300 text-gray-500 line-through"
+                }`}
+                onClick={() => toggleChip(chip)}
+                title="Toggle filter and refresh results"
+              >
+                {chip.label}
+              </button>
+            ))}
+          </div>
         </div>
 
         <div className="p-3 border-b bg-white space-y-2">
@@ -440,22 +441,6 @@ const SearchResultsTab: React.FC<SearchResultsTabProps> = ({
               </div>
             ))}
           </div>
-          <label className="flex items-center gap-2 text-xs text-gray-700">
-            <input
-              type="checkbox"
-              checked={filters.excludeNotInPresentationTree}
-              onChange={() =>
-                (() => {
-                  onFiltersChange({
-                    ...filters,
-                    excludeNotInPresentationTree: !filters.excludeNotInPresentationTree,
-                  });
-                  onRunSearch(0);
-                })()
-              }
-            />
-            <span>Exclude results not in entrypoint Presentation tree</span>
-          </label>
         </div>
 
         {visibleResults.length === 0 ? (
