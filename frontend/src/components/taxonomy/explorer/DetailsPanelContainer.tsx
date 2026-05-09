@@ -26,7 +26,13 @@ type DetailsTabName =
 interface DetailPanelProps {
   selectedNode: TreeNode | null;
   onNavigateToNode?: (qname: string, options?: { preserveDetails?: boolean }) => void;
-  onNavigateToSearchNode?: (qname: string, network?: string, elr?: string, entrypoint?: string) => void;
+  onNavigateToSearchNode?: (
+    qname: string,
+    network?: string,
+    elr?: string,
+    entrypoint?: string,
+    uuid?: string
+  ) => void;
   onNavigateToCrossReference?: (qname: string) => void;
   onNavigateToLocation?: (target: TreeLocationTarget) => void;
   networkLabels?: Record<string, string>;

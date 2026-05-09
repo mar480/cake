@@ -15,11 +15,13 @@ interface UseTreeNavigationArgs {
   rawTreeData: Record<string, RawElrGroup[]>;
   detailNode: TreeNode | null;
   network: string;
+  entrypoint?: string | null;
   setNetwork: (next: string) => void;
   setExpandedKeys: Dispatch<SetStateAction<{ [key: string]: boolean }>>;
   setHighlightedKey: (next: string | null) => void;
   setSelectedNode: (next: TreeNode | null) => void;
   setDetailNode: (next: TreeNode | null) => void;
+  onNavigationFailure?: (pendingNavigation: PendingNavigation) => void;
 }
 
 export function useTreeNavigation({
@@ -27,20 +29,15 @@ export function useTreeNavigation({
   rawTreeData,
   detailNode,
   network,
+  entrypoint,
   setNetwork,
   setExpandedKeys,
   setHighlightedKey,
   setSelectedNode,
   setDetailNode,
+  onNavigationFailure,
 }: UseTreeNavigationArgs) {
   const [pendingNavigation, setPendingNavigation] = useState<PendingNavigation | null>(null);
-
-
-  useEffect(() => {
-    if (currentTreeNodes.length === 0) {
-      setPendingNavigation(null);
-    }
-  }, [currentTreeNodes.length]);
   const treeLocations = useMemo<TreeLocationTarget[]>(
     () => collectTreeLocations(rawTreeData, detailNode?.data?.qname),
     [rawTreeData, detailNode?.data?.qname]
@@ -82,6 +79,7 @@ export function useTreeNavigation({
       });
 
       setPendingNavigation({
+        targetEntrypoint: entrypoint ?? undefined,
         network: target.network,
         elr: target.elr,
         qname: target.qname,
@@ -95,18 +93,25 @@ export function useTreeNavigation({
         setHighlightedKey(null);
       }
     },
-    [network, setExpandedKeys, setHighlightedKey, setNetwork]
+    [entrypoint, network, setExpandedKeys, setHighlightedKey, setNetwork]
   );
 
   const navigateToQNameInNetwork = useCallback(
-    (targetQName: string, targetNetwork: string, targetElr?: string, options?: { preserveDetails?: boolean }) => {
+    (
+      targetQName: string,
+      targetNetwork: string,
+      targetElr?: string,
+      options?: { preserveDetails?: boolean; targetEntrypoint?: string; uuid?: string }
+    ) => {
       if (!targetQName || !targetNetwork) return;
       if (!rawTreeData[targetNetwork]) return;
 
       setPendingNavigation({
+        targetEntrypoint: options?.targetEntrypoint ?? entrypoint ?? undefined,
         network: targetNetwork,
         elr: targetElr,
         qname: targetQName,
+        uuid: options?.uuid,
         updateDetails: options?.preserveDetails ? false : true,
       });
 
@@ -116,7 +121,7 @@ export function useTreeNavigation({
         setHighlightedKey(null);
       }
     },
-    [network, rawTreeData, setExpandedKeys, setHighlightedKey, setNetwork]
+    [entrypoint, network, rawTreeData, setExpandedKeys, setHighlightedKey, setNetwork]
   );
 
   useEffect(() => {
@@ -142,6 +147,8 @@ export function useTreeNavigation({
         network,
         requested: pendingNavigation,
       });
+      onNavigationFailure?.(pendingNavigation);
+      setPendingNavigation(null);
       return;
     }
 
@@ -175,11 +182,13 @@ export function useTreeNavigation({
     setExpandedKeys,
     setHighlightedKey,
     setSelectedNode,
+    onNavigationFailure,
   ]);
 
   return {
     treeLocations,
     expandPathToQName,
+    clearPendingNavigation: useCallback(() => setPendingNavigation(null), []),
     navigateToLocation,
     navigateToQNameInNetwork,
   };

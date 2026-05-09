@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo, useCallback } from "react";
 import XBRLTaxonomyExplorer from "./XBRLTaxonomyExplorer";
 import Loader from "@/components/loader/Loader";
 import "@/components/loader/loader.scss";
+import { toast } from "@/components/ui/use-toast";
 import {
   TreeNode,
   mapElrGroupedTreeToTreeNodes,
@@ -51,10 +52,11 @@ const XBRLTaxonomyExplorerContainer: React.FC = () => {
   const [year, setYear] = useState<string | null>(null);
   const [entrypoint, setEntrypoint] = useState<string | null>(null);
   const [pendingEntrypointNavigation, setPendingEntrypointNavigation] = useState<{
+    targetEntrypoint: string;
     qname: string;
     network: string;
     elr?: string;
-    entrypoint: string;
+    uuid?: string;
   } | null>(null);
 
   const {
@@ -88,16 +90,27 @@ const XBRLTaxonomyExplorerContainer: React.FC = () => {
     return mapElrGroupedTreeToTreeNodes(raw);
   }, [rawTreeData, network]);
 
-  const { treeLocations, expandPathToQName, navigateToLocation, navigateToQNameInNetwork } = useTreeNavigation({
+  const { treeLocations, expandPathToQName, clearPendingNavigation, navigateToLocation, navigateToQNameInNetwork } = useTreeNavigation({
     currentTreeNodes,
     rawTreeData,
     detailNode,
     network,
+    entrypoint,
     setNetwork,
     setExpandedKeys,
     setHighlightedKey,
     setSelectedNode,
     setDetailNode,
+    onNavigationFailure: (pendingNavigation) => {
+      toast({
+        title: "Navigation failed",
+        description:
+          pendingNavigation.targetEntrypoint && pendingNavigation.targetEntrypoint !== entrypoint
+            ? "The target concept could not be found in the selected entrypoint."
+            : "The target concept could not be found in the current tree.",
+        variant: "destructive",
+      });
+    },
   });
 
   const resultNetworks = useMemo(() => {
@@ -182,20 +195,21 @@ const XBRLTaxonomyExplorerContainer: React.FC = () => {
   }, [advancedSearchState.allResults, directDefinitionElrsByQname, hypercubeToDefinitionElrs]);
 
   const navigateFromSearch = useCallback(
-    (qname: string, targetNetwork?: string, elr?: string, targetEntrypoint?: string) => {
+    (qname: string, targetNetwork?: string, elr?: string, targetEntrypoint?: string, uuid?: string) => {
       const destinationNetwork = targetNetwork || "presentation";
       if (targetEntrypoint && targetEntrypoint !== entrypoint) {
         setPendingEntrypointNavigation({
+          targetEntrypoint,
           qname,
           network: destinationNetwork,
           elr,
-          entrypoint: targetEntrypoint,
+          uuid,
         });
         setEntrypoint(targetEntrypoint);
         return;
       }
 
-      navigateToQNameInNetwork(qname, destinationNetwork, elr);
+      navigateToQNameInNetwork(qname, destinationNetwork, elr, { uuid });
     },
     [entrypoint, navigateToQNameInNetwork]
   );
@@ -203,15 +217,31 @@ const XBRLTaxonomyExplorerContainer: React.FC = () => {
   useEffect(() => {
     if (!pendingEntrypointNavigation) return;
     if (!entrypointLoaded) return;
-    if (entrypoint !== pendingEntrypointNavigation.entrypoint) return;
+    if (entrypoint !== pendingEntrypointNavigation.targetEntrypoint) return;
 
     navigateToQNameInNetwork(
       pendingEntrypointNavigation.qname,
       pendingEntrypointNavigation.network,
-      pendingEntrypointNavigation.elr
+      pendingEntrypointNavigation.elr,
+      {
+        targetEntrypoint: pendingEntrypointNavigation.targetEntrypoint,
+        uuid: pendingEntrypointNavigation.uuid,
+      }
     );
     setPendingEntrypointNavigation(null);
   }, [entrypoint, entrypointLoaded, navigateToQNameInNetwork, pendingEntrypointNavigation]);
+
+  const handleYearChange = useCallback((nextYear: string | null) => {
+    setPendingEntrypointNavigation(null);
+    clearPendingNavigation();
+    setYear(nextYear);
+  }, [clearPendingNavigation]);
+
+  const handleEntrypointChange = useCallback((nextEntrypoint: string | null) => {
+    setPendingEntrypointNavigation(null);
+    clearPendingNavigation();
+    setEntrypoint(nextEntrypoint);
+  }, [clearPendingNavigation]);
 
   // Default network
   useEffect(() => {
@@ -241,8 +271,8 @@ const XBRLTaxonomyExplorerContainer: React.FC = () => {
         year={year}
         entrypoint={entrypoint}
         entrypoints={entrypoints}
-        onYearChange={setYear}
-        onEntrypointChange={setEntrypoint}
+        onYearChange={handleYearChange}
+        onEntrypointChange={handleEntrypointChange}
         onSelectNode={(node) => {
           setSelectedNode(node);
           setDetailNode(node);

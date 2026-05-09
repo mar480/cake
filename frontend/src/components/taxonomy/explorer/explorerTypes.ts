@@ -19,6 +19,7 @@ export type RawElrGroup = {
 };
 
 export type PendingNavigation = {
+  targetEntrypoint?: string;
   network: string;
   elr?: string;
   qname: string;

@@ -47,7 +47,13 @@ interface SearchResultsTabProps {
   onFiltersChange: (next: AdvancedSearchFilters) => void;
   onRunSearch: (nextOffset?: number) => void;
   onResetSearch: () => void;
-  onNavigateToSearchNode?: (qname: string, network?: string, elr?: string, entrypoint?: string) => void;
+  onNavigateToSearchNode?: (
+    qname: string,
+    network?: string,
+    elr?: string,
+    entrypoint?: string,
+    uuid?: string
+  ) => void;
   onReturnToSearch?: () => void;
   networkLabels?: Record<string, string>;
   resultNetworks?: Record<string, string[]>;
@@ -522,12 +528,19 @@ const SearchResultsTab: React.FC<SearchResultsTabProps> = ({
                 presentationFallbackErrorByKey[presentationFallbackCacheKey] ?? "";
               const conceptType = result.conceptType ?? "concept";
               const goToNodeLabel = networkLabels?.presentation ?? "Presentation";
+              const showDefinitionBeforePresentation =
+                presentationElrs.length === 0 && definitionHypercubeElrs.length > 0;
 
               return (
                 <li key={result.id} className="p-3 flex items-start justify-between gap-3">
                   <div className="min-w-0 flex-1 space-y-1">
                     <div className="font-medium text-sm break-words">{result.label || result.qname}</div>
                     <div className="text-xs text-gray-500 break-all">{result.qname}</div>
+                    {showDefinitionBeforePresentation && (
+                      <div className="text-xs text-gray-500 break-words">
+                        Definition ELR: {definitionHypercubeElrs.join(", ")}
+                      </div>
+                    )}
                     <div
                       className={`text-xs break-words rounded px-2 py-1 flex items-center ${
                         presentationElrs.length > 0
@@ -544,7 +557,7 @@ const SearchResultsTab: React.FC<SearchResultsTabProps> = ({
                         </span>
                       )}
                     </div>
-                    {definitionHypercubeElrs.length > 0 && (
+                    {definitionHypercubeElrs.length > 0 && !showDefinitionBeforePresentation && (
                       <div className="text-xs text-gray-500 break-words">
                         Definition ELR: {definitionHypercubeElrs.join(", ")}
                       </div>
@@ -606,14 +619,25 @@ const SearchResultsTab: React.FC<SearchResultsTabProps> = ({
                         }))
                         .filter((group) => group.occurrences.length > 0);
 
-                      const menuGroups: ResultMenuGroup[] = [
-                        {
-                          network: "presentation",
-                          label: goToNodeLabel,
-                          occurrences: presentationOccurrences,
-                        },
-                        ...definitionMenuGroups,
-                      ].filter((group) => group.network === "presentation" || group.occurrences.length > 0);
+                      const menuGroups: ResultMenuGroup[] = (
+                        presentationOccurrences.length === 0
+                          ? [
+                              ...definitionMenuGroups,
+                              {
+                                network: "presentation",
+                                label: goToNodeLabel,
+                                occurrences: presentationOccurrences,
+                              },
+                            ]
+                          : [
+                              {
+                                network: "presentation",
+                                label: goToNodeLabel,
+                                occurrences: presentationOccurrences,
+                              },
+                              ...definitionMenuGroups,
+                            ]
+                      ).filter((group) => group.network === "presentation" || group.occurrences.length > 0);
 
                       const presentationUnavailableNoteId = `presentation-note-${result.id}`;
                       const hasSinglePresentationTarget = presentationOccurrences.length === 1;
@@ -721,7 +745,7 @@ const SearchResultsTab: React.FC<SearchResultsTabProps> = ({
                                               ...entrypointOption.elrs.map((elr) => (
                                                 <DropdownMenuItem
                                                   key={`${result.id}-${group.network}-${entrypointOption.href}-${elr}`}
-                                                  className="pl-8 text-xs"
+                                                  className="pl-8 text-xs transition-all duration-150 data-[highlighted]:bg-sky-50 data-[highlighted]:text-slate-900"
                                                   onClick={() =>
                                                     onNavigateToSearchNode?.(
                                                       result.qname,
@@ -731,7 +755,13 @@ const SearchResultsTab: React.FC<SearchResultsTabProps> = ({
                                                     )
                                                   }
                                                 >
-                                                  {elr}
+                                                  <span className="flex w-full items-center gap-3">
+                                                    <span className="min-w-0 flex-1">{elr}</span>
+                                                    <i
+                                                      className="pi pi-external-link text-[0.8rem] text-slate-500"
+                                                      aria-hidden="true"
+                                                    />
+                                                  </span>
                                                 </DropdownMenuItem>
                                               )),
                                             ])
@@ -759,6 +789,7 @@ const SearchResultsTab: React.FC<SearchResultsTabProps> = ({
                                   : group.occurrences.map((occurrence) => (
                                       <DropdownMenuItem
                                         key={`${result.id}-${group.network}-${occurrence.elr}-${occurrence.entrypoint ?? ""}`}
+                                        className="text-xs transition-all duration-150 data-[highlighted]:bg-sky-50 data-[highlighted]:text-slate-900"
                                         onClick={() =>
                                           onNavigateToSearchNode?.(result.qname, group.network, occurrence.elr, occurrence.entrypoint)
                                         }
