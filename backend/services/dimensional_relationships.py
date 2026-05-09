@@ -2,7 +2,7 @@ import json
 import os
 from functools import lru_cache
 
-from services.search_filters import classify_concept_type, entrypoint_name_from_href
+from services.search_filters import classify_concept_type, resolve_tree_dir_for_entrypoint
 
 
 def _read_json(path: str):
@@ -93,10 +93,7 @@ def _walk_members(
 
 @lru_cache(maxsize=32)
 def load_dimensional_relationship_index(taxonomy_base_dir: str, year: str, href: str) -> dict:
-    entrypoint_name = entrypoint_name_from_href(href)
-    tree_dir = os.path.join(taxonomy_base_dir, year, "trees", entrypoint_name)
-    if not os.path.isdir(tree_dir):
-        raise FileNotFoundError(f"Tree directory not found: {tree_dir}")
+    tree_dir = resolve_tree_dir_for_entrypoint(taxonomy_base_dir, year, href)
 
     concepts = _read_json(os.path.join(tree_dir, "concepts.json")) or {}
     hypercubes = _read_json(os.path.join(tree_dir, "hypercubes.json")) or []

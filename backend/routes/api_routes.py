@@ -411,6 +411,7 @@ def register_api_routes(app, taxonomy_base_dir: str):
         entrypoint_path = href
 
         try:
+            total_started_at = time.perf_counter()
             print("\n[load-entrypoint] ===== START =====")
             print(f"[load-entrypoint] year={year}")
             print(f"[load-entrypoint] href={href}")
@@ -423,9 +424,12 @@ def register_api_routes(app, taxonomy_base_dir: str):
                 taxonomy_cache["is_loading"] = True
                 old_taxonomy = taxonomy_cache.get("active")
 
+            arelle_started_at = time.perf_counter()
             new_taxonomy = load_taxonomy_with_lloyds_fallback(
                 taxonomy_base_dir, year, entrypoint_path
             )
+            arelle_elapsed_ms = (time.perf_counter() - arelle_started_at) * 1000
+            print(f"[load-entrypoint] arelle_load_ms={arelle_elapsed_ms:.1f}")
 
             with taxonomy_lock:
                 taxonomy_cache["active"] = new_taxonomy
@@ -496,6 +500,8 @@ def register_api_routes(app, taxonomy_base_dir: str):
                 taxonomy_cache["active_search_filter_options_key"] = cache_key
                 print(f"[load-entrypoint] cached search filter options key={cache_key}")
 
+            total_elapsed_ms = (time.perf_counter() - total_started_at) * 1000
+            print(f"[load-entrypoint] total_request_ms={total_elapsed_ms:.1f}")
             print("[load-entrypoint] ===== END OK =====\n")
 
             return jsonify(

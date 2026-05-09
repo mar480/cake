@@ -1,9 +1,25 @@
+import json
 import os
+import time
 from urllib.parse import unquote, urlparse
 
 from lxml import etree
 
 from xbrl.loader import TaxonomyContext
+
+
+def _load_entrypoint_manifest(taxonomy_base_dir: str, year: str) -> dict[str, str]:
+    manifest_path = os.path.join(taxonomy_base_dir, year, "entrypoint_manifest.json")
+    if not os.path.exists(manifest_path):
+        return {}
+
+    with open(manifest_path, "r", encoding="utf-8") as handle:
+        raw_manifest = json.load(handle)
+
+    if not isinstance(raw_manifest, dict):
+        raise ValueError(f"Invalid entrypoint manifest format (expected object): {manifest_path}")
+
+    return {str(k): str(v) for k, v in raw_manifest.items()}
 
 
 def is_lloyds_year_key(year: str) -> bool:
@@ -18,17 +34,27 @@ def find_local_entrypoint_from_href(taxonomy_base_dir: str, year: str, href: str
     """
     Resolve a remote entrypoint URL to a local file inside backend/taxonomies/<year>.
     Strategy:
-      1) filename exact match
-      2) URL path suffix match
+      1) manifest exact match (entrypoint_manifest.json)
+      2) filename exact match
+      3) URL path suffix match
     """
+    started_at = time.perf_counter()
     year_root = os.path.join(taxonomy_base_dir, year)
     if not os.path.isdir(year_root):
         raise FileNotFoundError(f"Year root not found: {year_root}")
 
+    manifest = _load_entrypoint_manifest(taxonomy_base_dir, year)
+    manifest_local_path = manifest.get(href)
+    if manifest_local_path:
+        resolved_manifest_path = os.path.join(year_root, manifest_local_path)
+        if os.path.exists(resolved_manifest_path):
+            elapsed_ms = (time.perf_counter() - started_at) * 1000
+            print(f"[taxonomy-load] local resolution method=manifest elapsed_ms={elapsed_ms:.1f}")
+            return resolved_manifest_path
+        print(f"[taxonomy-load] manifest path not found for href={href}: {resolved_manifest_path}")
+
     parsed = urlparse(href)
-    remote_path = unquote(parsed.path).lstrip(
-        "/"
-    )  # e.g. lloyds/2025-.../lloyds-2025-...xsd
+    remote_path = unquote(parsed.path).lstrip("/")
     base_name = os.path.basename(remote_path)
 
     file_paths = []
@@ -36,28 +62,32 @@ def find_local_entrypoint_from_href(taxonomy_base_dir: str, year: str, href: str
         for f in files:
             file_paths.append(os.path.join(root, f))
 
-    # 1) Exact filename matches
     name_matches = [p for p in file_paths if os.path.basename(p) == base_name]
     if len(name_matches) == 1:
+        elapsed_ms = (time.perf_counter() - started_at) * 1000
+        print(f"[taxonomy-load] local resolution method=filename elapsed_ms={elapsed_ms:.1f}")
         return name_matches[0]
     if len(name_matches) > 1:
         name_matches.sort(key=lambda p: (len(p.split(os.sep)), len(p)))
+        elapsed_ms = (time.perf_counter() - started_at) * 1000
+        print(f"[taxonomy-load] local resolution method=filename-ambiguous elapsed_ms={elapsed_ms:.1f}")
         return name_matches[0]
 
-    # 2) Path suffix match
     remote_suffix = remote_path.replace("\\", "/")
-    suffix_matches = [
-        p for p in file_paths if p.replace("\\", "/").endswith(remote_suffix)
-    ]
+    suffix_matches = [p for p in file_paths if p.replace("\\", "/").endswith(remote_suffix)]
     if len(suffix_matches) == 1:
+        elapsed_ms = (time.perf_counter() - started_at) * 1000
+        print(f"[taxonomy-load] local resolution method=suffix elapsed_ms={elapsed_ms:.1f}")
         return suffix_matches[0]
     if len(suffix_matches) > 1:
         suffix_matches.sort(key=lambda p: (len(p.split(os.sep)), len(p)))
+        elapsed_ms = (time.perf_counter() - started_at) * 1000
+        print(f"[taxonomy-load] local resolution method=suffix-ambiguous elapsed_ms={elapsed_ms:.1f}")
         return suffix_matches[0]
 
-    raise FileNotFoundError(
-        f"Could not map href to local file for year='{year}': {href}"
-    )
+    elapsed_ms = (time.perf_counter() - started_at) * 1000
+    print(f"[taxonomy-load] local resolution method=none elapsed_ms={elapsed_ms:.1f}")
+    raise FileNotFoundError(f"Could not map href to local file for year='{year}': {href}")
 
 
 def safe_close_taxonomy(taxonomy_obj):
