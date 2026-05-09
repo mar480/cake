@@ -5,10 +5,11 @@ import DetailsPanelContainer from "./DetailsPanelContainer";
 import { TreeNode } from "@/components/taxonomy/explorer/tree_utils";
 import { TreeLocationTarget } from "./TreeLocationsTab";
 import {
-    AdvancedSearchFilterOptions,
+  AdvancedSearchFilterOptions,
   AdvancedSearchFilters,
   AdvancedSearchState,
 } from "@/types/advancedSearch";
+import { EntrypointOption } from "./services/explorerApi";
 
 interface Props {
   selectedNode: TreeNode | null;
@@ -26,7 +27,7 @@ interface Props {
   onNetworkChange: (network: string) => void;
   year: string | null;
   entrypoint: string | null;
-  entrypoints: { name: string; href: string }[];
+  entrypoints: EntrypointOption[];
   onYearChange: (year: string | null) => void;
   onEntrypointChange: (entrypoint: string | null) => void;
   currentTreeNodes: TreeNode[];
@@ -180,6 +181,7 @@ const XBRLTaxonomyExplorer: React.FC<Props> = ({
             resultNetworks={resultNetworks}
             resultPresentationElrs={resultPresentationElrs}
             hypercubeElrDefinitionsByQname={hypercubeElrDefinitionsByQname}
+            currentEntrypoint={entrypoint}
           />
         </div>
 

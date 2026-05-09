@@ -1,6 +1,10 @@
 import { AdvancedSearchFilterOptions, AdvancedSearchFilters, AdvancedSearchResult } from "@/types/advancedSearch";
 
-import { RawElrGroup, SearchConceptApiResult } from "./explorerTypes";
+import { RawElrGroup, RawTreeNode, SearchConceptApiResult } from "./explorerTypes";
+
+export type ConceptElrMap = Record<string, string[]>;
+export type ConceptNetworksMap = Record<string, string[]>;
+export type ConceptLocationIndex = Record<string, Record<string, Record<string, string[]>>>;
 
 export function sanitizeAdvancedFilters(next: AdvancedSearchFilters): AdvancedSearchFilters {
   return {
@@ -30,6 +34,102 @@ export function mapTreesPayloadToNetworkMap(
   }
 
   return treeMap;
+}
+
+function walkTree(
+  node: RawTreeNode,
+  visit: (currentNode: RawTreeNode) => void
+) {
+  visit(node);
+  (node.children ?? []).forEach((child) => walkTree(child, visit));
+}
+
+export function buildConceptElrMapForNetwork(groups: RawElrGroup[]): ConceptElrMap {
+  const elrsByQname = new Map<string, string[]>();
+
+  const addElr = (qname: string, elrDefinition: string) => {
+    if (!qname || !elrDefinition) return;
+    const existing = elrsByQname.get(qname) ?? [];
+    if (!existing.includes(elrDefinition)) {
+      existing.push(elrDefinition);
+      elrsByQname.set(qname, existing);
+    }
+  };
+
+  groups.forEach((group) => {
+    const elrDefinition = group.definition ?? group.elr ?? "";
+    (group.root_tree ?? []).forEach((root) =>
+      walkTree(root, (node) => {
+        if (node.qname) {
+          addElr(node.qname, elrDefinition);
+        }
+      })
+    );
+  });
+
+  return Object.fromEntries(elrsByQname);
+}
+
+export function buildConceptNetworksMap(rawTreeData: Record<string, RawElrGroup[]>): ConceptNetworksMap {
+  const networksByQname = new Map<string, Set<string>>();
+
+  Object.entries(rawTreeData).forEach(([networkKey, groups]) => {
+    (groups ?? []).forEach((group) => {
+      (group.root_tree ?? []).forEach((root) =>
+        walkTree(root, (node) => {
+          if (!node.qname) return;
+          if (!networksByQname.has(node.qname)) {
+            networksByQname.set(node.qname, new Set<string>());
+          }
+          networksByQname.get(node.qname)?.add(networkKey);
+        })
+      );
+    });
+  });
+
+  return Object.fromEntries(
+    Array.from(networksByQname.entries()).map(([qname, networks]) => [qname, Array.from(networks)])
+  );
+}
+
+export function buildConceptLocationsForEntrypoint(
+  rawTreeData: Record<string, RawElrGroup[]>
+): Record<string, Record<string, string[]>> {
+  const conceptLocations = new Map<string, Map<string, string[]>>();
+
+  Object.entries(rawTreeData).forEach(([networkKey, groups]) => {
+    const networkElrs = buildConceptElrMapForNetwork(groups ?? []);
+    Object.entries(networkElrs).forEach(([qname, elrs]) => {
+      if (!conceptLocations.has(qname)) {
+        conceptLocations.set(qname, new Map<string, string[]>());
+      }
+      conceptLocations.get(qname)?.set(networkKey, elrs);
+    });
+  });
+
+  return Object.fromEntries(
+    Array.from(conceptLocations.entries()).map(([qname, networks]) => [qname, Object.fromEntries(networks)])
+  );
+}
+
+export function mergeConceptLocationIndex(
+  existing: ConceptLocationIndex,
+  entrypointHref: string,
+  rawTreeData: Record<string, RawElrGroup[]>
+): ConceptLocationIndex {
+  if (!entrypointHref) return existing;
+
+  const next: ConceptLocationIndex = { ...existing };
+  const conceptLocations = buildConceptLocationsForEntrypoint(rawTreeData);
+
+  Object.entries(conceptLocations).forEach(([qname, networks]) => {
+    next[qname] = {
+      ...(next[qname] ?? {}),
+      [entrypointHref]: networks,
+    };
+  });
+
+  return next;
 }
 
 type SearchOptionsPayload = {

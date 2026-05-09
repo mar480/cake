@@ -10,3 +10,4 @@ taxonomy_cache = {
 }
 taxonomy_lock = RLock()
 search_filter_options_cache = {}  # key: "<year>::<entrypoint_name>" -> options payload
+presentation_locations_cache = {}  # key: "<year>::<entrypoint_name>" -> {qname: [elr, ...]}

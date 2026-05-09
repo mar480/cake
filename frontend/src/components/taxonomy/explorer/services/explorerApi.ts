@@ -44,6 +44,16 @@ export interface SearchConceptsResponse {
   error?: string;
 }
 
+export interface PresentationEntrypointLocationMatch {
+  entrypoint: EntrypointOption;
+  elrs: string[];
+}
+
+export interface PresentationEntrypointLocationsResponse {
+  matches?: PresentationEntrypointLocationMatch[];
+  error?: string;
+}
+
 async function parseJsonResponse<T>(response: Response): Promise<T> {
   const payload = (await response.json()) as T | { error?: unknown };
   if (!response.ok) {
@@ -89,6 +99,20 @@ export async function searchConcepts(payload: SearchConceptRequest): Promise<Sea
     body: JSON.stringify(payload),
   });
   return parseJsonResponse<SearchConceptsResponse>(response);
+}
+
+export async function fetchPresentationEntrypointLocations(
+  year: string,
+  qname: string,
+  excludeHref?: string | null
+): Promise<PresentationEntrypointLocationMatch[]> {
+  const url =
+    `/api/presentation-entrypoint-locations?year=${encodeURIComponent(year)}` +
+    `&qname=${encodeURIComponent(qname)}` +
+    (excludeHref ? `&excludeHref=${encodeURIComponent(excludeHref)}` : "");
+  const response = await fetch(url);
+  const payload = await parseJsonResponse<PresentationEntrypointLocationsResponse>(response);
+  return payload.matches ?? [];
 }
 
 export async function warmConceptDetails(): Promise<void> {

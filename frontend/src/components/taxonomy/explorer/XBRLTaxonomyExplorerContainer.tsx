@@ -6,6 +6,10 @@ import {
   TreeNode,
   mapElrGroupedTreeToTreeNodes,
 } from "@/components/taxonomy/explorer/tree_utils";
+import {
+  buildConceptElrMapForNetwork,
+  buildConceptNetworksMap,
+} from "./explorerDataUtils";
 import { useAdvancedSearch } from "./hooks/useAdvancedSearch";
 import { useEntrypointData } from "./hooks/useEntrypointData";
 import { useTreeNavigation } from "./hooks/useTreeNavigation";
@@ -46,6 +50,12 @@ const XBRLTaxonomyExplorerContainer: React.FC = () => {
   // Taxonomy selection state
   const [year, setYear] = useState<string | null>(null);
   const [entrypoint, setEntrypoint] = useState<string | null>(null);
+  const [pendingEntrypointNavigation, setPendingEntrypointNavigation] = useState<{
+    qname: string;
+    network: string;
+    elr?: string;
+    entrypoint: string;
+  } | null>(null);
 
   const {
     advancedSearchState,
@@ -91,60 +101,20 @@ const XBRLTaxonomyExplorerContainer: React.FC = () => {
   });
 
   const resultNetworks = useMemo(() => {
-    const networksByQname = new Map<string, Set<string>>();
+    const mapped = buildConceptNetworksMap(rawTreeData);
 
-    const walk = (networkKey: string, node: { qname?: string; children?: { qname?: string; children?: unknown[] }[] }) => {
-      if (node.qname) {
-        if (!networksByQname.has(node.qname)) networksByQname.set(node.qname, new Set());
-        networksByQname.get(node.qname)?.add(networkKey);
-      }
-      (node.children ?? []).forEach((child) => walk(networkKey, child as never));
-    };
-
-    Object.entries(rawTreeData).forEach(([networkKey, groups]) => {
-      (groups ?? []).forEach((group) => {
-        (group.root_tree ?? []).forEach((root) => walk(networkKey, root));
-      });
-    });
-
-    const mapped: Record<string, string[]> = {};
-    networksByQname.forEach((networkSet, qname) => {
-      const ordered = NETWORK_TAB_ORDER.filter((networkKey) => networkSet.has(networkKey));
-      const extras = Array.from(networkSet).filter((networkKey) => !NETWORK_TAB_ORDER.includes(networkKey as never));
-      mapped[qname] = [...ordered, ...extras];
-    });
-    return mapped;
+    return Object.fromEntries(
+      Object.entries(mapped).map(([qname, networks]) => {
+        const networkSet = new Set(networks);
+        const ordered = NETWORK_TAB_ORDER.filter((networkKey) => networkSet.has(networkKey));
+        const extras = networks.filter((networkKey) => !NETWORK_TAB_ORDER.includes(networkKey as never));
+        return [qname, [...ordered, ...extras]];
+      })
+    );
   }, [rawTreeData]);
 
   const buildElrMap = useCallback((networkKey: string) => {
-    const elrsByQname = new Map<string, string[]>();
-
-    const addElr = (qname: string, elrDefinition: string) => {
-      if (!qname || !elrDefinition) return;
-      const existing = elrsByQname.get(qname) ?? [];
-      if (!existing.includes(elrDefinition)) {
-        existing.push(elrDefinition);
-        elrsByQname.set(qname, existing);
-      }
-    };
-
-    const walk = (
-      elrDefinition: string,
-      node: { qname?: string; children?: { qname?: string; children?: unknown[] }[] }
-    ) => {
-      if (node.qname) {
-        addElr(node.qname, elrDefinition);
-      }
-      (node.children ?? []).forEach((child) => walk(elrDefinition, child as never));
-    };
-
-    const groups = rawTreeData[networkKey] ?? [];
-    groups.forEach((group) => {
-      const elrDefinition = group.definition ?? group.elr ?? "";
-      (group.root_tree ?? []).forEach((root) => walk(elrDefinition, root));
-    });
-
-    return Object.fromEntries(elrsByQname);
+    return buildConceptElrMapForNetwork(rawTreeData[networkKey] ?? []);
   }, [rawTreeData]);
 
   const resultPresentationElrs = useMemo(() => {
@@ -212,12 +182,36 @@ const XBRLTaxonomyExplorerContainer: React.FC = () => {
   }, [advancedSearchState.allResults, directDefinitionElrsByQname, hypercubeToDefinitionElrs]);
 
   const navigateFromSearch = useCallback(
-    (qname: string, targetNetwork?: string, elr?: string) => {
+    (qname: string, targetNetwork?: string, elr?: string, targetEntrypoint?: string) => {
       const destinationNetwork = targetNetwork || "presentation";
+      if (targetEntrypoint && targetEntrypoint !== entrypoint) {
+        setPendingEntrypointNavigation({
+          qname,
+          network: destinationNetwork,
+          elr,
+          entrypoint: targetEntrypoint,
+        });
+        setEntrypoint(targetEntrypoint);
+        return;
+      }
+
       navigateToQNameInNetwork(qname, destinationNetwork, elr);
     },
-    [navigateToQNameInNetwork]
+    [entrypoint, navigateToQNameInNetwork]
   );
+
+  useEffect(() => {
+    if (!pendingEntrypointNavigation) return;
+    if (!entrypointLoaded) return;
+    if (entrypoint !== pendingEntrypointNavigation.entrypoint) return;
+
+    navigateToQNameInNetwork(
+      pendingEntrypointNavigation.qname,
+      pendingEntrypointNavigation.network,
+      pendingEntrypointNavigation.elr
+    );
+    setPendingEntrypointNavigation(null);
+  }, [entrypoint, entrypointLoaded, navigateToQNameInNetwork, pendingEntrypointNavigation]);
 
   // Default network
   useEffect(() => {

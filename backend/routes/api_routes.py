@@ -13,13 +13,19 @@ from services.search_filters import (
     entrypoint_cache_key,
     entrypoint_name_from_href,
     load_concepts_json_for_entrypoint,
+    resolve_tree_dir_for_entrypoint,
 )
 from services.taxonomy_service import (
     get_entrypoints_for_year,
     load_taxonomy_with_lloyds_fallback,
     safe_close_taxonomy,
 )
-from state import search_filter_options_cache, taxonomy_cache, taxonomy_lock
+from state import (
+    presentation_locations_cache,
+    search_filter_options_cache,
+    taxonomy_cache,
+    taxonomy_lock,
+)
 
 
 def get_active_taxonomy_with_retry(max_attempts: int = 3, delay_seconds: float = 0.2):
@@ -38,6 +44,26 @@ def get_active_taxonomy_with_retry(max_attempts: int = 3, delay_seconds: float =
 
 
 def register_api_routes(app, taxonomy_base_dir: str):
+    def collect_presentation_elrs_by_qname(root_nodes):
+        qname_to_elrs = {}
+
+        def walk(node, elr_definition):
+            qname = (node or {}).get("qname")
+            if qname and elr_definition:
+                qname_to_elrs.setdefault(qname, [])
+                if elr_definition not in qname_to_elrs[qname]:
+                    qname_to_elrs[qname].append(elr_definition)
+
+            for child in (node or {}).get("children", []) or []:
+                walk(child, elr_definition)
+
+        for group in root_nodes or []:
+            elr_definition = group.get("definition") or group.get("elr") or ""
+            for root in group.get("root_tree", []) or []:
+                walk(root, elr_definition)
+
+        return qname_to_elrs
+
     @app.route("/api/hello", methods=["POST"])
     def get_hypercubes():
         taxonomy = getattr(g, "taxonomy", taxonomy_cache.get("active"))
@@ -281,14 +307,10 @@ def register_api_routes(app, taxonomy_base_dir: str):
 
             print("[load-entrypoint] ===== MODEL LOADED =====")
 
-            tree_dir = os.path.join(taxonomy_base_dir, year, "trees")
-            if not os.path.isdir(tree_dir):
-                return jsonify({"error": f"Tree directory not found: {tree_dir}"}), 404
-
             entrypoint_name = entrypoint_name_from_href(href)
             print(f"[Flask] Extracted entrypoint_name: {entrypoint_name}")
 
-            tree_files = os.path.join(taxonomy_base_dir, year, "trees", entrypoint_name)
+            tree_files = resolve_tree_dir_for_entrypoint(taxonomy_base_dir, year, href)
             print(f"[Flask] Looking for tree files in: {tree_files}")
 
             trees = {}
@@ -322,6 +344,58 @@ def register_api_routes(app, taxonomy_base_dir: str):
                 taxonomy_cache["is_loading"] = False
             print(f"[load-entrypoint] ERROR: {e}")
             return jsonify({"error": f"Failed to load taxonomy: {str(e)}"}), 500
+
+    @app.route("/api/presentation-entrypoint-locations", methods=["GET"])
+    def presentation_entrypoint_locations():
+        year = request.args.get("year", "").strip()
+        qname = request.args.get("qname", "").strip()
+        exclude_href = request.args.get("excludeHref", "").strip()
+
+        if not year or not qname:
+            return jsonify({"error": "Year and qname are required"}), 400
+
+        try:
+            entrypoints = get_entrypoints_for_year(taxonomy_base_dir, year)
+            matches = []
+
+            for entrypoint in entrypoints:
+                href = (entrypoint.get("href") or "").strip()
+                if not href or href == exclude_href:
+                    continue
+
+                cache_key = entrypoint_cache_key(year, href)
+                qname_to_elrs = presentation_locations_cache.get(cache_key)
+
+                if qname_to_elrs is None:
+                    tree_dir = resolve_tree_dir_for_entrypoint(taxonomy_base_dir, year, href)
+                    presentation_path = os.path.join(tree_dir, "presentation_tree.json")
+                    if not os.path.exists(presentation_path):
+                        presentation_locations_cache[cache_key] = {}
+                        continue
+
+                    with open(presentation_path, "r", encoding="utf-8") as handle:
+                        presentation_tree = json.load(handle)
+                    qname_to_elrs = collect_presentation_elrs_by_qname(presentation_tree)
+                    presentation_locations_cache[cache_key] = qname_to_elrs
+
+                elrs = qname_to_elrs.get(qname, [])
+                if elrs:
+                    matches.append(
+                        {
+                            "entrypoint": {
+                                "name": entrypoint.get("name") or href,
+                                "href": href,
+                            },
+                            "elrs": elrs,
+                        }
+                    )
+
+            return jsonify({"matches": matches})
+        except FileNotFoundError as exc:
+            return jsonify({"error": str(exc)}), 404
+        except Exception as exc:
+            print(f"[presentation-entrypoint-locations] ERROR: {exc}")
+            return jsonify({"error": "Failed to load presentation entrypoint locations"}), 500
 
     @app.route("/api/search-filter-options", methods=["GET"])
     def search_filter_options():

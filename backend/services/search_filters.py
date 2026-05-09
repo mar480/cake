@@ -2,6 +2,8 @@ import json
 import os
 import re
 
+from services.taxonomy_service import get_entrypoints_for_year
+
 
 def entrypoint_name_from_href(href: str) -> str:
     raw_entrypoint_name = os.path.splitext(os.path.basename(href))[0]
@@ -9,7 +11,7 @@ def entrypoint_name_from_href(href: str) -> str:
 
 
 def entrypoint_cache_key(year: str, href: str) -> str:
-    return f"{year}::{entrypoint_name_from_href(href)}"
+    return f"{year}::{href}"
 
 
 def normalize_bool(value):
@@ -111,14 +113,67 @@ def paragraph_sort_key(value: str):
 
 
 def load_concepts_json_for_entrypoint(taxonomy_base_dir: str, year: str, href: str) -> dict:
-    entrypoint_name = entrypoint_name_from_href(href)
-    concepts_path = os.path.join(
-        taxonomy_base_dir, year, "trees", entrypoint_name, "concepts.json"
-    )
+    tree_dir = resolve_tree_dir_for_entrypoint(taxonomy_base_dir, year, href)
+    concepts_path = os.path.join(tree_dir, "concepts.json")
     if not os.path.exists(concepts_path):
         return {}
     with open(concepts_path, "r", encoding="utf-8") as f:
         return json.load(f)
+
+
+def normalize_tree_key(value: str) -> str:
+    return re.sub(r"[^a-z0-9]+", "", (value or "").lower())
+
+
+def resolve_tree_dir_for_entrypoint(taxonomy_base_dir: str, year: str, href: str) -> str:
+    trees_root = os.path.join(taxonomy_base_dir, year, "trees")
+    if not os.path.isdir(trees_root):
+        raise FileNotFoundError(f"Tree directory not found: {trees_root}")
+
+    tree_dirs = [
+        name for name in os.listdir(trees_root) if os.path.isdir(os.path.join(trees_root, name))
+    ]
+    if not tree_dirs:
+        raise FileNotFoundError(f"No entrypoint tree directories found for year {year}")
+
+    entrypoints = get_entrypoints_for_year(taxonomy_base_dir, year)
+    display_name = next(
+        (entrypoint.get("name", "") for entrypoint in entrypoints if entrypoint.get("href") == href),
+        "",
+    )
+
+    raw_entrypoint_name = os.path.splitext(os.path.basename(href))[0]
+    href_entrypoint_name = entrypoint_name_from_href(href)
+
+    candidates = [
+        display_name,
+        href_entrypoint_name,
+        raw_entrypoint_name,
+        raw_entrypoint_name.replace("-", "_"),
+        raw_entrypoint_name.replace("_", "-"),
+        href_entrypoint_name.removeprefix("frc-"),
+        display_name.replace(" ", "_"),
+        display_name.replace(" ", "-"),
+    ]
+
+    for candidate in candidates:
+        if not candidate:
+            continue
+        exact_match = next((name for name in tree_dirs if name == candidate), None)
+        if exact_match:
+            return os.path.join(trees_root, exact_match)
+
+    normalized_dirs = {normalize_tree_key(name): name for name in tree_dirs}
+    for candidate in candidates:
+        normalized_candidate = normalize_tree_key(candidate)
+        if not normalized_candidate:
+            continue
+        if normalized_candidate in normalized_dirs:
+            return os.path.join(trees_root, normalized_dirs[normalized_candidate])
+
+    raise FileNotFoundError(
+        f"Tree files not found for href '{href}' in year '{year}'"
+    )
 
 
 def classify_concept_type(full_type: str | None, substitution_group: str | None) -> str:

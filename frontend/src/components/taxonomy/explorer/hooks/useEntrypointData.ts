@@ -84,7 +84,8 @@ export function useEntrypointData(
           return;
         }
 
-        setRawTreeData(mapTreesPayloadToNetworkMap(data.trees || {}, EXCLUDED_TREE_KEYS));
+        const mappedTreeData = mapTreesPayloadToNetworkMap(data.trees || {}, EXCLUDED_TREE_KEYS);
+        setRawTreeData(mappedTreeData);
 
         fetchSearchFilterOptions(year, entrypoint)
           .then((opts) => {

@@ -314,6 +314,8 @@ const DetailPanelContainer: React.FC<DetailPanelProps> = ({
             resultNetworks={resultNetworks}
             resultPresentationElrs={resultPresentationElrs}
             hypercubeElrDefinitionsByQname={hypercubeElrDefinitionsByQname}
+            year={year}
+            currentEntrypoint={entrypoint}
           />
         )}
 

@@ -8,6 +8,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { AdvancedSearchFilters, AdvancedSearchState } from "@/types/advancedSearch";
+import { fetchPresentationEntrypointLocations } from "./services/explorerApi";
 
 type FilterChip = {
   key: string;
@@ -52,6 +53,8 @@ interface SearchResultsTabProps {
   resultNetworks?: Record<string, string[]>;
   resultPresentationElrs?: Record<string, string[]>;
   hypercubeElrDefinitionsByQname?: Record<string, string[]>;
+  year?: string | null;
+  currentEntrypoint?: string | null;
 }
 
 const SearchResultsTab: React.FC<SearchResultsTabProps> = ({
@@ -65,6 +68,8 @@ const SearchResultsTab: React.FC<SearchResultsTabProps> = ({
   resultNetworks,
   resultPresentationElrs,
   hypercubeElrDefinitionsByQname,
+  year,
+  currentEntrypoint,
 }) => {
   const safeState: AdvancedSearchState = {
     query: state?.query ?? "",
@@ -169,6 +174,12 @@ const SearchResultsTab: React.FC<SearchResultsTabProps> = ({
     }));
   }, [resultFilterOptions]);
 
+  useEffect(() => {
+    setPresentationFallbacksByKey({});
+    setPresentationFallbackLoadingByKey({});
+    setPresentationFallbackErrorByKey({});
+  }, [year, currentEntrypoint, state?.lastRunAt]);
+
   type ResultMenuOccurrence = {
     elr: string;
     entrypoint?: string;
@@ -179,6 +190,22 @@ const SearchResultsTab: React.FC<SearchResultsTabProps> = ({
     label: string;
     occurrences: ResultMenuOccurrence[];
   };
+
+  type PresentationFallbackMatch = {
+    href: string;
+    label: string;
+    elrs: string[];
+  };
+
+  const [presentationFallbacksByKey, setPresentationFallbacksByKey] = useState<
+    Record<string, PresentationFallbackMatch[]>
+  >({});
+  const [presentationFallbackLoadingByKey, setPresentationFallbackLoadingByKey] = useState<
+    Record<string, boolean>
+  >({});
+  const [presentationFallbackErrorByKey, setPresentationFallbackErrorByKey] = useState<
+    Record<string, string>
+  >({});
 
   const isChipActive = (chip: FilterChip) => {
     if (chip.field === "referenceParagraph") {
@@ -318,6 +345,41 @@ const SearchResultsTab: React.FC<SearchResultsTabProps> = ({
     }));
   };
 
+  const loadPresentationFallbacks = (qname: string) => {
+    if (!year || !qname) return;
+
+    const cacheKey = `${year}::${currentEntrypoint ?? ""}::${qname}`;
+    if (presentationFallbacksByKey[cacheKey] || presentationFallbackLoadingByKey[cacheKey]) {
+      return;
+    }
+
+    setPresentationFallbackLoadingByKey((prev) => ({ ...prev, [cacheKey]: true }));
+    setPresentationFallbackErrorByKey((prev) => {
+      const next = { ...prev };
+      delete next[cacheKey];
+      return next;
+    });
+
+    fetchPresentationEntrypointLocations(year, qname, currentEntrypoint)
+      .then((matches) => {
+        setPresentationFallbacksByKey((prev) => ({
+          ...prev,
+          [cacheKey]: matches.map((match) => ({
+            href: match.entrypoint.href,
+            label: match.entrypoint.name,
+            elrs: match.elrs,
+          })),
+        }));
+      })
+      .catch((err) => {
+        const message = err instanceof Error ? err.message : "Failed to load other entrypoints";
+        setPresentationFallbackErrorByKey((prev) => ({ ...prev, [cacheKey]: message }));
+      })
+      .finally(() => {
+        setPresentationFallbackLoadingByKey((prev) => ({ ...prev, [cacheKey]: false }));
+      });
+  };
+
   return (
     <div className="p-4 space-y-4">
       <div className="border rounded">
@@ -451,6 +513,13 @@ const SearchResultsTab: React.FC<SearchResultsTabProps> = ({
               const associatedNetworks = resultNetworks?.[result.qname] ?? [];
               const presentationElrs = resultPresentationElrs?.[result.qname] ?? [];
               const definitionHypercubeElrs = hypercubeElrDefinitionsByQname?.[result.qname] ?? [];
+              const presentationFallbackCacheKey = `${year ?? ""}::${currentEntrypoint ?? ""}::${result.qname}`;
+              const alternatePresentationEntrypoints =
+                presentationFallbacksByKey[presentationFallbackCacheKey] ?? [];
+              const presentationFallbackLoading =
+                presentationFallbackLoadingByKey[presentationFallbackCacheKey] ?? false;
+              const presentationFallbackError =
+                presentationFallbackErrorByKey[presentationFallbackCacheKey] ?? "";
               const conceptType = result.conceptType ?? "concept";
               const goToNodeLabel = networkLabels?.presentation ?? "Presentation";
 
@@ -548,11 +617,17 @@ const SearchResultsTab: React.FC<SearchResultsTabProps> = ({
 
                       const presentationUnavailableNoteId = `presentation-note-${result.id}`;
                       const hasSinglePresentationTarget = presentationOccurrences.length === 1;
+                      const hasAlternatePresentationTargets = alternatePresentationEntrypoints.length > 0;
 
                       return (
                         <DropdownMenu
                           open={openMenuResultId === result.id}
-                          onOpenChange={(open) => setOpenMenuResultId(open ? result.id : null)}
+                          onOpenChange={(open) => {
+                            setOpenMenuResultId(open ? result.id : null);
+                            if (open && presentationElrs.length === 0) {
+                              loadPresentationFallbacks(result.qname);
+                            }
+                          }}
                         >
                           <Button
                             type="button"
@@ -572,6 +647,9 @@ const SearchResultsTab: React.FC<SearchResultsTabProps> = ({
                               if (hasSinglePresentationTarget) {
                                 onNavigateToSearchNode?.(result.qname, "presentation", presentationOccurrences[0].elr);
                                 return;
+                              }
+                              if (presentationElrs.length === 0) {
+                                loadPresentationFallbacks(result.qname);
                               }
                               setOpenMenuResultId(result.id);
                             }}
@@ -621,6 +699,62 @@ const SearchResultsTab: React.FC<SearchResultsTabProps> = ({
                                           Not in this entrypoint’s Presentation tree
                                         </span>
                                       </DropdownMenuItem>,
+                                      ...(presentationFallbackLoading
+                                        ? [
+                                            <DropdownMenuItem
+                                              key={`${result.id}-${group.network}-loading`}
+                                              disabled
+                                              className="text-xs text-gray-500"
+                                            >
+                                              Loading other entrypoints...
+                                            </DropdownMenuItem>,
+                                          ]
+                                          : hasAlternatePresentationTargets
+                                          ? alternatePresentationEntrypoints.flatMap((entrypointOption) => [
+                                              <DropdownMenuItem
+                                                key={`${result.id}-${group.network}-${entrypointOption.href}-heading`}
+                                                disabled
+                                                className="pl-4 text-xs font-medium text-slate-700"
+                                              >
+                                                {entrypointOption.label}
+                                              </DropdownMenuItem>,
+                                              ...entrypointOption.elrs.map((elr) => (
+                                                <DropdownMenuItem
+                                                  key={`${result.id}-${group.network}-${entrypointOption.href}-${elr}`}
+                                                  className="pl-8 text-xs"
+                                                  onClick={() =>
+                                                    onNavigateToSearchNode?.(
+                                                      result.qname,
+                                                      group.network,
+                                                      elr,
+                                                      entrypointOption.href
+                                                    )
+                                                  }
+                                                >
+                                                  {elr}
+                                                </DropdownMenuItem>
+                                              )),
+                                            ])
+                                          : [
+                                              <DropdownMenuItem
+                                                key={`${result.id}-${group.network}-empty`}
+                                                disabled
+                                                className="text-xs text-gray-500"
+                                              >
+                                                No Presentation hits in other entrypoints.
+                                              </DropdownMenuItem>,
+                                            ]),
+                                      ...(presentationFallbackError
+                                        ? [
+                                            <DropdownMenuItem
+                                              key={`${result.id}-${group.network}-error`}
+                                              disabled
+                                              className="text-xs text-red-600"
+                                            >
+                                              {presentationFallbackError}
+                                            </DropdownMenuItem>,
+                                          ]
+                                        : []),
                                     ]
                                   : group.occurrences.map((occurrence) => (
                                       <DropdownMenuItem
