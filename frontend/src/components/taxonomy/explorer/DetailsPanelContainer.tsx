@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import DetailsTab from "./DetailsTab";
 import HypercubeRelationshipsTab from "./HypercubeRelationshipsTab";
 import TreeLocationsTab, { TreeLocationTarget } from "./TreeLocationsTab";
@@ -76,6 +76,7 @@ const DetailPanelContainer: React.FC<DetailPanelProps> = ({
   onRunAdvancedSearch,
   onResetAdvancedSearch,
 }) => {
+  const conceptCacheRef = useRef(new Map<string, ConceptDetailsResponse>());
   const [activeTab, setActiveTab] = useState<DetailsTabName>("Details");
   const [concept, setConcept] = useState<ConceptDetailsResponse | null>(null);
   const [isConceptLoading, setIsConceptLoading] = useState(false);
@@ -108,6 +109,11 @@ const DetailPanelContainer: React.FC<DetailPanelProps> = ({
   }, [tabs, activeTab]);
 
   const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+  const getConceptCacheKey = useCallback(
+    (qname: string) => `${year ?? ""}::${entrypoint ?? ""}::${qname}`,
+    [entrypoint, year]
+  );
 
   const fetchConceptDetailsWithRetry = useCallback(
     async (
@@ -167,17 +173,38 @@ const DetailPanelContainer: React.FC<DetailPanelProps> = ({
   useEffect(() => {
     if (selectedNode?.data?.qname) {
       const qname = selectedNode.data.qname;
+      const cacheKey = getConceptCacheKey(qname);
+      const cached = conceptCacheRef.current.get(cacheKey);
       const controller = new AbortController();
+      let isActive = true;
+      let loadingTimer: ReturnType<typeof setTimeout> | null = null;
 
-      setIsConceptLoading(true);
       setConceptError(null);
+      setIsConceptLoading(false);
+
+      if (cached) {
+        setConcept(cached);
+        return () => {
+          isActive = false;
+          controller.abort();
+        };
+      }
+
+      loadingTimer = setTimeout(() => {
+        if (isActive) {
+          setIsConceptLoading(true);
+        }
+      }, 250);
 
       fetchConceptDetailsWithRetry(qname, controller.signal)
         .then((data) => {
+          if (!isActive) return;
+          conceptCacheRef.current.set(cacheKey, data);
           setConcept(data);
           setConceptError(null);
         })
         .catch((err) => {
+          if (!isActive) return;
           if (err instanceof DOMException && err.name === "AbortError") {
             return;
           }
@@ -187,16 +214,27 @@ const DetailPanelContainer: React.FC<DetailPanelProps> = ({
           setConceptError(message);
         })
         .finally(() => {
-          setIsConceptLoading(false);
+          if (loadingTimer) {
+            clearTimeout(loadingTimer);
+          }
+          if (isActive) {
+            setIsConceptLoading(false);
+          }
         });
 
-      return () => controller.abort();
+      return () => {
+        isActive = false;
+        if (loadingTimer) {
+          clearTimeout(loadingTimer);
+        }
+        controller.abort();
+      };
     } else {
       setConcept(null);
       setConceptError(null);
       setIsConceptLoading(false);
     }
-  }, [fetchConceptDetailsWithRetry, selectedNode]);
+  }, [fetchConceptDetailsWithRetry, getConceptCacheKey, selectedNode]);
 
   useEffect(() => {
     if (selectedNode) {

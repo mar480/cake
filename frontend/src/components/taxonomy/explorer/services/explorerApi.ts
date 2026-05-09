@@ -114,3 +114,7 @@ export async function fetchPresentationEntrypointLocations(
   const payload = await parseJsonResponse<PresentationEntrypointLocationsResponse>(response);
   return payload.matches ?? [];
 }
+
+export async function warmConceptDetails(): Promise<void> {
+  await fetch("/api/warm-concept-details");
+}

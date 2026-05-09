@@ -25,6 +25,11 @@ interface Props {
   onNavigateToCrossReference?: (qname: string) => void;
 }
 
+type PropertyRow = {
+  label: string;
+  value: string | string[];
+};
+
 const DetailsTab: React.FC<Props> = ({
   concept,
   selectedNode,
@@ -56,7 +61,7 @@ const DetailsTab: React.FC<Props> = ({
                   </tr>
                 </thead>
                 <tbody>
-                  {[
+                  {([
                     { label: "Name", value: concept.concept.local_name },
                     concept.cross_ref_destination
                       ? {
@@ -101,14 +106,11 @@ const DetailsTab: React.FC<Props> = ({
                       label: "Nillable",
                       value: concept.concept.nillable ? "true" : "false",
                     },
-                  ]
+                  ] as Array<PropertyRow | null>)
                     .filter(
                       (
                         row
-                      ): row is {
-                        label: string;
-                        value: string | boolean | null;
-                      } => row !== null
+                      ): row is PropertyRow => row !== null
                     )
                     .map((row, idx) => (
                       <tr

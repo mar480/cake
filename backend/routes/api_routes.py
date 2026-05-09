@@ -222,6 +222,46 @@ def register_api_routes(app, taxonomy_base_dir: str):
         print("[concept-details] ===== END OK =====\n")
         return jsonify(concept_data)
 
+    @app.route("/api/warm-concept-details")
+    def warm_concept_details():
+        taxonomy = getattr(g, "taxonomy", None)
+        if taxonomy is None:
+            taxonomy = get_active_taxonomy_with_retry()
+
+        if taxonomy is None:
+            with taxonomy_lock:
+                is_loading = taxonomy_cache.get("is_loading", False)
+            return (
+                jsonify(
+                    {
+                        "error": (
+                            "Taxonomy is still loading"
+                            if is_loading
+                            else "Taxonomy temporarily unavailable"
+                        ),
+                        "retryable": True,
+                    }
+                ),
+                503,
+            )
+
+        g.taxonomy = taxonomy
+
+        try:
+            for qn in g.taxonomy.model.qnameConcepts.keys():
+                namespace = getattr(qn, "namespaceURI", None)
+                local_name = getattr(qn, "localName", None)
+                if not namespace or not local_name:
+                    continue
+
+                g.taxonomy.concepts.get_concept_json(namespace, local_name)
+                return ("", 204)
+        except Exception as exc:
+            print(f"[warm-concept-details] ERROR: {exc}")
+            return jsonify({"error": "Failed to warm concept details"}), 500
+
+        return ("", 204)
+
     @app.route("/api/entrypoints", methods=["GET"])
     def list_entrypoints_by_year():
         year = request.args.get("year")
