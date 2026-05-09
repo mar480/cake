@@ -1,7 +1,26 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Search, X } from "lucide-react";
 import { Tree } from "primereact/tree";
-import { TreeNode } from "./tree_utils";
+import { toast } from "@/components/ui/use-toast";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { TreeNode, getTreeNodeVisualSpec } from "./tree_utils";
+import {
+  buildTreeExportSnapshot,
+  buildTreeSnapshotCsv,
+  buildTreeSnapshotHtmlDocument,
+  buildTreeSnapshotJson,
+  buildTreeSnapshotPngBlob,
+  downloadBlob,
+  downloadTextFile,
+} from "./treeExportUtils";
 
 interface TaxonomyTreeViewProps {
   onSelectNode: (node: TreeNode) => void;
@@ -12,6 +31,11 @@ interface TaxonomyTreeViewProps {
   onExpandedKeysChange: (keys: { [key: string]: boolean }) => void;
   language: "en" | "cy";
   network: string;
+  networkLabel: string;
+  year: string | null;
+  entrypoint: string | null;
+  treeFilter: string;
+  onTreeFilterChange: (value: string) => void;
 }
 
 const TaxonomyTreeView = ({
@@ -22,9 +46,15 @@ const TaxonomyTreeView = ({
   onSelectNode,
   language,
   network,
+  networkLabel,
+  year,
+  entrypoint,
+  treeFilter,
+  onTreeFilterChange,
 }: TaxonomyTreeViewProps) => {
   const nodeRefs = useRef<{ [key: string]: HTMLSpanElement | null }>({});
-  const [treeFilter, setTreeFilter] = useState("");
+  const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
+  const [treeExportLoading, setTreeExportLoading] = useState<"json" | "csv" | "html" | "png" | null>(null);
 
   // Clear refs on dataset change to avoid stale elements
   useEffect(() => {
@@ -32,8 +62,8 @@ const TaxonomyTreeView = ({
   }, [network, treeNodes]);
 
   useEffect(() => {
-    setTreeFilter("");
-  }, [network]);
+    onTreeFilterChange("");
+  }, [network, onTreeFilterChange]);
 
   // Smooth scroll once the highlighted node exists in the DOM
   useEffect(() => {
@@ -49,6 +79,59 @@ const TaxonomyTreeView = ({
     // Two rAFs ensures paint has happened even after a big expand
     requestAnimationFrame(() => requestAnimationFrame(scroll));
   }, [highlightedKey, expandedKeys, network]);
+
+  const exportSnapshot = useMemo(
+    () =>
+      buildTreeExportSnapshot({
+        treeNodes,
+        expandedKeys,
+        treeFilter,
+        language,
+        network,
+        networkLabel,
+        year,
+        entrypoint,
+      }),
+    [entrypoint, expandedKeys, language, network, networkLabel, treeFilter, treeNodes, year]
+  );
+
+  const hasActiveTreeFilter = treeFilter.trim().length > 0;
+
+  const handleTreeExport = async (format: "json" | "csv" | "html" | "png") => {
+    const filterSlug = treeFilter.trim().replace(/[^a-z0-9]+/gi, "-").replace(/^-+|-+$/g, "").toLowerCase() || "tree-filter";
+    const networkSlug = networkLabel.replace(/[^a-z0-9]+/gi, "-").replace(/^-+|-+$/g, "").toLowerCase();
+    const baseFilename = `tree-export-${networkSlug || network}-${filterSlug}`;
+
+    setTreeExportLoading(format);
+
+    try {
+      if (format === "json") {
+        downloadTextFile(buildTreeSnapshotJson(exportSnapshot), `${baseFilename}.json`, "application/json");
+      } else if (format === "csv") {
+        downloadTextFile(buildTreeSnapshotCsv(exportSnapshot), `${baseFilename}.csv`, "text/csv;charset=utf-8");
+      } else if (format === "html") {
+        downloadTextFile(buildTreeSnapshotHtmlDocument(exportSnapshot), `${baseFilename}.html`, "text/html;charset=utf-8");
+      } else {
+        const pngBlob = await buildTreeSnapshotPngBlob(exportSnapshot);
+        downloadBlob(pngBlob, `${baseFilename}.png`);
+      }
+
+      setIsExportDialogOpen(false);
+      toast({
+        title: "Tree exported",
+        description: `Saved ${format.toUpperCase()} for the current tree filter.`,
+      });
+    } catch (error) {
+      console.error("Tree export failed", error);
+      toast({
+        title: "Tree export failed",
+        description: error instanceof Error ? error.message : "Unable to export the filtered tree.",
+        variant: "destructive",
+      });
+    } finally {
+      setTreeExportLoading(null);
+    }
+  };
 
   return (
     <div className="p-2">
@@ -73,73 +156,8 @@ const TaxonomyTreeView = ({
           );
         }}
         nodeTemplate={(node) => {
-          const fullType = node.data?.full_type;
-          const xbrlType = node.data?.xbrl_type;
-          const substitutionGroup = node.data?.substitution_group;
           const isHighlighted = node.key === highlightedKey;
-
-          const isDimension = substitutionGroup === "xbrldt:dimensionItem";
-
-          const fullTypeIcons: Record<string, string> = {
-            "types:guidanceItemType": "pi pi-exclamation-triangle text-red-500",
-            "types:headingItemType": "pi pi-folder text-black-500",
-            "types:xrefItemType": "pi pi-arrow-right-arrow-left text-red-400",
-            "nonnum:domainItemType": "pi pi-globe text-pink-500",
-            "Q2:domainItemType": "pi pi-globe text-pink-500",
-            "num:energyItemType": "pi pi-sun text-orange-500",
-            "num:massItemType": "pi pi-gauge text-green-500",
-            "num:percentItemType": "pi pi-percentage text-teal-500",
-            "types:fixedItemType": "pi pi-align-left text-cyan-500",
-            "types:syndicateNumberItemType": "pi pi-hashtag text-green-500",
-          };
-
-          const xbrlTypeIcons: Record<string, string> = {
-            anyURIItemType: "pi pi-link text-blue-400",
-            booleanItemType: "pi pi-check-square text-green-500",
-            dateItemType: "pi pi-calendar-clock text-fuchsia-500",
-            decimalItemType: "pi pi-sort-numeric-down text-neutral-500",
-            monetaryItemType: "pi pi-pound text-amber-500",
-            sharesItemType: "pi pi-chart-line text-purple-500",
-            stringItemType: "pi pi-align-left text-cyan-500",
-          };
-
-          const iconClass = isDimension
-            ? "pi pi-sort-amount-down-alt text-indigo-500"
-            : fullTypeIcons[fullType ?? ""] ??
-              xbrlTypeIcons[xbrlType ?? ""] ??
-              "pi pi-home text-gray-500";
-
-          // Independent secondary icons
-          const secondaryIcon =
-            fullType === "types:fixedItemType" ? (
-              <i
-                className="pi pi-star text-red-500 text-xs ml-1"
-                title="Fixed item"
-              />
-            ) : fullType === "types:groupingItemType" ? (
-              <i
-                className="pi pi-star text-blue-500 text-xs ml-1"
-                title="Grouping item"
-              />
-            ) : null;
-
-          // Extra icon if it's a [Dimension] and has a known xbrl_type
-          const dimensionTypeIcon =
-            isDimension && xbrlType && xbrlTypeIcons[xbrlType] ? (
-              <i
-                className={`${xbrlTypeIcons[xbrlType]} text-xs ml-1`}
-                title={`Dimension type: ${xbrlType}`}
-              />
-            ) : null;
-
-          const isDomainMember = fullType === "nonnum:domainItemType";
-          const domainTypeIcon =
-            isDomainMember && xbrlType && xbrlTypeIcons[xbrlType] ? (
-              <i
-                className={`${xbrlTypeIcons[xbrlType]} text-xs ml-1`}
-                title={`Domain type: ${xbrlType}`}
-              />
-            ) : null;
+          const visual = getTreeNodeVisualSpec(node.data);
 
           return (
             <span
@@ -148,42 +166,37 @@ const TaxonomyTreeView = ({
                 if (el && node.key) nodeRefs.current[String(node.key)] = el;
               }}
               title={node.data?.qname || node.label}
-                className={`flex items-center gap-2 transition duration-500 ${
-    isHighlighted
-      ? "bg-yellow-200 animate-pulse rounded"
-      : ""
-  }`}
+              className={`flex items-center gap-2 transition duration-500 ${isHighlighted ? "bg-yellow-200 animate-pulse rounded" : ""}`}
             >
               <span className="flex items-center gap-[4px] mr-1">
-                <i className={iconClass} />
-                {dimensionTypeIcon}
-                {domainTypeIcon}
+                <i className={visual.iconClass} />
+                {visual.tertiaryIconClass ? <i className={visual.tertiaryIconClass} /> : null}
               </span>
               <span>
                 {language === "cy" && node.data?.label_cy
                   ? node.data.label_cy
                   : node.label}
               </span>
-              {secondaryIcon}
+              {visual.secondaryIconClass ? <i className={visual.secondaryIconClass} /> : null}
             </span>
           );
         }}
         filter
         filterValue={treeFilter}
-        onFilterValueChange={(e) => setTreeFilter(e.value ?? "")}
+        onFilterValueChange={(e) => onTreeFilterChange(e.value ?? "")}
         filterTemplate={(options) => (
           <div className="taxonomy-tree-filter-shell">
             <input
               type="text"
               value={treeFilter}
               onChange={(e) => {
-                setTreeFilter(e.target.value);
+                onTreeFilterChange(e.target.value);
                 options.filterOptions?.filter?.(e);
               }}
               onKeyDown={(e) => {
                 if (e.key === "Escape") {
                   e.preventDefault();
-                  setTreeFilter("");
+                  onTreeFilterChange("");
                   options.filterOptions?.reset?.();
                 } else {
                   options.filterInputKeyDown?.(e);
@@ -197,13 +210,24 @@ const TaxonomyTreeView = ({
                 type="button"
                 className="taxonomy-tree-filter-clear"
                 onClick={() => {
-                  setTreeFilter("");
+                  onTreeFilterChange("");
                   options.filterOptions?.reset?.();
                 }}
                 aria-label="Clear tree search"
                 title="Clear"
               >
                 <X size={14} />
+              </button>
+            ) : null}
+            {hasActiveTreeFilter ? (
+              <button
+                type="button"
+                className="taxonomy-tree-filter-download"
+                onClick={() => setIsExportDialogOpen(true)}
+                aria-label="Export filtered tree"
+                title="Export filtered tree"
+              >
+                <i className="pi pi-download" aria-hidden="true" />
               </button>
             ) : null}
             <span className="taxonomy-tree-filter-icon" aria-hidden="true">
@@ -216,6 +240,58 @@ const TaxonomyTreeView = ({
         showHeader={true}
         className="w-full taxonomy-tree"
       />
+
+      <Dialog open={isExportDialogOpen} onOpenChange={setIsExportDialogOpen}>
+        <DialogContent className="max-w-xl bg-white">
+          <DialogHeader>
+            <DialogTitle>Export Filtered Tree</DialogTitle>
+            <DialogDescription>
+              Export the current filtered tree view as CSV, JSON, HTML, or PNG.
+            </DialogDescription>
+          </DialogHeader>
+
+            <div className="space-y-3">
+              <div className="rounded border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">
+                <div><span className="font-medium">Filter:</span> {treeFilter}</div>
+                <div><span className="font-medium">Network:</span> {networkLabel}</div>
+                <div><span className="font-medium">Visible nodes:</span> {exportSnapshot.visibleNodeCount}</div>
+              </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              {(["csv", "json", "html", "png"] as const).map((format) => (
+                <Button
+                  key={format}
+                  type="button"
+                  variant="outline"
+                  className="h-auto min-h-20 flex-col items-start justify-start gap-1 border-slate-300 bg-white px-4 py-3 text-left hover:bg-slate-50"
+                  onClick={() => void handleTreeExport(format)}
+                  disabled={treeExportLoading !== null}
+                >
+                  <span className="text-sm font-semibold uppercase text-slate-900">{format}</span>
+                  <span className="text-xs text-slate-600">
+                    {format === "csv"
+                      ? "Flat rows for spreadsheet review."
+                      : format === "json"
+                        ? "Full tree snapshot with metadata."
+                        : format === "html"
+                          ? "Styled standalone tree document."
+                          : "Static image of the filtered tree."}
+                  </span>
+                  {treeExportLoading === format ? (
+                    <span className="text-[11px] font-medium text-blue-700">Exporting...</span>
+                  ) : null}
+                </Button>
+              ))}
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setIsExportDialogOpen(false)} disabled={treeExportLoading !== null}>
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

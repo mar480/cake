@@ -36,6 +36,8 @@ interface Props {
   entrypoints: EntrypointOption[];
   onYearChange: (year: string | null) => void;
   onEntrypointChange: (entrypoint: string | null) => void;
+  treeFilter: string;
+  onTreeFilterChange: (value: string) => void;
   currentTreeNodes: TreeNode[];
   entrypointLoaded: boolean;
   treeLocations: TreeLocationTarget[];
@@ -76,6 +78,8 @@ const XBRLTaxonomyExplorer: React.FC<Props> = ({
   entrypoints,
   onYearChange,
   onEntrypointChange,
+  treeFilter,
+  onTreeFilterChange,
   currentTreeNodes,
   entrypointLoaded,
   treeLocations,
@@ -203,6 +207,11 @@ const XBRLTaxonomyExplorer: React.FC<Props> = ({
             treeNodes={currentTreeNodes}
             key={network}
             network={network}
+            networkLabel={networkLabels[network] ?? network}
+            year={year}
+            entrypoint={entrypoint}
+            treeFilter={treeFilter}
+            onTreeFilterChange={onTreeFilterChange}
             expandedKeys={expandedKeys}
             highlightedKey={highlightedKey}
             onSelectNode={onSelectNode}

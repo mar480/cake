@@ -47,6 +47,7 @@ const XBRLTaxonomyExplorerContainer: React.FC = () => {
   const [highlightedKey, setHighlightedKey] = useState<string | null>(null);
   const [language, setLanguage] = useState<"en" | "cy">("en");
   const [network, setNetwork] = useState<string>("");
+  const [treeFilter, setTreeFilter] = useState("");
 
   // Taxonomy selection state
   const [year, setYear] = useState<string | null>(null);
@@ -70,6 +71,7 @@ const XBRLTaxonomyExplorerContainer: React.FC = () => {
 
   const clearTreeUiState = useCallback(() => {
     setNetwork("");
+    setTreeFilter("");
     setSelectedNode(null);
     setDetailNode(null);
     setExpandedKeys({});
@@ -274,6 +276,8 @@ const XBRLTaxonomyExplorerContainer: React.FC = () => {
         entrypoints={entrypoints}
         onYearChange={handleYearChange}
         onEntrypointChange={handleEntrypointChange}
+        treeFilter={treeFilter}
+        onTreeFilterChange={setTreeFilter}
         onSelectNode={(node) => {
           setSelectedNode(node);
           setDetailNode(node);
@@ -283,6 +287,7 @@ const XBRLTaxonomyExplorerContainer: React.FC = () => {
         onNetworkChange={(val) => {
           if (entrypointLoaded && rawTreeData[val]) {
             setNetwork(val);
+            setTreeFilter("");
             setExpandedKeys({});
             setHighlightedKey(null);
           } else {
