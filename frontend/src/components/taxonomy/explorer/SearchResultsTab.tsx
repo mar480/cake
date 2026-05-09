@@ -27,14 +27,66 @@ type FilterChip = {
   source?: string | null;
 };
 
-const FACET_CHIP_PALETTE = [
-  "bg-sky-100 border-sky-300 text-sky-800",
-  "bg-violet-100 border-violet-300 text-violet-800",
-  "bg-emerald-100 border-emerald-300 text-emerald-800",
-  "bg-amber-100 border-amber-300 text-amber-800",
-  "bg-rose-100 border-rose-300 text-rose-800",
-  "bg-cyan-100 border-cyan-300 text-cyan-800",
-] as const;
+const CONCEPT_TYPE_CHIP_CLASSES: Record<string, string> = {
+  concept: "bg-slate-100 border-slate-300 text-slate-800",
+  "dimension member": "bg-pink-100 border-pink-300 text-pink-800",
+  dimension: "bg-indigo-100 border-indigo-300 text-indigo-800",
+  hypercube: "bg-rose-100 border-rose-300 text-rose-800",
+};
+
+const XBRL_TYPE_CHIP_CLASSES: Record<string, string> = {
+  anyURIItemType: "bg-blue-100 border-blue-300 text-blue-800",
+  booleanItemType: "bg-green-100 border-green-300 text-green-800",
+  dateItemType: "bg-fuchsia-100 border-fuchsia-300 text-fuchsia-800",
+  decimalItemType: "bg-neutral-100 border-neutral-300 text-neutral-800",
+  monetaryItemType: "bg-amber-100 border-amber-300 text-amber-800",
+  sharesItemType: "bg-purple-100 border-purple-300 text-purple-800",
+  stringItemType: "bg-cyan-100 border-cyan-300 text-cyan-800",
+};
+
+const PERIOD_TYPE_CHIP_CLASSES: Record<string, string> = {
+  instant: "bg-sky-100 border-sky-300 text-sky-800",
+  duration: "bg-cyan-100 border-cyan-300 text-cyan-800",
+};
+
+const BALANCE_CHIP_CLASSES: Record<string, string> = {
+  debit: "bg-red-100 border-red-300 text-red-800",
+  credit: "bg-emerald-100 border-emerald-300 text-emerald-800",
+};
+
+const FIELD_CHIP_CLASSES = {
+  referenceParagraph: "bg-amber-50 border-amber-300 text-amber-800",
+  excludeNotInPresentationTree: "bg-slate-100 border-slate-300 text-slate-700",
+} as const;
+
+const getConceptTypeLabel = (conceptType: string) =>
+  conceptType === "dimension member"
+    ? "Dimension member"
+    : conceptType === "dimension"
+      ? "Dimension"
+      : conceptType === "hypercube"
+        ? "Hypercube"
+        : "Concept";
+
+const getChipClassForField = (field: FilterChip["field"], value: string | boolean) => {
+  if (field === "conceptType") {
+    return CONCEPT_TYPE_CHIP_CLASSES[String(value)] ?? CONCEPT_TYPE_CHIP_CLASSES.concept;
+  }
+
+  if (field === "xbrlType") {
+    return XBRL_TYPE_CHIP_CLASSES[String(value)] ?? "bg-violet-100 border-violet-300 text-violet-800";
+  }
+
+  if (field === "periodType") {
+    return PERIOD_TYPE_CHIP_CLASSES[String(value)] ?? "bg-cyan-100 border-cyan-300 text-cyan-800";
+  }
+
+  if (field === "balance") {
+    return BALANCE_CHIP_CLASSES[String(value)] ?? "bg-teal-100 border-teal-300 text-teal-800";
+  }
+
+  return FIELD_CHIP_CLASSES[field] ?? "bg-gray-100 border-gray-300 text-gray-700";
+};
 
 const EMPTY_FILTERS: AdvancedSearchFilters = {
   namespace: [],
@@ -147,10 +199,10 @@ const SearchResultsTab: React.FC<SearchResultsTabProps> = ({
         field: "excludeNotInPresentationTree" as const,
         value: true,
       },
-      ...withString("balance", filters.balance, "Balance"),
-      ...withString("periodType", filters.periodType, "Period type"),
-      ...withString("xbrlType", filters.xbrlType, "XBRL type"),
       ...withString("conceptType", filters.conceptType, "Concept type"),
+      ...withString("xbrlType", filters.xbrlType, "XBRL type"),
+      ...withString("periodType", filters.periodType, "Period type"),
+      ...withString("balance", filters.balance, "Balance"),
       ...filters.referenceParagraph.map((value) => ({
         key: `referenceParagraph:${filters.referenceSource ?? ""}:${value}`,
         label: `Reference: ${filters.referenceSource ?? ""}, ${value}`,
@@ -297,15 +349,6 @@ const SearchResultsTab: React.FC<SearchResultsTabProps> = ({
     onRunSearch(0);
   };
 
-  const facetColorMapRef = useRef(new Map<string, string>());
-  chips.forEach((chip) => {
-    if (!facetColorMapRef.current.has(chip.key)) {
-      const nextClass =
-        FACET_CHIP_PALETTE[facetColorMapRef.current.size % FACET_CHIP_PALETTE.length];
-      facetColorMapRef.current.set(chip.key, nextClass);
-    }
-  });
-
   const clearAllFilters = () => {
     onFiltersChange(EMPTY_FILTERS);
     onRunSearch(0);
@@ -353,9 +396,6 @@ const SearchResultsTab: React.FC<SearchResultsTabProps> = ({
     filters.conceptType.length > 0 ||
     filters.referenceParagraph.length > 0 ||
     filters.excludeNotInPresentationTree;
-
-  const metadataChipClass = (facetKey: string) =>
-    facetColorMapRef.current.get(facetKey) ?? "bg-gray-100 border-gray-300 text-gray-700";
 
   const filteredResults = useMemo(() => {
     return resultFilterSource.filter((result) => {
@@ -557,7 +597,7 @@ const SearchResultsTab: React.FC<SearchResultsTabProps> = ({
                 type="button"
                 className={`text-xs px-2 py-1 rounded-full border ${
                   isChipActive(chip)
-                    ? facetColorMapRef.current.get(chip.key)
+                    ? getChipClassForField(chip.field, chip.value)
                     : "bg-gray-100 border-gray-300 text-gray-500 line-through"
                 }`}
                 onClick={() => toggleChip(chip)}
@@ -655,49 +695,47 @@ const SearchResultsTab: React.FC<SearchResultsTabProps> = ({
                         Definition ELR: {definitionHypercubeElrs.join(", ")}
                       </div>
                     )}
-                    <div className="flex flex-wrap gap-1 pt-1">
-                      {result.balance && (
-                        <span className={`text-xs px-2 py-0.5 rounded-full border ${metadataChipClass(`balance:${result.balance}`)}`}>
-                          Balance: {result.balance}
-                        </span>
-                      )}
-                      {result.periodType && (
-                        <span className={`text-xs px-2 py-0.5 rounded-full border ${metadataChipClass(`periodType:${result.periodType}`)}`}>
-                          Period: {result.periodType}
-                        </span>
-                      )}
-                      {result.xbrlType && (
-                        <span className={`text-xs px-2 py-0.5 rounded-full border ${metadataChipClass(`xbrlType:${result.xbrlType}`)}`}>
-                          XBRL: {result.xbrlType}
-                        </span>
-                      )}
-                      <span
-                        className={`text-xs px-2 py-0.5 rounded-full border ${metadataChipClass(`conceptType:${conceptType}`)} ${
-                          conceptType === "dimension member"
-                            ? "bg-emerald-100 border-emerald-300 text-emerald-800"
-                            : conceptType === "dimension"
-                              ? "bg-sky-100 border-sky-300 text-sky-800"
-                              : conceptType === "hypercube"
-                                ? "bg-rose-100 border-rose-300 text-rose-800"
-                                : "bg-gray-100 border-gray-300 text-gray-700"
-                        }`}
-                      >
-                        {conceptType === "dimension member"
-                          ? "Dimension member"
-                          : conceptType === "dimension"
-                            ? "Dimension"
-                            : conceptType === "hypercube"
-                              ? "Hypercube"
-                              : "Concept"}
-                      </span>
-                      {(result.referenceDisplays ?? []).map((referenceDisplay) => (
+                    <div className="space-y-1 pt-1">
+                      <div className="flex flex-wrap gap-1">
                         <span
-                          key={`${result.id}-reference-${referenceDisplay}`}
-                          className="text-xs px-2 py-0.5 rounded-full border bg-amber-50 border-amber-300 text-amber-800"
+                          className={`text-xs px-2 py-0.5 rounded-full border ${getChipClassForField("conceptType", conceptType)}`}
                         >
-                          Reference: {referenceDisplay}
+                          {getConceptTypeLabel(conceptType)}
                         </span>
-                      ))}
+                        {result.xbrlType && (
+                          <span
+                            className={`text-xs px-2 py-0.5 rounded-full border ${getChipClassForField("xbrlType", result.xbrlType)}`}
+                          >
+                            XBRL: {result.xbrlType}
+                          </span>
+                        )}
+                        {result.periodType && (
+                          <span
+                            className={`text-xs px-2 py-0.5 rounded-full border ${getChipClassForField("periodType", result.periodType)}`}
+                          >
+                            Period: {result.periodType}
+                          </span>
+                        )}
+                        {result.balance && (
+                          <span
+                            className={`text-xs px-2 py-0.5 rounded-full border ${getChipClassForField("balance", result.balance)}`}
+                          >
+                            Balance: {result.balance}
+                          </span>
+                        )}
+                      </div>
+                      {(result.referenceDisplays ?? []).length > 0 && (
+                        <div className="flex flex-wrap gap-1">
+                          {(result.referenceDisplays ?? []).map((referenceDisplay) => (
+                            <span
+                              key={`${result.id}-reference-${referenceDisplay}`}
+                              className={`text-xs px-2 py-0.5 rounded-full border ${getChipClassForField("referenceParagraph", referenceDisplay)}`}
+                            >
+                              Reference: {referenceDisplay}
+                            </span>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   </div>
                   <div className="flex items-center">

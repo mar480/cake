@@ -58,6 +58,7 @@ const RelationshipPrimaryItemsTree: React.FC<RelationshipPrimaryItemsTreeProps> 
         const substitutionGroup = node.data?.substitution_group;
 
         const isDimension = substitutionGroup === "xbrldt:dimensionItem";
+        const isHypercube = substitutionGroup === "xbrldt:hypercubeItem";
 
         const fullTypeIcons: Record<string, string> = {
           "types:guidanceItemType": "pi pi-exclamation-triangle text-red-500",
@@ -84,9 +85,11 @@ const RelationshipPrimaryItemsTree: React.FC<RelationshipPrimaryItemsTreeProps> 
 
         const iconClass = isDimension
           ? "pi pi-sort-amount-down-alt text-indigo-500"
-          : fullTypeIcons[fullType ?? ""] ??
-            xbrlTypeIcons[xbrlType ?? ""] ??
-            "pi pi-home text-gray-500";
+          : isHypercube
+            ? "pi pi-table text-rose-400"
+            : fullTypeIcons[fullType ?? ""] ??
+              xbrlTypeIcons[xbrlType ?? ""] ??
+              "pi pi-home text-gray-500";
 
         const secondaryIcon =
           fullType === "types:fixedItemType" ? (

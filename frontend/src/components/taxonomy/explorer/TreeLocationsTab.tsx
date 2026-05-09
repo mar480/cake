@@ -64,6 +64,7 @@ const getConceptIconClass = (meta?: {
   const substitutionGroup = meta.substitutionGroup;
 
   const isDimension = substitutionGroup === "xbrldt:dimensionItem";
+  const isHypercube = substitutionGroup === "xbrldt:hypercubeItem";
 
   const fullTypeIcons: Record<string, string> = {
     "types:guidanceItemType": "pi pi-exclamation-triangle text-red-500",
@@ -88,6 +89,7 @@ const getConceptIconClass = (meta?: {
   };
 
   if (isDimension) return "pi pi-sort-amount-down-alt text-indigo-500";
+  if (isHypercube) return "pi pi-table text-rose-400";
   return (
     fullTypeIcons[fullType ?? ""] ??
     xbrlTypeIcons[xbrlType ?? ""] ??

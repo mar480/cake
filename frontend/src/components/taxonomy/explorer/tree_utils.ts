@@ -62,6 +62,7 @@ export function getTreeNodeVisualSpec(nodeData?: TreeNode["data"]): TreeNodeVisu
   const substitutionGroup = nodeData?.substitution_group;
 
   const isDimension = substitutionGroup === "xbrldt:dimensionItem";
+  const isHypercube = substitutionGroup === "xbrldt:hypercubeItem";
   const isDomainMember = fullType === "nonnum:domainItemType";
   const isElrGroup = Boolean(nodeData?.definition || nodeData?.elr) && !nodeData?.qname;
 
@@ -105,6 +106,13 @@ export function getTreeNodeVisualSpec(nodeData?: TreeNode["data"]): TreeNodeVisu
         color: "#6366f1",
         label: "Dimension",
       }
+    : isHypercube
+      ? {
+          cls: "pi pi-table text-rose-400",
+          glyph: "\u25A6",
+          color: "#fb7185",
+          label: "Hypercube",
+        }
     : fullTypeIcons[fullType ?? ""] ??
       xbrlTypeIcons[xbrlType ?? ""] ?? {
         cls: "pi pi-home text-gray-500",
