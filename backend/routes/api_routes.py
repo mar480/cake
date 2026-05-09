@@ -1,8 +1,11 @@
 import json
 import os
 import time
+from csv import DictWriter
+from datetime import datetime, timezone
+from io import StringIO
 
-from flask import g, jsonify, request
+from flask import g, jsonify, make_response, request
 
 from search.cache import get_search_index, set_search_index
 from search.index_builder import build_search_index
@@ -44,6 +47,126 @@ def get_active_taxonomy_with_retry(max_attempts: int = 3, delay_seconds: float =
 
 
 def register_api_routes(app, taxonomy_base_dir: str):
+    SEARCH_EXPORT_MAX_ROWS = 10000
+    SEARCH_EXPORT_FIELDS = {
+        "qname": "qname",
+        "label": "label",
+        "local_name": "local_name",
+        "namespace": "namespace",
+        "balance": "balance",
+        "period_type": "period_type",
+        "xbrl_type": "xbrl_type",
+        "full_type": "full_type",
+        "abstract": "abstract",
+        "nillable": "nillable",
+        "substitution_group": "substitution_group",
+        "concept_type": "concept_type",
+        "hypercubes": "hypercubes",
+        "reference_displays": "reference_displays",
+        "score": "score",
+        "matched_fields": "matched_fields",
+    }
+
+    def _coerce_export_fields(fields_value):
+        if not isinstance(fields_value, list):
+            return None
+
+        normalized_fields = []
+        for field in fields_value:
+            if not isinstance(field, str):
+                return None
+            normalized = field.strip()
+            if not normalized:
+                continue
+            if normalized not in SEARCH_EXPORT_FIELDS:
+                return None
+            if normalized not in normalized_fields:
+                normalized_fields.append(normalized)
+
+        return normalized_fields
+
+    def _project_search_export_rows(results, selected_fields, flatten_lists=False):
+        projected_rows = []
+        for result in results or []:
+            row = {}
+            for field in selected_fields:
+                value = result.get(SEARCH_EXPORT_FIELDS[field])
+                if flatten_lists and isinstance(value, list):
+                    row[field] = " | ".join(str(item) for item in value)
+                else:
+                    row[field] = value
+            projected_rows.append(row)
+        return projected_rows
+
+    def _build_search_export_filename(year, href, query, export_format):
+        timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+        href_slug = "".join(ch if ch.isalnum() else "-" for ch in (href or "").lower()).strip("-")
+        query_slug = "".join(ch if ch.isalnum() else "-" for ch in (query or "").lower()).strip("-")
+        href_slug = href_slug[:40] or "entrypoint"
+        query_slug = query_slug[:40] or "all-results"
+        return f"search-export-{year}-{href_slug}-{query_slug}-{timestamp}.{export_format}"
+
+    def _get_presentation_qnames_for_entrypoint(year, href):
+        cache_key = entrypoint_cache_key(year, href)
+        qname_to_elrs = presentation_locations_cache.get(cache_key)
+
+        if qname_to_elrs is None:
+            tree_dir = resolve_tree_dir_for_entrypoint(taxonomy_base_dir, year, href)
+            presentation_path = os.path.join(tree_dir, "presentation_tree.json")
+            if not os.path.exists(presentation_path):
+                presentation_locations_cache[cache_key] = {}
+                return set()
+
+            with open(presentation_path, "r", encoding="utf-8") as handle:
+                presentation_tree = json.load(handle)
+
+            qname_to_elrs = collect_presentation_elrs_by_qname(presentation_tree)
+            presentation_locations_cache[cache_key] = qname_to_elrs
+
+        return set(qname_to_elrs.keys())
+
+    def _apply_presentation_tree_filter(payload, year, href, filters):
+        if not (filters or {}).get("excludeNotInPresentationTree"):
+            return payload
+
+        visible_qnames = _get_presentation_qnames_for_entrypoint(year, href)
+        filtered_results = [
+            item for item in (payload.get("results") or []) if item.get("qname") in visible_qnames
+        ]
+
+        return {
+            **payload,
+            "results": filtered_results,
+            "total": len(filtered_results),
+            "offset": 0,
+        }
+
+    def _run_search_payload(index, year, href, query, filters, limit, offset):
+        if (filters or {}).get("excludeNotInPresentationTree"):
+            unpaged_payload = search_index(
+                index=index,
+                query=query,
+                limit=max(len(index.concepts_by_qname), 1),
+                offset=0,
+                filters=filters,
+            )
+            filtered_payload = _apply_presentation_tree_filter(unpaged_payload, year, href, filters)
+            paged_results = filtered_payload.get("results", [])[offset : offset + limit]
+            return {
+                **filtered_payload,
+                "results": paged_results,
+                "limit": limit,
+                "offset": offset,
+            }
+
+        return search_index(
+            index=index,
+            query=query,
+            limit=limit,
+            offset=offset,
+            filters=filters,
+        )
+
     def collect_presentation_elrs_by_qname(root_nodes):
         qname_to_elrs = {}
 
@@ -520,13 +643,7 @@ def register_api_routes(app, taxonomy_base_dir: str):
             index = build_search_index(concepts_payload)
             set_search_index(cache_key, index)
 
-        payload = search_index(
-            index=index,
-            query=q,
-            limit=limit,
-            offset=offset,
-            filters=filters,
-        )
+        payload = _run_search_payload(index, year, href, q, filters, limit, offset)
 
         top_scores = [
             {
@@ -544,6 +661,88 @@ def register_api_routes(app, taxonomy_base_dir: str):
         print(f"[search-concepts] top_scores={top_scores}")
 
         return jsonify(payload)
+
+    @app.route("/api/search-concepts/export", methods=["POST"])
+    def export_search_concepts():
+        data = request.get_json() or {}
+        year = data.get("year")
+        href = data.get("href")
+        q = (data.get("q") or "").strip()
+        filters = data.get("filters") or {}
+        export_format = (data.get("format") or "csv").strip().lower()
+        fields = _coerce_export_fields(data.get("fields"))
+
+        if not year or not href:
+            return jsonify({"error": "Missing year or href"}), 400
+        if not isinstance(filters, dict):
+            return jsonify({"error": "filters must be an object"}), 400
+        if export_format not in {"csv", "json"}:
+            return jsonify({"error": "format must be csv or json"}), 400
+        if fields is None or len(fields) == 0:
+            return jsonify({"error": "fields must be a non-empty list of allowed field names"}), 400
+
+        cache_key = entrypoint_cache_key(year, href)
+        index = get_search_index(cache_key)
+
+        if index is None:
+            concepts_payload = load_concepts_json_for_entrypoint(taxonomy_base_dir, year, href)
+            if not concepts_payload:
+                return (
+                    jsonify({"error": "concepts.json not found or empty for entrypoint"}),
+                    404,
+                )
+            index = build_search_index(concepts_payload)
+            set_search_index(cache_key, index)
+
+        total_matches = _run_search_payload(index, year, href, q, filters, 1, 0).get("total", 0)
+
+        if total_matches > SEARCH_EXPORT_MAX_ROWS:
+            return (
+                jsonify(
+                    {
+                        "error": (
+                            f"Export exceeds maximum row limit of {SEARCH_EXPORT_MAX_ROWS}. "
+                            f"Current result count: {total_matches}."
+                        )
+                    }
+                ),
+                400,
+            )
+
+        payload = _run_search_payload(index, year, href, q, filters, max(total_matches, 1), 0)
+        projected_rows = _project_search_export_rows(
+            payload.get("results") or [],
+            fields,
+            flatten_lists=export_format == "csv",
+        )
+
+        timestamp = datetime.now(timezone.utc).isoformat()
+        filename = _build_search_export_filename(year, href, q, export_format)
+        response_headers = {
+            "Content-Disposition": f'attachment; filename="{filename}"',
+            "X-Export-Generated-At": timestamp,
+            "X-Export-Total-Rows": str(total_matches),
+            "X-Export-Query": q,
+            "X-Export-Year": str(year),
+            "X-Export-Href": str(href),
+            "X-Export-Fields": ",".join(fields),
+        }
+
+        if export_format == "json":
+            response = make_response(json.dumps(projected_rows, ensure_ascii=False, indent=2))
+            response.mimetype = "application/json"
+            response.headers.extend(response_headers)
+            return response
+
+        csv_buffer = StringIO()
+        writer = DictWriter(csv_buffer, fieldnames=fields, extrasaction="ignore")
+        writer.writeheader()
+        writer.writerows(projected_rows)
+
+        response = make_response(csv_buffer.getvalue())
+        response.mimetype = "text/csv"
+        response.headers.extend(response_headers)
+        return response
 
     @app.teardown_appcontext
     def cleanup(exception=None):

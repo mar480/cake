@@ -44,6 +44,20 @@ export interface SearchConceptsResponse {
   error?: string;
 }
 
+export interface SearchConceptExportRequest {
+  year: string;
+  href: string;
+  q: string;
+  filters: AdvancedSearchFilters;
+  format: "csv" | "json";
+  fields: string[];
+}
+
+export interface SearchConceptExportResponse {
+  blob: Blob;
+  filename: string;
+}
+
 export interface PresentationEntrypointLocationMatch {
   entrypoint: EntrypointOption;
   elrs: string[];
@@ -99,6 +113,37 @@ export async function searchConcepts(payload: SearchConceptRequest): Promise<Sea
     body: JSON.stringify(payload),
   });
   return parseJsonResponse<SearchConceptsResponse>(response);
+}
+
+export async function exportSearchConcepts(
+  payload: SearchConceptExportRequest
+): Promise<SearchConceptExportResponse> {
+  const response = await fetch("/api/search-concepts/export", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    let message = "Export failed";
+    try {
+      const errorPayload = (await response.json()) as { error?: unknown };
+      if (typeof errorPayload?.error === "string") {
+        message = errorPayload.error;
+      }
+    } catch {
+      // Ignore JSON parsing failures for non-JSON error responses.
+    }
+    throw new Error(message);
+  }
+
+  const contentDisposition = response.headers.get("Content-Disposition") ?? "";
+  const filenameMatch = /filename=\"?([^"]+)\"?/i.exec(contentDisposition);
+
+  return {
+    blob: await response.blob(),
+    filename: filenameMatch?.[1] ?? `search-export.${payload.format}`,
+  };
 }
 
 export async function fetchPresentationEntrypointLocations(

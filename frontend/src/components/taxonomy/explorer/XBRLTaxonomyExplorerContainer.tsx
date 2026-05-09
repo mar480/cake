@@ -65,6 +65,7 @@ const XBRLTaxonomyExplorerContainer: React.FC = () => {
     updateAdvancedSearchQuery,
     updateAdvancedSearchFilters,
     runAdvancedSearch,
+    runAdvancedSearchExport,
   } = useAdvancedSearch(year, entrypoint);
 
   const clearTreeUiState = useCallback(() => {
@@ -300,6 +301,7 @@ const XBRLTaxonomyExplorerContainer: React.FC = () => {
         onAdvancedSearchQueryChange={updateAdvancedSearchQuery}
         onAdvancedSearchFiltersChange={updateAdvancedSearchFilters}
         onRunAdvancedSearch={runAdvancedSearch}
+        onRunAdvancedSearchExport={runAdvancedSearchExport}
         onResetAdvancedSearch={resetAdvancedSearch}
         networkLabels={NETWORK_LABELS}
         resultNetworks={resultNetworks}

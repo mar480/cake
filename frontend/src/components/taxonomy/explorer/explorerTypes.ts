@@ -31,9 +31,13 @@ export type SearchConceptApiResult = {
   qname: string;
   local_name?: string;
   label?: string;
+  namespace?: string;
   balance?: string;
   period_type?: string;
   xbrl_type?: string;
+  full_type?: string;
+  abstract?: boolean;
+  nillable?: boolean;
   concept_type?: string;
   substitution_group?: string;
   hypercubes?: string[];

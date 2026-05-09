@@ -45,6 +45,11 @@ interface Props {
   onAdvancedSearchQueryChange: (query: string) => void;
   onAdvancedSearchFiltersChange: (next: AdvancedSearchFilters) => void;
   onRunAdvancedSearch: (nextOffset?: number) => void;
+  onRunAdvancedSearchExport: (options: {
+    format: "csv" | "json";
+    fields: string[];
+    filters?: AdvancedSearchFilters;
+  }) => void;
   onResetAdvancedSearch: () => void;
   networkLabels: Record<string, string>;
   resultNetworks: Record<string, string[]>;
@@ -80,6 +85,7 @@ const XBRLTaxonomyExplorer: React.FC<Props> = ({
   onAdvancedSearchQueryChange,
   onAdvancedSearchFiltersChange,
   onRunAdvancedSearch,
+  onRunAdvancedSearchExport,
   onResetAdvancedSearch,
   networkLabels,
   resultNetworks,
@@ -182,6 +188,7 @@ const XBRLTaxonomyExplorer: React.FC<Props> = ({
             onAdvancedSearchQueryChange={onAdvancedSearchQueryChange}
             onAdvancedSearchFiltersChange={onAdvancedSearchFiltersChange}
             onRunAdvancedSearch={onRunAdvancedSearch}
+            onRunAdvancedSearchExport={onRunAdvancedSearchExport}
             onResetAdvancedSearch={onResetAdvancedSearch}
             networkLabels={networkLabels}
             resultNetworks={resultNetworks}

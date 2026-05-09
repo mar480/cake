@@ -50,6 +50,11 @@ interface DetailPanelProps {
   onAdvancedSearchQueryChange: (query: string) => void;
   onAdvancedSearchFiltersChange: (next: AdvancedSearchFilters) => void;
   onRunAdvancedSearch: (nextOffset?: number) => void;
+  onRunAdvancedSearchExport: (options: {
+    format: "csv" | "json";
+    fields: string[];
+    filters?: AdvancedSearchFilters;
+  }) => void;
   onResetAdvancedSearch: () => void;
 }
 
@@ -74,6 +79,7 @@ const DetailPanelContainer: React.FC<DetailPanelProps> = ({
   onAdvancedSearchQueryChange,
   onAdvancedSearchFiltersChange,
   onRunAdvancedSearch,
+  onRunAdvancedSearchExport,
   onResetAdvancedSearch,
 }) => {
   const conceptCacheRef = useRef(new Map<string, ConceptDetailsResponse>());
@@ -349,10 +355,11 @@ const DetailPanelContainer: React.FC<DetailPanelProps> = ({
         {activeTab === "Search Results" && (
           <SearchResultsTab
             state={advancedSearchState}
-            onFiltersChange={onAdvancedSearchFiltersChange}
-            onRunSearch={onRunAdvancedSearch}
-            onResetSearch={onResetAdvancedSearch}
-            onNavigateToSearchNode={onNavigateToSearchNode}
+        onFiltersChange={onAdvancedSearchFiltersChange}
+        onRunSearch={onRunAdvancedSearch}
+        onRunExport={onRunAdvancedSearchExport}
+        onResetSearch={onResetAdvancedSearch}
+        onNavigateToSearchNode={onNavigateToSearchNode}
             onReturnToSearch={() => setActiveTab("Advanced Search")}
             networkLabels={networkLabels}
             resultNetworks={resultNetworks}

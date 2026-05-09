@@ -12,7 +12,13 @@ import {
   sanitizeAdvancedFilters,
 } from "../explorerDataUtils";
 import { EMPTY_ADVANCED_FILTERS } from "../explorerTypes";
-import { searchConcepts } from "../services/explorerApi";
+import { exportSearchConcepts, searchConcepts } from "../services/explorerApi";
+
+interface RunAdvancedSearchExportOptions {
+  format: "csv" | "json";
+  fields: string[];
+  filters?: AdvancedSearchFilters;
+}
 
 interface UseAdvancedSearchResult {
   advancedSearchState: AdvancedSearchState;
@@ -20,6 +26,7 @@ interface UseAdvancedSearchResult {
   updateAdvancedSearchQuery: (next: string) => void;
   updateAdvancedSearchFilters: (next: AdvancedSearchFilters) => void;
   runAdvancedSearch: (nextOffset?: number) => Promise<void>;
+  runAdvancedSearchExport: (options: RunAdvancedSearchExportOptions) => Promise<void>;
 }
 
 export function useAdvancedSearch(
@@ -32,7 +39,9 @@ export function useAdvancedSearch(
   const [advancedSearchResults, setAdvancedSearchResults] = useState<AdvancedSearchResult[]>([]);
   const [advancedSearchAllResults, setAdvancedSearchAllResults] = useState<AdvancedSearchResult[]>([]);
   const [advancedSearchLoading, setAdvancedSearchLoading] = useState(false);
+  const [advancedSearchExportLoading, setAdvancedSearchExportLoading] = useState(false);
   const [advancedSearchError, setAdvancedSearchError] = useState<string | null>(null);
+  const [advancedSearchExportError, setAdvancedSearchExportError] = useState<string | null>(null);
   const [advancedSearchPagination, setAdvancedSearchPagination] = useState<AdvancedSearchPagination>({
     limit: 25,
     offset: 0,
@@ -53,7 +62,9 @@ export function useAdvancedSearch(
     setAdvancedSearchResults([]);
     setAdvancedSearchAllResults([]);
     setAdvancedSearchLoading(false);
+    setAdvancedSearchExportLoading(false);
     setAdvancedSearchError(null);
+    setAdvancedSearchExportError(null);
     setAdvancedSearchPagination({ limit: 25, offset: 0, total: 0 });
     setAdvancedSearchLastRunAt(null);
   }, []);
@@ -106,24 +117,8 @@ export function useAdvancedSearch(
         const results = mapSearchResultsPayload(payload.results || [], requestedOffset);
         const totalResults = payload.total ?? results.length;
 
-        const allResultsPayloads: AdvancedSearchResult[] = [];
-        const fullFetchBatchSize = 100;
-        for (let batchOffset = 0; batchOffset < totalResults; batchOffset += fullFetchBatchSize) {
-          const batchPayload = await searchConcepts({
-            year,
-            href: entrypoint,
-            q: trimmedQuery,
-            filters: latestAdvancedFiltersRef.current,
-            limit: fullFetchBatchSize,
-            offset: batchOffset,
-          });
-          allResultsPayloads.push(
-            ...mapSearchResultsPayload(batchPayload.results || [], batchOffset)
-          );
-        }
-
         setAdvancedSearchResults(results);
-        setAdvancedSearchAllResults(allResultsPayloads);
+        setAdvancedSearchAllResults(results);
         setAdvancedSearchPagination((prev) => ({
           ...prev,
           limit: payload.limit ?? prev.limit,
@@ -143,6 +138,48 @@ export function useAdvancedSearch(
     [advancedSearchPagination.limit, advancedSearchPagination.offset, entrypoint, year]
   );
 
+  const runAdvancedSearchExport = useCallback(
+    async ({ format, fields, filters }: RunAdvancedSearchExportOptions) => {
+      if (!year || !entrypoint) {
+        setAdvancedSearchExportError("Select a taxonomy year and entrypoint before exporting.");
+        return;
+      }
+
+      const trimmedQuery = latestAdvancedQueryRef.current.trim();
+      const exportFilters = filters ? sanitizeAdvancedFilters(filters) : latestAdvancedFiltersRef.current;
+      setAdvancedSearchExportLoading(true);
+      setAdvancedSearchExportError(null);
+
+      try {
+        const { blob, filename } = await exportSearchConcepts({
+          year,
+          href: entrypoint,
+          q: trimmedQuery,
+          filters: exportFilters,
+          format,
+          fields,
+        });
+
+        const objectUrl = window.URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = objectUrl;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        window.URL.revokeObjectURL(objectUrl);
+      } catch (error) {
+        console.error("Advanced search export failed", error);
+        setAdvancedSearchExportError(
+          error instanceof Error ? error.message : "Advanced search export failed. Please try again."
+        );
+      } finally {
+        setAdvancedSearchExportLoading(false);
+      }
+    },
+    [entrypoint, year]
+  );
+
   const advancedSearchState = useMemo<AdvancedSearchState>(
     () => ({
       query: advancedSearchQuery,
@@ -150,7 +187,9 @@ export function useAdvancedSearch(
       results: advancedSearchResults,
       allResults: advancedSearchAllResults,
       loading: advancedSearchLoading,
+      exportLoading: advancedSearchExportLoading,
       error: advancedSearchError,
+      exportError: advancedSearchExportError,
       pagination: advancedSearchPagination,
       lastRunAt: advancedSearchLastRunAt,
     }),
@@ -160,7 +199,9 @@ export function useAdvancedSearch(
       advancedSearchResults,
       advancedSearchAllResults,
       advancedSearchLoading,
+      advancedSearchExportLoading,
       advancedSearchError,
+      advancedSearchExportError,
       advancedSearchPagination,
       advancedSearchLastRunAt,
     ]
@@ -172,5 +213,6 @@ export function useAdvancedSearch(
     updateAdvancedSearchQuery,
     updateAdvancedSearchFilters,
     runAdvancedSearch,
+    runAdvancedSearchExport,
   };
 }

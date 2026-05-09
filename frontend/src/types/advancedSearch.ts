@@ -18,9 +18,13 @@ export interface AdvancedSearchResult {
   qname: string;
   localName?: string;
   label?: string;
+  namespace?: string;
   balance?: string;
   periodType?: string;
   xbrlType?: string;
+  fullType?: string;
+  abstract?: boolean;
+  nillable?: boolean;
   conceptType?: string;
   substitutionGroup?: string;
   hypercubes?: string[];
@@ -41,7 +45,9 @@ export interface AdvancedSearchState {
   results: AdvancedSearchResult[];
   allResults: AdvancedSearchResult[];
   loading: boolean;
+  exportLoading: boolean;
   error: string | null;
+  exportError: string | null;
   pagination: AdvancedSearchPagination;
   lastRunAt: string | null;
 }

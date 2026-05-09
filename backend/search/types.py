@@ -29,9 +29,13 @@ class SearchResult(TypedDict):
     qname: str
     label: str
     local_name: str
+    namespace: str
     balance: str
     period_type: str
     xbrl_type: str
+    full_type: str
+    abstract: bool | None
+    nillable: bool | None
     substitution_group: str
     concept_type: str
     hypercubes: List[str]

@@ -197,7 +197,9 @@ const AdvancedSearchTab: React.FC<AdvancedSearchTabProps> = ({
     results: state?.results ?? [],
     allResults: state?.allResults ?? [],
     loading: state?.loading ?? false,
+    exportLoading: state?.exportLoading ?? false,
     error: state?.error ?? null,
+    exportError: state?.exportError ?? null,
     pagination: state?.pagination ?? { limit: 25, offset: 0, total: 0 },
     lastRunAt: state?.lastRunAt ?? null,
   };

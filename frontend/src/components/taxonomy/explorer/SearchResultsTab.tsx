@@ -1,6 +1,15 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { ChevronDown, Info } from "lucide-react";
+import { ChevronDown, Download, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -46,6 +55,11 @@ interface SearchResultsTabProps {
   state?: AdvancedSearchState;
   onFiltersChange: (next: AdvancedSearchFilters) => void;
   onRunSearch: (nextOffset?: number) => void;
+  onRunExport: (options: {
+    format: "csv" | "json";
+    fields: string[];
+    filters?: AdvancedSearchFilters;
+  }) => void;
   onResetSearch: () => void;
   onNavigateToSearchNode?: (
     qname: string,
@@ -67,6 +81,7 @@ const SearchResultsTab: React.FC<SearchResultsTabProps> = ({
   state,
   onFiltersChange,
   onRunSearch,
+  onRunExport,
   onResetSearch,
   onNavigateToSearchNode,
   onReturnToSearch,
@@ -77,18 +92,39 @@ const SearchResultsTab: React.FC<SearchResultsTabProps> = ({
   year,
   currentEntrypoint,
 }) => {
+  const exportFieldOptions = [
+    { id: "qname", label: "QName" },
+    { id: "label", label: "Label" },
+    { id: "local_name", label: "Local name" },
+    { id: "namespace", label: "Namespace" },
+    { id: "concept_type", label: "Concept type" },
+    { id: "xbrl_type", label: "XBRL type" },
+    { id: "full_type", label: "Full type" },
+    { id: "period_type", label: "Period type" },
+    { id: "balance", label: "Balance" },
+    { id: "abstract", label: "Abstract" },
+    { id: "nillable", label: "Nillable" },
+    { id: "substitution_group", label: "Substitution group" },
+    { id: "reference_displays", label: "References" },
+    { id: "hypercubes", label: "Hypercubes" },
+    { id: "matched_fields", label: "Matched fields" },
+    { id: "score", label: "Score" },
+  ] as const;
+  const allExportFieldIds = exportFieldOptions.map((field) => field.id);
   const safeState: AdvancedSearchState = {
     query: state?.query ?? "",
     filters: state?.filters ?? EMPTY_FILTERS,
     results: state?.results ?? [],
     allResults: state?.allResults ?? [],
     loading: state?.loading ?? false,
+    exportLoading: state?.exportLoading ?? false,
     error: state?.error ?? null,
+    exportError: state?.exportError ?? null,
     pagination: state?.pagination ?? { limit: 25, offset: 0, total: 0 },
     lastRunAt: state?.lastRunAt ?? null,
   };
 
-  const { filters, results, allResults, loading, error, lastRunAt, pagination } = safeState;
+  const { filters, results, allResults, loading, exportLoading, error, exportError, lastRunAt, pagination } = safeState;
   const { limit, offset, total } = pagination;
 
   const activeChips: FilterChip[] = useMemo(() => {
@@ -146,6 +182,9 @@ const SearchResultsTab: React.FC<SearchResultsTabProps> = ({
   }>({ balance: [], periodType: [], xbrlType: [], conceptType: [] });
   const [localResultOffset, setLocalResultOffset] = useState(0);
   const [openMenuResultId, setOpenMenuResultId] = useState<string | null>(null);
+  const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
+  const [exportFormat, setExportFormat] = useState<"csv" | "json">("csv");
+  const [selectedExportFields, setSelectedExportFields] = useState<string[]>(allExportFieldIds);
 
   const resultFilterSource = allResults.length > 0 ? allResults : results;
 
@@ -270,6 +309,41 @@ const SearchResultsTab: React.FC<SearchResultsTabProps> = ({
   const clearAllFilters = () => {
     onFiltersChange(EMPTY_FILTERS);
     onRunSearch(0);
+  };
+
+  const toggleExportField = (fieldId: string) => {
+    setSelectedExportFields((prev) =>
+      prev.includes(fieldId) ? prev.filter((value) => value !== fieldId) : [...prev, fieldId]
+    );
+  };
+
+  const exportResultFilters = useMemo<Pick<AdvancedSearchFilters, "balance" | "periodType" | "xbrlType" | "conceptType">>(
+    () => ({
+      balance: resultFilter.balance,
+      periodType: resultFilter.periodType,
+      xbrlType: resultFilter.xbrlType,
+      conceptType: resultFilter.conceptType,
+    }),
+    [resultFilter.balance, resultFilter.conceptType, resultFilter.periodType, resultFilter.xbrlType]
+  );
+
+  const effectiveExportFilters = useMemo<AdvancedSearchFilters>(
+    () => ({
+      ...filters,
+      balance: exportResultFilters.balance.length > 0 ? exportResultFilters.balance : filters.balance,
+      periodType: exportResultFilters.periodType.length > 0 ? exportResultFilters.periodType : filters.periodType,
+      xbrlType: exportResultFilters.xbrlType.length > 0 ? exportResultFilters.xbrlType : filters.xbrlType,
+      conceptType: exportResultFilters.conceptType.length > 0 ? exportResultFilters.conceptType : filters.conceptType,
+    }),
+    [exportResultFilters.balance, exportResultFilters.conceptType, exportResultFilters.periodType, exportResultFilters.xbrlType, filters]
+  );
+
+  const handleExport = () => {
+    if (selectedExportFields.length === 0) {
+      return;
+    }
+
+    onRunExport({ format: exportFormat, fields: selectedExportFields, filters: effectiveExportFilters });
   };
 
   const hasActiveSharedFacetFilters =
@@ -414,6 +488,25 @@ const SearchResultsTab: React.FC<SearchResultsTabProps> = ({
                 onClick={onReturnToSearch}
               >
                 Return to search query
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                className="
+                  min-w-[170px]
+                  justify-center
+                  border-2 border-slate-400
+                  bg-emerald-50
+                  text-slate-800
+                  hover:bg-emerald-100
+                  focus-visible:ring-1 focus-visible:ring-emerald-300
+                "
+                onClick={() => setIsExportDialogOpen(true)}
+                disabled={displayedTotal === 0 || exportLoading}
+              >
+                <Download className="mr-2 h-3.5 w-3.5" />
+                {exportLoading ? "Exporting..." : "Export results"}
               </Button>
               <Button
                 type="button"
@@ -840,9 +933,86 @@ const SearchResultsTab: React.FC<SearchResultsTabProps> = ({
         </div>
       </div>
 
-
-
       {error && <div className="text-sm text-red-600">{error}</div>}
+      {exportError && <div className="text-sm text-red-600">{exportError}</div>}
+
+      <Dialog open={isExportDialogOpen} onOpenChange={setIsExportDialogOpen}>
+        <DialogContent className="max-w-3xl bg-white">
+          <DialogHeader>
+            <DialogTitle>Export Search Results</DialogTitle>
+            <DialogDescription>
+              Export uses the current search query and active filters. Choose a format and the fields to include.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="rounded border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">
+              Query: <span className="font-medium">{state?.query?.trim() || "(all concepts)"}</span>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-sm font-medium text-slate-700">Format</span>
+              {(["csv", "json"] as const).map((formatOption) => (
+                <button
+                  key={formatOption}
+                  type="button"
+                  className={`rounded border px-3 py-1 text-sm ${
+                    exportFormat === formatOption
+                      ? "border-emerald-500 bg-emerald-100 text-emerald-900"
+                      : "border-slate-300 bg-white text-slate-700"
+                  }`}
+                  onClick={() => setExportFormat(formatOption)}
+                >
+                  {formatOption.toUpperCase()}
+                </button>
+              ))}
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+              <Button type="button" size="sm" variant="outline" onClick={() => setSelectedExportFields(allExportFieldIds)}>
+                All fields
+              </Button>
+              <Button type="button" size="sm" variant="outline" onClick={() => setSelectedExportFields([])}>
+                Clear selection
+              </Button>
+            </div>
+
+            <div className="grid max-h-[360px] grid-cols-2 gap-3 overflow-auto rounded border border-slate-200 p-3 md:grid-cols-3">
+              {exportFieldOptions.map((field) => (
+                <label key={field.id} className="flex items-center gap-2 text-sm text-slate-800">
+                  <Checkbox
+                    checked={selectedExportFields.includes(field.id)}
+                    onCheckedChange={() => toggleExportField(field.id)}
+                  />
+                  <span>{field.label}</span>
+                </label>
+              ))}
+            </div>
+
+            {selectedExportFields.length === 0 && (
+              <div className="text-sm text-red-600">Select at least one field to export.</div>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setIsExportDialogOpen(false)} disabled={exportLoading}>
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              onClick={() => {
+                handleExport();
+                if (selectedExportFields.length > 0) {
+                  setIsExportDialogOpen(false);
+                }
+              }}
+              disabled={selectedExportFields.length === 0 || exportLoading}
+            >
+              {exportLoading ? "Exporting..." : `Export ${exportFormat.toUpperCase()}`}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
