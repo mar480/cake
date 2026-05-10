@@ -237,10 +237,13 @@ def register_api_routes(app, taxonomy_base_dir: str):
 
     @app.route("/api/concept-details")
     def concept_details():
+        total_started_at = time.perf_counter()
         qname = request.args.get("qname", "").strip()
 
         if ":" not in qname:
             print("[concept-details] invalid qname format")
+            total_request_ms = (time.perf_counter() - total_started_at) * 1000
+            print(f"[concept-details] total_request_ms={total_request_ms:.1f}")
             return jsonify({"error": "Invalid qname"}), 400
 
         taxonomy = getattr(g, "taxonomy", None)
@@ -258,6 +261,8 @@ def register_api_routes(app, taxonomy_base_dir: str):
             print("[concept-details] taxonomy is None")
             with taxonomy_lock:
                 is_loading = taxonomy_cache.get("is_loading", False)
+            total_request_ms = (time.perf_counter() - total_started_at) * 1000
+            print(f"[concept-details] total_request_ms={total_request_ms:.1f}")
             return (
                 jsonify(
                     {
@@ -300,6 +305,7 @@ def register_api_routes(app, taxonomy_base_dir: str):
             available_prefixes = []
 
         prefix, local_name = qname.split(":", 1)
+        concept_lookup_started_at = time.perf_counter()
         print(f"[concept-details] requested prefix={prefix}, local_name={local_name}")
 
         # Keep existing resolution logic with logs
@@ -313,6 +319,10 @@ def register_api_routes(app, taxonomy_base_dir: str):
 
         if ns is None:
             print("[concept-details] namespace resolution failed")
+            concept_lookup_ms = (time.perf_counter() - concept_lookup_started_at) * 1000
+            print(f"[concept-details] concept_lookup_ms={concept_lookup_ms:.1f}")
+            total_request_ms = (time.perf_counter() - total_started_at) * 1000
+            print(f"[concept-details] total_request_ms={total_request_ms:.1f}")
             return (
                 jsonify(
                     {
@@ -327,6 +337,10 @@ def register_api_routes(app, taxonomy_base_dir: str):
             concept_data = g.taxonomy.concepts.get_concept_json(ns, local_name)
         except Exception as ex:
             print(f"[concept-details] get_concept_json error: {ex}")
+            concept_lookup_ms = (time.perf_counter() - concept_lookup_started_at) * 1000
+            print(f"[concept-details] concept_lookup_ms={concept_lookup_ms:.1f}")
+            total_request_ms = (time.perf_counter() - total_started_at) * 1000
+            print(f"[concept-details] total_request_ms={total_request_ms:.1f}")
             return (
                 jsonify(
                     {
@@ -339,9 +353,17 @@ def register_api_routes(app, taxonomy_base_dir: str):
 
         if not concept_data:
             print("[concept-details] concept_data not found")
+            concept_lookup_ms = (time.perf_counter() - concept_lookup_started_at) * 1000
+            print(f"[concept-details] concept_lookup_ms={concept_lookup_ms:.1f}")
+            total_request_ms = (time.perf_counter() - total_started_at) * 1000
+            print(f"[concept-details] total_request_ms={total_request_ms:.1f}")
             return jsonify({"error": f"Concept '{qname}' not found"}), 404
 
+        concept_lookup_ms = (time.perf_counter() - concept_lookup_started_at) * 1000
+        print(f"[concept-details] concept_lookup_ms={concept_lookup_ms:.1f}")
         concept_data["concept"]["qname"] = qname
+        total_request_ms = (time.perf_counter() - total_started_at) * 1000
+        print(f"[concept-details] total_request_ms={total_request_ms:.1f}")
         print("[concept-details] ===== END OK =====\n")
         return jsonify(concept_data)
 
@@ -411,6 +433,7 @@ def register_api_routes(app, taxonomy_base_dir: str):
         entrypoint_path = href
 
         try:
+            total_started_at = time.perf_counter()
             print("\n[load-entrypoint] ===== START =====")
             print(f"[load-entrypoint] year={year}")
             print(f"[load-entrypoint] href={href}")
@@ -423,9 +446,12 @@ def register_api_routes(app, taxonomy_base_dir: str):
                 taxonomy_cache["is_loading"] = True
                 old_taxonomy = taxonomy_cache.get("active")
 
+            arelle_started_at = time.perf_counter()
             new_taxonomy = load_taxonomy_with_lloyds_fallback(
                 taxonomy_base_dir, year, entrypoint_path
             )
+            arelle_load_ms = (time.perf_counter() - arelle_started_at) * 1000
+            print(f"[load-entrypoint] arelle_load_ms={arelle_load_ms:.1f}")
 
             with taxonomy_lock:
                 taxonomy_cache["active"] = new_taxonomy
@@ -497,6 +523,8 @@ def register_api_routes(app, taxonomy_base_dir: str):
                 print(f"[load-entrypoint] cached search filter options key={cache_key}")
 
             print("[load-entrypoint] ===== END OK =====\n")
+            total_request_ms = (time.perf_counter() - total_started_at) * 1000
+            print(f"[load-entrypoint] total_request_ms={total_request_ms:.1f}")
 
             return jsonify(
                 {"status": "loaded", "entrypoint": os.path.basename(href), "trees": trees}
