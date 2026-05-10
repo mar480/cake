@@ -1,5 +1,6 @@
 import json
 import os
+import time
 from functools import lru_cache
 
 from services.search_filters import classify_concept_type, entrypoint_name_from_href
@@ -93,6 +94,7 @@ def _walk_members(
 
 @lru_cache(maxsize=32)
 def load_dimensional_relationship_index(taxonomy_base_dir: str, year: str, href: str) -> dict:
+    started_at = time.perf_counter()
     entrypoint_name = entrypoint_name_from_href(href)
     tree_dir = os.path.join(taxonomy_base_dir, year, "trees", entrypoint_name)
     if not os.path.isdir(tree_dir):
@@ -214,7 +216,7 @@ def load_dimensional_relationship_index(taxonomy_base_dir: str, year: str, href:
             },
         )
 
-    return {
+    result = {
         "concept_meta": concept_meta,
         "hypercube_by_qname": hypercube_by_qname,
         "dimension_by_qname": dimension_by_qname,
@@ -225,6 +227,9 @@ def load_dimensional_relationship_index(taxonomy_base_dir: str, year: str, href:
         },
         "member_to_dimension_paths": member_to_dimension_paths,
     }
+    elapsed_ms = (time.perf_counter() - started_at) * 1000
+    print(f"[dimensional-load] total_request_ms={elapsed_ms:.1f}")
+    return result
 
 
 def resolve_dimensional_relationships(taxonomy_base_dir: str, year: str, href: str, qname: str) -> dict:
