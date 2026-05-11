@@ -451,7 +451,7 @@ def register_api_routes(app, taxonomy_base_dir: str):
                 old_taxonomy = taxonomy_cache.get("active")
 
             arelle_started_at = time.perf_counter()
-            new_taxonomy = load_taxonomy_with_lloyds_fallback(
+            new_taxonomy, load_diagnostics = load_taxonomy_with_lloyds_fallback(
                 taxonomy_base_dir, year, entrypoint_path
             )
             arelle_load_ms = (time.perf_counter() - arelle_started_at) * 1000
