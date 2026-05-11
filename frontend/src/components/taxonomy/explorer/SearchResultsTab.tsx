@@ -675,7 +675,7 @@ const SearchResultsTab: React.FC<SearchResultsTabProps> = ({
                       </div>
                     )}
                     <div
-                      className={`text-xs break-words rounded px-2 py-1 flex items-center ${
+                      className={`text-xs break-words rounded py-1 flex items-center ${
                         presentationElrs.length > 0
                           ? "text-gray-500"
                           : "text-red-800 bg-red-50 border border-red-200"
