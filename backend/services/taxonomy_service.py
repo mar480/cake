@@ -1,4 +1,5 @@
 import os
+import time
 from urllib.parse import unquote, urlparse
 
 from lxml import etree
@@ -21,8 +22,11 @@ def find_local_entrypoint_from_href(taxonomy_base_dir: str, year: str, href: str
       1) filename exact match
       2) URL path suffix match
     """
+    started_at = time.perf_counter()
     year_root = os.path.join(taxonomy_base_dir, year)
     if not os.path.isdir(year_root):
+        elapsed_ms = (time.perf_counter() - started_at) * 1000
+        print(f"[taxonomy-load] local resolution method=none elapsed_ms={elapsed_ms:.1f}")
         raise FileNotFoundError(f"Year root not found: {year_root}")
 
     parsed = urlparse(href)
@@ -39,9 +43,13 @@ def find_local_entrypoint_from_href(taxonomy_base_dir: str, year: str, href: str
     # 1) Exact filename matches
     name_matches = [p for p in file_paths if os.path.basename(p) == base_name]
     if len(name_matches) == 1:
+        elapsed_ms = (time.perf_counter() - started_at) * 1000
+        print(f"[taxonomy-load] local resolution method=filename match elapsed_ms={elapsed_ms:.1f}")
         return name_matches[0]
     if len(name_matches) > 1:
         name_matches.sort(key=lambda p: (len(p.split(os.sep)), len(p)))
+        elapsed_ms = (time.perf_counter() - started_at) * 1000
+        print(f"[taxonomy-load] local resolution method=filename-ambiguous elapsed_ms={elapsed_ms:.1f}")
         return name_matches[0]
 
     # 2) Path suffix match
@@ -50,11 +58,17 @@ def find_local_entrypoint_from_href(taxonomy_base_dir: str, year: str, href: str
         p for p in file_paths if p.replace("\\", "/").endswith(remote_suffix)
     ]
     if len(suffix_matches) == 1:
+        elapsed_ms = (time.perf_counter() - started_at) * 1000
+        print(f"[taxonomy-load] local resolution method=suffix match elapsed_ms={elapsed_ms:.1f}")
         return suffix_matches[0]
     if len(suffix_matches) > 1:
         suffix_matches.sort(key=lambda p: (len(p.split(os.sep)), len(p)))
+        elapsed_ms = (time.perf_counter() - started_at) * 1000
+        print(f"[taxonomy-load] local resolution method=suffix-ambiguous elapsed_ms={elapsed_ms:.1f}")
         return suffix_matches[0]
 
+    elapsed_ms = (time.perf_counter() - started_at) * 1000
+    print(f"[taxonomy-load] local resolution method=none elapsed_ms={elapsed_ms:.1f}")
     raise FileNotFoundError(
         f"Could not map href to local file for year='{year}': {href}"
     )
