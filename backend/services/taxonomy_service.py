@@ -88,6 +88,9 @@ def load_taxonomy_with_lloyds_fallback(taxonomy_base_dir: str, year: str, href: 
     Primary: load href as-is.
     Fallback (Lloyds only): if remote load appears empty/forbidden, resolve local file and reload.
     """
+    local_resolution_method = "not_attempted"
+    local_resolution_elapsed_ms = 0.0
+
     print(f"[taxonomy-load] Attempt primary load: {href}")
     primary = TaxonomyContext(href)
     primary_count = len(getattr(primary.model, "qnameConcepts", {}))
@@ -100,7 +103,10 @@ def load_taxonomy_with_lloyds_fallback(taxonomy_base_dir: str, year: str, href: 
         )
         safe_close_taxonomy(primary)
 
+        local_find_started_at = time.perf_counter()
         local_entrypoint = find_local_entrypoint_from_href(taxonomy_base_dir, year, href)
+        local_resolution_elapsed_ms = (time.perf_counter() - local_find_started_at) * 1000
+        local_resolution_method = "lloyds-fallback"
         print(f"[taxonomy-load] Local fallback entrypoint: {local_entrypoint}")
 
         fallback = TaxonomyContext(local_entrypoint)
@@ -113,14 +119,26 @@ def load_taxonomy_with_lloyds_fallback(taxonomy_base_dir: str, year: str, href: 
                 f"Local fallback loaded but model still empty for {local_entrypoint}"
             )
 
-        return fallback
+        return (
+            fallback,
+            {
+                "local_resolution_method": local_resolution_method,
+                "local_resolution_elapsed_ms": local_resolution_elapsed_ms,
+            },
+        )
 
     # Not fallback case, or primary load succeeded
     if primary_count == 0:
         print(
             "[taxonomy-load] Warning: model empty after primary load (fallback not applied)"
         )
-    return primary
+    return (
+        primary,
+        {
+            "local_resolution_method": local_resolution_method,
+            "local_resolution_elapsed_ms": local_resolution_elapsed_ms,
+        },
+    )
 
 
 def get_entrypoints_for_year(taxonomy_base_dir: str, year: str):

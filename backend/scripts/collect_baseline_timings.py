@@ -103,6 +103,33 @@ def extract_metrics(lines):
     return metrics
 
 
+def merge_metrics_from_response(metrics, payload, endpoint):
+    if not isinstance(payload, dict):
+        return metrics
+    timings = payload.get("timings_ms")
+    if not isinstance(timings, dict):
+        return metrics
+
+    if endpoint == "load-entrypoint":
+        metrics["arelle_load_ms"] = timings.get(
+            "arelle_load_ms", metrics["arelle_load_ms"]
+        )
+        metrics["local_resolution_elapsed_ms"] = timings.get(
+            "local_resolution_elapsed_ms", metrics["local_resolution_elapsed_ms"]
+        )
+        metrics["local_resolution_method"] = payload.get(
+            "local_resolution_method", metrics["local_resolution_method"]
+        )
+    if endpoint == "concept-details":
+        metrics["concept_lookup_ms"] = timings.get(
+            "concept_lookup_ms", metrics["concept_lookup_ms"]
+        )
+    metrics["total_request_ms"] = timings.get(
+        "total_request_ms", metrics["total_request_ms"]
+    )
+    return metrics
+
+
 def main():
     args = parse_args()
     if args.include_concept_details and not args.qname:
@@ -125,6 +152,12 @@ def main():
             )
             lines, log_offset = read_new_log_lines(log_path, before)
             metrics = extract_metrics(lines)
+            try:
+                metrics = merge_metrics_from_response(
+                    metrics, resp.json(), "load-entrypoint"
+                )
+            except ValueError:
+                pass
             records.append(
                 {
                     "captured_at_utc": dt.datetime.now(dt.timezone.utc).isoformat(),
@@ -149,6 +182,12 @@ def main():
                     )
                     lines, log_offset = read_new_log_lines(log_path, before)
                     metrics = extract_metrics(lines)
+                    try:
+                        metrics = merge_metrics_from_response(
+                            metrics, cresp.json(), "concept-details"
+                        )
+                    except ValueError:
+                        pass
                     records.append(
                         {
                             "captured_at_utc": dt.datetime.now(dt.timezone.utc).isoformat(),
