@@ -365,6 +365,10 @@ def register_api_routes(app, taxonomy_base_dir: str):
         total_request_ms = (time.perf_counter() - total_started_at) * 1000
         print(f"[concept-details] total_request_ms={total_request_ms:.1f}")
         print("[concept-details] ===== END OK =====\n")
+        concept_data["timings_ms"] = {
+            "concept_lookup_ms": round(concept_lookup_ms, 1),
+            "total_request_ms": round(total_request_ms, 1),
+        }
         return jsonify(concept_data)
 
     @app.route("/api/warm-concept-details")
@@ -527,7 +531,15 @@ def register_api_routes(app, taxonomy_base_dir: str):
             print(f"[load-entrypoint] total_request_ms={total_request_ms:.1f}")
 
             return jsonify(
-                {"status": "loaded", "entrypoint": os.path.basename(href), "trees": trees}
+                {
+                    "status": "loaded",
+                    "entrypoint": os.path.basename(href),
+                    "trees": trees,
+                    "timings_ms": {
+                        "arelle_load_ms": round(arelle_load_ms, 1),
+                        "total_request_ms": round(total_request_ms, 1),
+                    },
+                }
             )
 
         except Exception as e:
