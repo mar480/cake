@@ -114,12 +114,6 @@ def merge_metrics_from_response(metrics, payload, endpoint):
         metrics["arelle_load_ms"] = timings.get(
             "arelle_load_ms", metrics["arelle_load_ms"]
         )
-        metrics["local_resolution_elapsed_ms"] = timings.get(
-            "local_resolution_elapsed_ms", metrics["local_resolution_elapsed_ms"]
-        )
-        metrics["local_resolution_method"] = payload.get(
-            "local_resolution_method", metrics["local_resolution_method"]
-        )
     if endpoint == "concept-details":
         metrics["concept_lookup_ms"] = timings.get(
             "concept_lookup_ms", metrics["concept_lookup_ms"]

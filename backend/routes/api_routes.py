@@ -538,13 +538,7 @@ def register_api_routes(app, taxonomy_base_dir: str):
                     "timings_ms": {
                         "arelle_load_ms": round(arelle_load_ms, 1),
                         "total_request_ms": round(total_request_ms, 1),
-                        "local_resolution_elapsed_ms": round(
-                            load_diagnostics.get("local_resolution_elapsed_ms", 0.0), 1
-                        ),
                     },
-                    "local_resolution_method": load_diagnostics.get(
-                        "local_resolution_method"
-                    ),
                 }
             )
 
