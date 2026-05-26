@@ -38,6 +38,7 @@ export function useAdvancedSearch(
     useState<AdvancedSearchFilters>(EMPTY_ADVANCED_FILTERS);
   const [advancedSearchResults, setAdvancedSearchResults] = useState<AdvancedSearchResult[]>([]);
   const [advancedSearchAllResults, setAdvancedSearchAllResults] = useState<AdvancedSearchResult[]>([]);
+  const [advancedSearchHasRun, setAdvancedSearchHasRun] = useState(false);
   const [advancedSearchLoading, setAdvancedSearchLoading] = useState(false);
   const [advancedSearchExportLoading, setAdvancedSearchExportLoading] = useState(false);
   const [advancedSearchError, setAdvancedSearchError] = useState<string | null>(null);
@@ -61,6 +62,7 @@ export function useAdvancedSearch(
     lastRunCriteriaKeyRef.current = null;
     setAdvancedSearchResults([]);
     setAdvancedSearchAllResults([]);
+    setAdvancedSearchHasRun(false);
     setAdvancedSearchLoading(false);
     setAdvancedSearchExportLoading(false);
     setAdvancedSearchError(null);
@@ -101,6 +103,7 @@ export function useAdvancedSearch(
             ? 0
             : advancedSearchPagination.offset;
 
+      setAdvancedSearchHasRun(true);
       setAdvancedSearchLoading(true);
       setAdvancedSearchError(null);
 
@@ -186,6 +189,7 @@ export function useAdvancedSearch(
       filters: advancedSearchFilters,
       results: advancedSearchResults,
       allResults: advancedSearchAllResults,
+      hasRun: advancedSearchHasRun,
       loading: advancedSearchLoading,
       exportLoading: advancedSearchExportLoading,
       error: advancedSearchError,
@@ -198,6 +202,7 @@ export function useAdvancedSearch(
       advancedSearchFilters,
       advancedSearchResults,
       advancedSearchAllResults,
+      advancedSearchHasRun,
       advancedSearchLoading,
       advancedSearchExportLoading,
       advancedSearchError,

@@ -168,6 +168,7 @@ const SearchResultsTab: React.FC<SearchResultsTabProps> = ({
     filters: state?.filters ?? EMPTY_FILTERS,
     results: state?.results ?? [],
     allResults: state?.allResults ?? [],
+    hasRun: state?.hasRun ?? false,
     loading: state?.loading ?? false,
     exportLoading: state?.exportLoading ?? false,
     error: state?.error ?? null,

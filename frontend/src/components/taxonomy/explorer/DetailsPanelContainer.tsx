@@ -44,6 +44,7 @@ interface DetailPanelProps {
   network: string;
   year: string | null;
   entrypoint?: string | null;
+  entrypointLoaded: boolean;
   advancedSearchState: AdvancedSearchState;
   advancedSearchFilterOptions: AdvancedSearchFilterOptions;
   referenceParagraphsBySource: Record<string, string[]>;
@@ -73,6 +74,7 @@ const DetailPanelContainer: React.FC<DetailPanelProps> = ({
   network,
   year,
   entrypoint,
+  entrypointLoaded,
   advancedSearchState,
   advancedSearchFilterOptions,
   referenceParagraphsBySource,
@@ -89,30 +91,37 @@ const DetailPanelContainer: React.FC<DetailPanelProps> = ({
   const [conceptError, setConceptError] = useState<string | null>(null);
   const [prefetchedRelationships, setPrefetchedRelationships] =
     useState<PrefetchedDimensionalRelationshipsState | null>(null);
-
-  const showHypercubeTab = Boolean(year && entrypoint);
+  const hasNodeSelection = Boolean(selectedNode?.data?.qname);
+  const hasSearchRun = Boolean(advancedSearchState?.hasRun);
+  const hasSearchContext = entrypointLoaded && Boolean(year && entrypoint);
 
   const tabs = useMemo(
     () =>
-      showHypercubeTab
-        ? ([
-            "Details",
-            "Hypercube Relationships",
-            "Tree Locations",
-            "Advanced Search",
-            "Search Results",
-          ] as const)
-        : (["Details", "Tree Locations", "Advanced Search", "Search Results"] as const),
-    [showHypercubeTab]
+      [
+        "Details",
+        "Hypercube Relationships",
+        "Tree Locations",
+        "Advanced Search",
+        "Search Results",
+      ] as const,
+    []
   );
 
-  const hasSearchRun = Boolean(advancedSearchState?.lastRunAt);
-
   useEffect(() => {
-    if (!tabs.includes(activeTab)) {
-      setActiveTab("Details");
+    const requiresSelection =
+      activeTab === "Details" ||
+      activeTab === "Hypercube Relationships" ||
+      activeTab === "Tree Locations";
+    const tabUnavailable =
+      !tabs.includes(activeTab) ||
+      ((activeTab === "Advanced Search" || activeTab === "Search Results") && !hasSearchContext) ||
+      (requiresSelection && !hasNodeSelection) ||
+      (activeTab === "Search Results" && !hasSearchRun);
+
+    if (tabUnavailable) {
+      setActiveTab(hasSearchContext ? "Advanced Search" : "Details");
     }
-  }, [tabs, activeTab]);
+  }, [tabs, activeTab, hasNodeSelection, hasSearchContext, hasSearchRun]);
 
   const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -243,14 +252,14 @@ const DetailPanelContainer: React.FC<DetailPanelProps> = ({
   }, [fetchConceptDetailsWithRetry, getConceptCacheKey, selectedNode]);
 
   useEffect(() => {
-    if (selectedNode) {
+    if (hasNodeSelection) {
       setActiveTab("Details");
     }
-  }, [selectedNode]);
+  }, [hasNodeSelection, selectedNode?.key]);
 
   useEffect(() => {
-    setActiveTab("Details");
-  }, [year, entrypoint]);
+    setActiveTab(hasSearchContext ? "Advanced Search" : "Details");
+  }, [hasSearchContext]);
 
   useEffect(() => {
     if (!selectedNode?.data?.qname || !year || !entrypoint) {
@@ -311,21 +320,29 @@ const DetailPanelContainer: React.FC<DetailPanelProps> = ({
   return (
     <div className="flex flex-col h-full overflow-hidden">
       <div className="flex border-b px-1 pt-1 shadow-sm">
-  {tabs.map((tab) => (
-    <button
-      key={tab}
-      className={`px-4 py-1.5 text-sm font-medium border border-b-0 rounded-t-md shadow-sm transition-colors mr-1 ${
-        activeTab === tab
-          ? "bg-blue-100 border-blue-300 text-blue-900"
-          : "bg-gray-200 border-gray-300 text-gray-800 hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
-      }`}
-      onClick={() => setActiveTab(tab)}
-      disabled={tab === "Search Results" && !hasSearchRun}
-    >
-      {tab}
-    </button>
-  ))}
-</div>
+        {tabs.map((tab) => {
+          const requiresSelection =
+            tab === "Details" || tab === "Hypercube Relationships" || tab === "Tree Locations";
+          const disabled =
+            ((tab === "Advanced Search" || tab === "Search Results") && !hasSearchContext) ||
+            (requiresSelection && !hasNodeSelection) || (tab === "Search Results" && !hasSearchRun);
+
+          return (
+            <button
+              key={tab}
+              className={`px-4 py-1.5 text-sm font-medium border border-b-0 rounded-t-md shadow-sm transition-colors mr-1 ${
+                activeTab === tab
+                  ? "bg-blue-100 border-blue-300 text-blue-900"
+                  : "bg-gray-200 border-gray-300 text-gray-800 hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
+              }`}
+              onClick={() => setActiveTab(tab)}
+              disabled={disabled}
+            >
+              {tab}
+            </button>
+          );
+        })}
+      </div>
 
       <div className="flex-1 overflow-auto">
         {conceptError && (
@@ -382,23 +399,22 @@ const DetailPanelContainer: React.FC<DetailPanelProps> = ({
             />
           ))}
 
-        {showHypercubeTab &&
-          (!selectedNode || !concept ? (
-            activeTab === "Hypercube Relationships" ? renderNoSelection() : null
-          ) : (
-            <div className={activeTab === "Hypercube Relationships" ? "block" : "hidden"}>
-              <HypercubeRelationshipsTab
-                qname={concept.concept.qname}
-                language={language}
-                year={year ?? ""}
-                href={entrypoint ?? ""}
-                prefetchedState={prefetchedRelationships}
-                onNavigateToNode={(qname) =>
-                  onNavigateToNode?.(qname, { preserveDetails: true })
-                }
-              />
-            </div>
-          ))}
+        {!selectedNode || !concept ? (
+          activeTab === "Hypercube Relationships" ? renderNoSelection() : null
+        ) : (
+          <div className={activeTab === "Hypercube Relationships" ? "block" : "hidden"}>
+            <HypercubeRelationshipsTab
+              qname={concept.concept.qname}
+              language={language}
+              year={year ?? ""}
+              href={entrypoint ?? ""}
+              prefetchedState={prefetchedRelationships}
+              onNavigateToNode={(qname) =>
+                onNavigateToNode?.(qname, { preserveDetails: true })
+              }
+            />
+          </div>
+        )}
 
         {activeTab === "Tree Locations" &&
           (!selectedNode || !concept ? (

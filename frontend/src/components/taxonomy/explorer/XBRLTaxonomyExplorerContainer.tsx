@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import XBRLTaxonomyExplorer from "./XBRLTaxonomyExplorer";
 import Loader from "@/components/loader/Loader";
 import "@/components/loader/loader.scss";
@@ -59,6 +59,7 @@ const XBRLTaxonomyExplorerContainer: React.FC = () => {
     elr?: string;
     uuid?: string;
   } | null>(null);
+  const pendingTreeFilterNavigationRef = useRef<(() => void) | null>(null);
 
   const {
     advancedSearchState,
@@ -90,8 +91,8 @@ const XBRLTaxonomyExplorerContainer: React.FC = () => {
   const currentTreeNodes: TreeNode[] = useMemo(() => {
     const raw = rawTreeData?.[network];
     if (!raw || !Array.isArray(raw)) return [];
-    return mapElrGroupedTreeToTreeNodes(raw);
-  }, [rawTreeData, network]);
+    return mapElrGroupedTreeToTreeNodes(raw, language);
+  }, [language, rawTreeData, network]);
 
   const { treeLocations, expandPathToQName, clearPendingNavigation, navigateToLocation, navigateToQNameInNetwork } = useTreeNavigation({
     currentTreeNodes,
@@ -217,6 +218,30 @@ const XBRLTaxonomyExplorerContainer: React.FC = () => {
     [entrypoint, navigateToQNameInNetwork]
   );
 
+  const runAfterTreeFilterClears = useCallback((action: () => void) => {
+    if (!treeFilter) {
+      action();
+      return;
+    }
+
+    pendingTreeFilterNavigationRef.current = action;
+    setTreeFilter("");
+  }, [treeFilter]);
+
+  useEffect(() => {
+    if (treeFilter) {
+      return;
+    }
+
+    const pendingAction = pendingTreeFilterNavigationRef.current;
+    if (!pendingAction) {
+      return;
+    }
+
+    pendingTreeFilterNavigationRef.current = null;
+    pendingAction();
+  }, [treeFilter]);
+
   useEffect(() => {
     if (!pendingEntrypointNavigation) return;
     if (!entrypointLoaded) return;
@@ -279,6 +304,9 @@ const XBRLTaxonomyExplorerContainer: React.FC = () => {
         treeFilter={treeFilter}
         onTreeFilterChange={setTreeFilter}
         onSelectNode={(node) => {
+          if (!node.data?.qname) {
+            return;
+          }
           setSelectedNode(node);
           setDetailNode(node);
         }}
@@ -286,6 +314,7 @@ const XBRLTaxonomyExplorerContainer: React.FC = () => {
         onLanguageChange={setLanguage}
         onNetworkChange={(val) => {
           if (entrypointLoaded && rawTreeData[val]) {
+            pendingTreeFilterNavigationRef.current = null;
             setNetwork(val);
             setTreeFilter("");
             setExpandedKeys({});
@@ -294,9 +323,21 @@ const XBRLTaxonomyExplorerContainer: React.FC = () => {
             console.warn("[NetworkChange] Ignored invalid or unloaded network:", val);
           }
         }}
-        onNavigateToNode={expandPathToQName}
-        onNavigateToSearchNode={navigateFromSearch}
-        onNavigateToLocation={navigateToLocation}
+        onNavigateToNode={(qname, options) => {
+          runAfterTreeFilterClears(() => {
+            expandPathToQName(qname, options);
+          });
+        }}
+        onNavigateToSearchNode={(qname, targetNetwork, elr, targetEntrypoint, uuid) => {
+          runAfterTreeFilterClears(() => {
+            navigateFromSearch(qname, targetNetwork, elr, targetEntrypoint, uuid);
+          });
+        }}
+        onNavigateToLocation={(target) => {
+          runAfterTreeFilterClears(() => {
+            navigateToLocation(target);
+          });
+        }}
         currentTreeNodes={currentTreeNodes}
         entrypointLoaded={entrypointLoaded}
         treeLocations={treeLocations}

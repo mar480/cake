@@ -196,6 +196,7 @@ const AdvancedSearchTab: React.FC<AdvancedSearchTabProps> = ({
     filters: normalizedFilters,
     results: state?.results ?? [],
     allResults: state?.allResults ?? [],
+    hasRun: state?.hasRun ?? false,
     loading: state?.loading ?? false,
     exportLoading: state?.exportLoading ?? false,
     error: state?.error ?? null,

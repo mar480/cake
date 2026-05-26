@@ -44,6 +44,7 @@ export interface AdvancedSearchState {
   filters: AdvancedSearchFilters;
   results: AdvancedSearchResult[];
   allResults: AdvancedSearchResult[];
+  hasRun: boolean;
   loading: boolean;
   exportLoading: boolean;
   error: string | null;

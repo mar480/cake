@@ -187,6 +187,7 @@ const XBRLTaxonomyExplorer: React.FC<Props> = ({
             language={language}
             network={network}
             advancedSearchState={advancedSearchState}
+            entrypointLoaded={entrypointLoaded}
             advancedSearchFilterOptions={advancedSearchFilterOptions}
             referenceParagraphsBySource={referenceParagraphsBySource}
             onAdvancedSearchQueryChange={onAdvancedSearchQueryChange}

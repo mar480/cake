@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import { Search, X } from "lucide-react";
 import { Tree } from "primereact/tree";
 import { toast } from "@/components/ui/use-toast";
@@ -38,6 +38,77 @@ interface TaxonomyTreeViewProps {
   onTreeFilterChange: (value: string) => void;
 }
 
+function normalizeTreeSearchValue(value: string): string {
+  return value.trim().toLocaleLowerCase();
+}
+
+function tokenizeTreeSearchValue(value: string): string[] {
+  return normalizeTreeSearchValue(value)
+    .replace(/(?<=[a-z0-9])(?=[A-Z])/g, " ")
+    .split(/[\s:._-]+/)
+    .map((token) => token.trim())
+    .filter(Boolean);
+}
+
+function matchesTreeNodeSearch(node: TreeNode, treeFilter: string, language: "en" | "cy"): boolean {
+  const rawFilter = normalizeTreeSearchValue(treeFilter);
+  if (!rawFilter) return true;
+
+  const haystack = normalizeTreeSearchValue(
+    [
+      language === "cy" && node.data?.label_cy ? node.data.label_cy : node.label,
+      node.data?.qname ?? "",
+      node.data?.definition ?? "",
+      node.data?.elr ?? "",
+    ].join(" ")
+  );
+
+  const filterTokens = tokenizeTreeSearchValue(treeFilter);
+  if (filterTokens.length === 0) {
+    return haystack.includes(rawFilter);
+  }
+
+  return filterTokens.every((token) => haystack.includes(token));
+}
+
+function filterTreeNodes(nodes: TreeNode[], treeFilter: string, language: "en" | "cy"): TreeNode[] {
+  if (!normalizeTreeSearchValue(treeFilter)) {
+    return nodes;
+  }
+
+  return nodes.flatMap((node) => {
+    const filteredChildren = filterTreeNodes(node.children ?? [], treeFilter, language);
+    const isMatch = matchesTreeNodeSearch(node, treeFilter, language);
+
+    if (!isMatch && filteredChildren.length === 0) {
+      return [];
+    }
+
+    return [
+      {
+        ...node,
+        children: filteredChildren,
+      },
+    ];
+  });
+}
+
+function buildFullyExpandedKeys(nodes: TreeNode[]): { [key: string]: boolean } {
+  const next: { [key: string]: boolean } = {};
+
+  const visit = (node: TreeNode) => {
+    if ((node.children?.length ?? 0) === 0) {
+      return;
+    }
+
+    next[String(node.key)] = true;
+    node.children?.forEach(visit);
+  };
+
+  nodes.forEach(visit);
+  return next;
+}
+
 const TaxonomyTreeView = ({
   treeNodes,
   expandedKeys,
@@ -55,6 +126,8 @@ const TaxonomyTreeView = ({
   const nodeRefs = useRef<{ [key: string]: HTMLSpanElement | null }>({});
   const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
   const [treeExportLoading, setTreeExportLoading] = useState<"json" | "csv" | "html" | "png" | null>(null);
+  const deferredTreeFilter = useDeferredValue(treeFilter);
+  const appliedTreeFilter = treeFilter.trim().length === 0 ? "" : deferredTreeFilter;
 
   // Clear refs on dataset change to avoid stale elements
   useEffect(() => {
@@ -64,6 +137,16 @@ const TaxonomyTreeView = ({
   useEffect(() => {
     onTreeFilterChange("");
   }, [network, onTreeFilterChange]);
+
+  const hasActiveTreeFilter = appliedTreeFilter.trim().length > 0;
+  const visibleTreeNodes = useMemo(
+    () => filterTreeNodes(treeNodes, appliedTreeFilter, language),
+    [appliedTreeFilter, language, treeNodes]
+  );
+  const effectiveExpandedKeys = useMemo(
+    () => (hasActiveTreeFilter ? buildFullyExpandedKeys(visibleTreeNodes) : expandedKeys),
+    [expandedKeys, hasActiveTreeFilter, visibleTreeNodes]
+  );
 
   // Smooth scroll once the highlighted node exists in the DOM
   useEffect(() => {
@@ -78,27 +161,25 @@ const TaxonomyTreeView = ({
 
     // Two rAFs ensures paint has happened even after a big expand
     requestAnimationFrame(() => requestAnimationFrame(scroll));
-  }, [highlightedKey, expandedKeys, network]);
+  }, [effectiveExpandedKeys, highlightedKey, network]);
 
   const exportSnapshot = useMemo(
     () =>
       buildTreeExportSnapshot({
         treeNodes,
-        expandedKeys,
-        treeFilter,
+        expandedKeys: effectiveExpandedKeys,
+        treeFilter: appliedTreeFilter,
         language,
         network,
         networkLabel,
         year,
         entrypoint,
       }),
-    [entrypoint, expandedKeys, language, network, networkLabel, treeFilter, treeNodes, year]
+    [appliedTreeFilter, effectiveExpandedKeys, entrypoint, language, network, networkLabel, treeNodes, year]
   );
 
-  const hasActiveTreeFilter = treeFilter.trim().length > 0;
-
   const handleTreeExport = async (format: "json" | "csv" | "html" | "png") => {
-    const filterSlug = treeFilter.trim().replace(/[^a-z0-9]+/gi, "-").replace(/^-+|-+$/g, "").toLowerCase() || "tree-filter";
+    const filterSlug = appliedTreeFilter.trim().replace(/[^a-z0-9]+/gi, "-").replace(/^-+|-+$/g, "").toLowerCase() || "tree-filter";
     const networkSlug = networkLabel.replace(/[^a-z0-9]+/gi, "-").replace(/^-+|-+$/g, "").toLowerCase();
     const baseFilename = `tree-export-${networkSlug || network}-${filterSlug}`;
 
@@ -137,8 +218,8 @@ const TaxonomyTreeView = ({
     <div className="p-2">
       <Tree
         key={network} // stable per dataset; don't remount on highlight
-        value={treeNodes}
-        expandedKeys={expandedKeys}
+        value={visibleTreeNodes}
+        expandedKeys={effectiveExpandedKeys}
         onToggle={(e) => onExpandedKeysChange(e.value)}
         selectionMode="single"
         onSelect={(e) => {
@@ -182,24 +263,18 @@ const TaxonomyTreeView = ({
           );
         }}
         filter
-        filterValue={treeFilter}
-        onFilterValueChange={(e) => onTreeFilterChange(e.value ?? "")}
-        filterTemplate={(options) => (
+        filterTemplate={() => (
           <div className="taxonomy-tree-filter-shell">
             <input
               type="text"
               value={treeFilter}
               onChange={(e) => {
                 onTreeFilterChange(e.target.value);
-                options.filterOptions?.filter?.(e);
               }}
               onKeyDown={(e) => {
                 if (e.key === "Escape") {
                   e.preventDefault();
                   onTreeFilterChange("");
-                  options.filterOptions?.reset?.();
-                } else {
-                  options.filterInputKeyDown?.(e);
                 }
               }}
               placeholder="Search..."
@@ -211,7 +286,6 @@ const TaxonomyTreeView = ({
                 className="taxonomy-tree-filter-clear"
                 onClick={() => {
                   onTreeFilterChange("");
-                  options.filterOptions?.reset?.();
                 }}
                 aria-label="Clear tree search"
                 title="Clear"
@@ -236,7 +310,6 @@ const TaxonomyTreeView = ({
           </div>
         )}
         filterPlaceholder="Search..."
-        filterMode="lenient"
         showHeader={true}
         className="w-full taxonomy-tree"
       />
