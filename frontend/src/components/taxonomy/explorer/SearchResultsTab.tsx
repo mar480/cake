@@ -177,7 +177,7 @@ const SearchResultsTab: React.FC<SearchResultsTabProps> = ({
     lastRunAt: state?.lastRunAt ?? null,
   };
 
-  const { filters, results, allResults, loading, exportLoading, error, exportError, lastRunAt, pagination } = safeState;
+  const { filters, results, loading, exportLoading, error, exportError, lastRunAt, pagination } = safeState;
   const { limit, offset, total } = pagination;
 
   const activeChips: FilterChip[] = useMemo(() => {
@@ -227,19 +227,12 @@ const SearchResultsTab: React.FC<SearchResultsTabProps> = ({
   });
   const chips = Array.from(chipRegistryRef.current.values());
 
-  const [resultFilter, setResultFilter] = useState<{
-    balance: string[];
-    periodType: string[];
-    xbrlType: string[];
-    conceptType: string[];
-  }>({ balance: [], periodType: [], xbrlType: [], conceptType: [] });
-  const [localResultOffset, setLocalResultOffset] = useState(0);
   const [openMenuResultId, setOpenMenuResultId] = useState<string | null>(null);
   const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
   const [exportFormat, setExportFormat] = useState<"csv" | "json">("csv");
   const [selectedExportFields, setSelectedExportFields] = useState<string[]>(allExportFieldIds);
 
-  const resultFilterSource = allResults.length > 0 ? allResults : results;
+  const resultFilterSource = results;
 
   const resultFilterOptions = useMemo(() => {
     const balance = new Set<string>();
@@ -261,16 +254,6 @@ const SearchResultsTab: React.FC<SearchResultsTabProps> = ({
       ),
     };
   }, [resultFilterSource]);
-
-  useEffect(() => {
-    setResultFilter((prev) => ({
-      ...prev,
-      balance: prev.balance.filter((value) => resultFilterOptions.balance.includes(value)),
-      periodType: prev.periodType.filter((value) => resultFilterOptions.periodType.includes(value)),
-      xbrlType: prev.xbrlType.filter((value) => resultFilterOptions.xbrlType.includes(value)),
-      conceptType: prev.conceptType.filter((value) => resultFilterOptions.conceptType.includes(value)),
-    }));
-  }, [resultFilterOptions]);
 
   useEffect(() => {
     setPresentationFallbacksByKey({});
@@ -361,33 +344,12 @@ const SearchResultsTab: React.FC<SearchResultsTabProps> = ({
     );
   };
 
-  const exportResultFilters = useMemo<Pick<AdvancedSearchFilters, "balance" | "periodType" | "xbrlType" | "conceptType">>(
-    () => ({
-      balance: resultFilter.balance,
-      periodType: resultFilter.periodType,
-      xbrlType: resultFilter.xbrlType,
-      conceptType: resultFilter.conceptType,
-    }),
-    [resultFilter.balance, resultFilter.conceptType, resultFilter.periodType, resultFilter.xbrlType]
-  );
-
-  const effectiveExportFilters = useMemo<AdvancedSearchFilters>(
-    () => ({
-      ...filters,
-      balance: exportResultFilters.balance.length > 0 ? exportResultFilters.balance : filters.balance,
-      periodType: exportResultFilters.periodType.length > 0 ? exportResultFilters.periodType : filters.periodType,
-      xbrlType: exportResultFilters.xbrlType.length > 0 ? exportResultFilters.xbrlType : filters.xbrlType,
-      conceptType: exportResultFilters.conceptType.length > 0 ? exportResultFilters.conceptType : filters.conceptType,
-    }),
-    [exportResultFilters.balance, exportResultFilters.conceptType, exportResultFilters.periodType, exportResultFilters.xbrlType, filters]
-  );
-
   const handleExport = () => {
     if (selectedExportFields.length === 0) {
       return;
     }
 
-    onRunExport({ format: exportFormat, fields: selectedExportFields, filters: effectiveExportFilters });
+    onRunExport({ format: exportFormat, fields: selectedExportFields, filters });
   };
 
   const hasActiveSharedFacetFilters =
@@ -398,72 +360,27 @@ const SearchResultsTab: React.FC<SearchResultsTabProps> = ({
     filters.referenceParagraph.length > 0 ||
     filters.excludeNotInPresentationTree;
 
-  const filteredResults = useMemo(() => {
-    return resultFilterSource.filter((result) => {
-      if (resultFilter.balance.length > 0 && (!result.balance || !resultFilter.balance.includes(result.balance))) {
-        return false;
-      }
-      if (
-        resultFilter.periodType.length > 0 &&
-        (!result.periodType || !resultFilter.periodType.includes(result.periodType))
-      ) {
-        return false;
-      }
-      if (resultFilter.xbrlType.length > 0 && (!result.xbrlType || !resultFilter.xbrlType.includes(result.xbrlType))) {
-        return false;
-      }
-      if (
-        resultFilter.conceptType.length > 0 &&
-        (!result.conceptType || !resultFilter.conceptType.includes(result.conceptType))
-      ) {
-        return false;
-      }
-      if (filters.excludeNotInPresentationTree && (resultPresentationElrs?.[result.qname] ?? []).length === 0) {
-        return false;
-      }
-      return true;
-    });
-  }, [filters.excludeNotInPresentationTree, resultFilter.balance, resultFilter.conceptType, resultFilter.periodType, resultFilter.xbrlType, resultFilterSource, resultPresentationElrs]);
+  const visibleResults = results;
+  const displayedTotal = total;
+  const from = displayedTotal === 0 ? 0 : offset + 1;
+  const to = displayedTotal === 0 ? 0 : Math.min(offset + limit, displayedTotal);
+  const hasPrev = offset > 0;
+  const hasNext = offset + limit < total;
 
-  const hasLocalResultFilter =
-    resultFilter.balance.length > 0 ||
-    resultFilter.periodType.length > 0 ||
-    resultFilter.xbrlType.length > 0 ||
-    resultFilter.conceptType.length > 0 ||
-    filters.excludeNotInPresentationTree;
-  const localFilteredTotal = filteredResults.length;
-  const visibleResults = hasLocalResultFilter
-    ? filteredResults.slice(localResultOffset, localResultOffset + limit)
-    : results;
-  const displayedTotal = hasLocalResultFilter ? localFilteredTotal : total;
-  const from = displayedTotal === 0 ? 0 : hasLocalResultFilter ? localResultOffset + 1 : offset + 1;
-  const to = displayedTotal === 0 ? 0 : hasLocalResultFilter ? Math.min(localResultOffset + limit, localFilteredTotal) : Math.min(offset + limit, displayedTotal);
-  const hasPrev = hasLocalResultFilter ? localResultOffset > 0 : offset > 0;
-  const hasNext = hasLocalResultFilter ? localResultOffset + limit < localFilteredTotal : offset + limit < total;
+  const toggleResultFilterValue = (
+    field: "balance" | "periodType" | "xbrlType" | "conceptType",
+    value: string
+  ) => {
+    const currentValues = filters[field];
+    const nextValues = currentValues.includes(value)
+      ? currentValues.filter((item) => item !== value)
+      : [...currentValues, value];
 
-  useEffect(() => {
-    setLocalResultOffset(0);
-  }, [filters.excludeNotInPresentationTree, resultFilter.balance, resultFilter.conceptType, resultFilter.periodType, resultFilter.xbrlType, state?.lastRunAt]);
-
-  useEffect(() => {
-    if (!hasLocalResultFilter) {
-      setLocalResultOffset(0);
-      return;
-    }
-    if (localResultOffset >= localFilteredTotal) {
-      const lastPageOffset =
-        localFilteredTotal > 0 ? Math.floor((localFilteredTotal - 1) / limit) * limit : 0;
-      setLocalResultOffset(lastPageOffset);
-    }
-  }, [hasLocalResultFilter, limit, localFilteredTotal, localResultOffset]);
-
-  const toggleResultFilterValue = (field: "balance" | "periodType" | "xbrlType" | "conceptType", value: string) => {
-    setResultFilter((prev) => ({
-      ...prev,
-      [field]: prev[field].includes(value)
-        ? prev[field].filter((item) => item !== value)
-        : [...prev[field], value],
-    }));
+    onFiltersChange({
+      ...filters,
+      [field]: Array.from(new Set(nextValues)),
+    } as AdvancedSearchFilters);
+    onRunSearch(0);
   };
 
   const loadPresentationFallbacks = (qname: string) => {
@@ -632,7 +549,7 @@ const SearchResultsTab: React.FC<SearchResultsTabProps> = ({
                       <label key={`${field}-${value}`} className="flex items-center gap-2 text-xs">
                         <input
                           type="checkbox"
-                          checked={resultFilter[field].includes(value)}
+                          checked={filters[field].includes(value)}
                           onChange={() => toggleResultFilterValue(field, value)}
                         />
                         <span>{value}</span>
@@ -948,11 +865,7 @@ const SearchResultsTab: React.FC<SearchResultsTabProps> = ({
               type="button"
               className="px-2 py-1 rounded border bg-white disabled:opacity-50"
               disabled={loading || !hasPrev}
-              onClick={() =>
-                hasLocalResultFilter
-                  ? setLocalResultOffset(Math.max(0, localResultOffset - limit))
-                  : onRunSearch(Math.max(0, offset - limit))
-              }
+              onClick={() => onRunSearch(Math.max(0, offset - limit))}
             >
               Previous
             </button>
@@ -960,11 +873,7 @@ const SearchResultsTab: React.FC<SearchResultsTabProps> = ({
               type="button"
               className="px-2 py-1 rounded border bg-white disabled:opacity-50"
               disabled={loading || !hasNext}
-              onClick={() =>
-                hasLocalResultFilter
-                  ? setLocalResultOffset(localResultOffset + limit)
-                  : onRunSearch(offset + limit)
-              }
+              onClick={() => onRunSearch(offset + limit)}
             >
               Next
             </button>
