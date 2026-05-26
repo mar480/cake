@@ -229,6 +229,7 @@ const SearchResultsTab: React.FC<SearchResultsTabProps> = ({
 
   const [openMenuResultId, setOpenMenuResultId] = useState<string | null>(null);
   const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
+  const [showResultFilters, setShowResultFilters] = useState(false);
   const [exportFormat, setExportFormat] = useState<"csv" | "json">("csv");
   const [selectedExportFields, setSelectedExportFields] = useState<string[]>(allExportFieldIds);
 
@@ -527,39 +528,61 @@ const SearchResultsTab: React.FC<SearchResultsTabProps> = ({
           </div>
         </div>
 
-        <div className="p-3 border-b bg-white space-y-2">
-          <div className="text-sm font-medium">Filter these results</div>
-          <div className="grid grid-cols-4 gap-3">
-            {(["balance", "periodType", "xbrlType", "conceptType"] as const).map((field) => (
-              <div key={field} className="space-y-1">
-                <div className="text-xs font-medium text-gray-600">
-                  {field === "periodType"
-                    ? "Period type"
-                    : field === "xbrlType"
-                      ? "XBRL type"
-                      : field === "conceptType"
-                        ? "Concept type"
-                        : "Balance"}
-                </div>
-                <div className="border rounded p-2 max-h-24 overflow-auto space-y-1">
-                  {resultFilterOptions[field].length === 0 ? (
-                    <div className="text-xs text-gray-400">No options</div>
-                  ) : (
-                    resultFilterOptions[field].map((value) => (
-                      <label key={`${field}-${value}`} className="flex items-center gap-2 text-xs">
-                        <input
-                          type="checkbox"
-                          checked={filters[field].includes(value)}
-                          onChange={() => toggleResultFilterValue(field, value)}
-                        />
-                        <span>{value}</span>
-                      </label>
-                    ))
-                  )}
-                </div>
+        <div className="border-b bg-white">
+          <button
+            type="button"
+            className="flex w-full items-center justify-between gap-3 px-3 py-3 text-left"
+            onClick={() => setShowResultFilters((prev) => !prev)}
+            aria-expanded={showResultFilters}
+          >
+            <div>
+              <div className="text-sm font-medium text-gray-800">Filter these results</div>
+              <div className="text-xs text-gray-500">
+                Refine the current backend result set without changing layout flow.
               </div>
-            ))}
-          </div>
+            </div>
+            <ChevronDown
+              className={`h-4 w-4 text-slate-500 transition-transform duration-200 ${
+                showResultFilters ? "rotate-180" : ""
+              }`}
+            />
+          </button>
+
+          {showResultFilters ? (
+            <div className="px-3 pb-3">
+              <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
+                {(["balance", "periodType", "xbrlType", "conceptType"] as const).map((field) => (
+                  <div key={field} className="space-y-1">
+                    <div className="text-xs font-medium text-gray-600">
+                      {field === "periodType"
+                        ? "Period type"
+                        : field === "xbrlType"
+                          ? "XBRL type"
+                          : field === "conceptType"
+                            ? "Concept type"
+                            : "Balance"}
+                    </div>
+                    <div className="max-h-28 space-y-1 overflow-auto rounded border p-2">
+                      {resultFilterOptions[field].length === 0 ? (
+                        <div className="text-xs text-gray-400">No options</div>
+                      ) : (
+                        resultFilterOptions[field].map((value) => (
+                          <label key={`${field}-${value}`} className="flex items-center gap-2 text-xs">
+                            <input
+                              type="checkbox"
+                              checked={filters[field].includes(value)}
+                              onChange={() => toggleResultFilterValue(field, value)}
+                            />
+                            <span>{value}</span>
+                          </label>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : null}
         </div>
 
         {visibleResults.length === 0 ? (
