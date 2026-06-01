@@ -17,7 +17,6 @@ import {
   fetchSearchFilterOptions,
   LoadEntrypointResponse,
   loadEntrypoint,
-  warmConceptDetails,
 } from "../services/explorerApi";
 
 interface EntrypointDataState {
@@ -44,14 +43,6 @@ export function useEntrypointData(
   const [referenceParagraphsBySource, setReferenceParagraphsBySource] = useState<
     Record<string, string[]>
   >({});
-
-  useEffect(() => {
-    if (!entrypointLoaded) return;
-
-    warmConceptDetails().catch((err) => {
-      console.warn("Concept details warm-up failed", err);
-    });
-  }, [entrypointLoaded]);
 
   useEffect(() => {
     if (!year) return;

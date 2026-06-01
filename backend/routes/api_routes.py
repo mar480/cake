@@ -1,7 +1,6 @@
 import json
 from copy import deepcopy
 import os
-import time
 from csv import DictWriter
 from datetime import datetime, timezone
 from io import StringIO
@@ -28,23 +27,7 @@ from state import (
     presentation_locations_cache,
     search_filter_options_cache,
     taxonomy_cache,
-    taxonomy_lock,
 )
-
-
-def get_active_taxonomy_with_retry(max_attempts: int = 3, delay_seconds: float = 0.2):
-    for attempt in range(max_attempts):
-        with taxonomy_lock:
-            taxonomy = taxonomy_cache.get("active")
-            is_loading = taxonomy_cache.get("is_loading", False)
-
-        if taxonomy is not None and not is_loading:
-            return taxonomy
-
-        if attempt < max_attempts - 1:
-            time.sleep(delay_seconds)
-
-    return None
 
 
 def register_api_routes(app, taxonomy_base_dir: str):
@@ -290,46 +273,6 @@ def register_api_routes(app, taxonomy_base_dir: str):
         concept_data = deepcopy(concept_data)
         concept_data.setdefault("concept", {})["qname"] = qname
         return jsonify(concept_data)
-
-    @app.route("/api/warm-concept-details")
-    def warm_concept_details():
-        taxonomy = getattr(g, "taxonomy", None)
-        if taxonomy is None:
-            taxonomy = get_active_taxonomy_with_retry()
-
-        if taxonomy is None:
-            with taxonomy_lock:
-                is_loading = taxonomy_cache.get("is_loading", False)
-            return (
-                jsonify(
-                    {
-                        "error": (
-                            "Taxonomy is still loading"
-                            if is_loading
-                            else "Taxonomy temporarily unavailable"
-                        ),
-                        "retryable": True,
-                    }
-                ),
-                503,
-            )
-
-        g.taxonomy = taxonomy
-
-        try:
-            for qn in g.taxonomy.model.qnameConcepts.keys():
-                namespace = getattr(qn, "namespaceURI", None)
-                local_name = getattr(qn, "localName", None)
-                if not namespace or not local_name:
-                    continue
-
-                g.taxonomy.concepts.get_concept_json(namespace, local_name)
-                return ("", 204)
-        except Exception as exc:
-            print(f"[warm-concept-details] ERROR: {exc}")
-            return jsonify({"error": "Failed to warm concept details"}), 500
-
-        return ("", 204)
 
     @app.route("/api/entrypoints", methods=["GET"])
     def list_entrypoints_by_year():
