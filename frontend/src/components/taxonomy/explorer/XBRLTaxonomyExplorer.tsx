@@ -10,6 +10,7 @@ import {
   AdvancedSearchState,
 } from "@/types/advancedSearch";
 import { EntrypointOption } from "./services/explorerApi";
+import type { RawElrGroup } from "./explorerTypes";
 
 interface Props {
   selectedNode: TreeNode | null;
@@ -57,6 +58,7 @@ interface Props {
   resultNetworks: Record<string, string[]>;
   resultPresentationElrs: Record<string, string[]>;
   hypercubeElrDefinitionsByQname: Record<string, string[]>;
+  rawTreeData: Record<string, RawElrGroup[]>;
 }
 
 const XBRLTaxonomyExplorer: React.FC<Props> = ({
@@ -95,6 +97,7 @@ const XBRLTaxonomyExplorer: React.FC<Props> = ({
   resultNetworks,
   resultPresentationElrs,
   hypercubeElrDefinitionsByQname,
+  rawTreeData,
 }) => {
   return (
     <div className="flex flex-col h-screen bg-white">
@@ -199,7 +202,7 @@ const XBRLTaxonomyExplorer: React.FC<Props> = ({
             resultNetworks={resultNetworks}
             resultPresentationElrs={resultPresentationElrs}
             hypercubeElrDefinitionsByQname={hypercubeElrDefinitionsByQname}
-            currentEntrypoint={entrypoint}
+            rawTreeData={rawTreeData}
           />
         </div>
 

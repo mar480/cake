@@ -5,6 +5,13 @@ import { RawElrGroup, RawTreeNode, SearchConceptApiResult } from "./explorerType
 export type ConceptElrMap = Record<string, string[]>;
 export type ConceptNetworksMap = Record<string, string[]>;
 export type ConceptLocationIndex = Record<string, Record<string, Record<string, string[]>>>;
+export type TreeNodeOccurrence = {
+  network: string;
+  elr: string;
+  elrDefinition: string;
+  qname: string;
+  uuid?: string;
+};
 
 export function sanitizeAdvancedFilters(next: AdvancedSearchFilters): AdvancedSearchFilters {
   return {
@@ -42,6 +49,39 @@ function walkTree(
 ) {
   visit(node);
   (node.children ?? []).forEach((child) => walkTree(child, visit));
+}
+
+export function collectTreeNodeOccurrences(
+  rawTreeData: Record<string, RawElrGroup[]>,
+  qname: string | undefined
+): TreeNodeOccurrence[] {
+  if (!qname) return [];
+
+  const occurrences: TreeNodeOccurrence[] = [];
+
+  const visitNode = (network: string, elr: string, elrDefinition: string, node: RawTreeNode) => {
+    if (node.qname === qname) {
+      occurrences.push({
+        network,
+        elr,
+        elrDefinition,
+        qname,
+        uuid: node.uuid,
+      });
+    }
+
+    (node.children ?? []).forEach((child) => visitNode(network, elr, elrDefinition, child));
+  };
+
+  Object.entries(rawTreeData).forEach(([network, groups]) => {
+    (groups ?? []).forEach((group) => {
+      const elr = group.elr ?? "";
+      const elrDefinition = group.definition ?? elr;
+      (group.root_tree ?? []).forEach((root) => visitNode(network, elr, elrDefinition, root));
+    });
+  });
+
+  return occurrences;
 }
 
 export function buildConceptElrMapForNetwork(groups: RawElrGroup[]): ConceptElrMap {

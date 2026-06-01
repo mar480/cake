@@ -17,6 +17,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { AdvancedSearchFilters, AdvancedSearchState } from "@/types/advancedSearch";
+import { collectTreeNodeOccurrences } from "./explorerDataUtils";
+import type { RawElrGroup } from "./explorerTypes";
 import { fetchPresentationEntrypointLocations } from "./services/explorerApi";
 
 type FilterChip = {
@@ -125,6 +127,7 @@ interface SearchResultsTabProps {
   resultNetworks?: Record<string, string[]>;
   resultPresentationElrs?: Record<string, string[]>;
   hypercubeElrDefinitionsByQname?: Record<string, string[]>;
+  rawTreeData?: Record<string, RawElrGroup[]>;
   year?: string | null;
   currentEntrypoint?: string | null;
 }
@@ -141,6 +144,7 @@ const SearchResultsTab: React.FC<SearchResultsTabProps> = ({
   resultNetworks,
   resultPresentationElrs,
   hypercubeElrDefinitionsByQname,
+  rawTreeData = {},
   year,
   currentEntrypoint,
 }) => {
@@ -263,7 +267,11 @@ const SearchResultsTab: React.FC<SearchResultsTabProps> = ({
   }, [year, currentEntrypoint, state?.lastRunAt]);
 
   type ResultMenuOccurrence = {
+    network: string;
     elr: string;
+    elrDefinition: string;
+    qname: string;
+    uuid?: string;
     entrypoint?: string;
   };
 
@@ -591,7 +599,13 @@ const SearchResultsTab: React.FC<SearchResultsTabProps> = ({
           <ul className="divide-y">
             {visibleResults.map((result) => {
               const associatedNetworks = resultNetworks?.[result.qname] ?? [];
-              const presentationElrs = resultPresentationElrs?.[result.qname] ?? [];
+              const resultOccurrences = collectTreeNodeOccurrences(rawTreeData, result.qname);
+              const presentationOccurrences = resultOccurrences.filter(
+                (occurrence) => occurrence.network === "presentation"
+              );
+              const presentationElrs = presentationOccurrences.map(
+                (occurrence) => occurrence.elrDefinition
+              );
               const definitionHypercubeElrs = hypercubeElrDefinitionsByQname?.[result.qname] ?? [];
               const presentationFallbackCacheKey = `${year ?? ""}::${currentEntrypoint ?? ""}::${result.qname}`;
               const alternatePresentationEntrypoints =
@@ -681,13 +695,19 @@ const SearchResultsTab: React.FC<SearchResultsTabProps> = ({
                   </div>
                   <div className="flex items-center">
                     {(() => {
-                      const presentationOccurrences = presentationElrs.map((elr) => ({ elr }));
-                      const definitionMenuGroups: ResultMenuGroup[] = associatedNetworks
-                        .filter((networkKey) => networkKey !== "presentation")
+                      const definitionNetworks = new Set([
+                        ...associatedNetworks.filter((networkKey) => networkKey !== "presentation"),
+                        ...resultOccurrences
+                          .filter((occurrence) => occurrence.network !== "presentation")
+                          .map((occurrence) => occurrence.network),
+                      ]);
+                      const definitionMenuGroups: ResultMenuGroup[] = Array.from(definitionNetworks)
                         .map((networkKey) => ({
                           network: networkKey,
                           label: networkLabels?.[networkKey] ?? networkKey,
-                          occurrences: definitionHypercubeElrs.map((elr) => ({ elr })),
+                          occurrences: resultOccurrences.filter(
+                            (occurrence) => occurrence.network === networkKey
+                          ),
                         }))
                         .filter((group) => group.occurrences.length > 0);
 
@@ -741,7 +761,13 @@ const SearchResultsTab: React.FC<SearchResultsTabProps> = ({
                             "
                             onClick={() => {
                               if (hasSinglePresentationTarget) {
-                                onNavigateToSearchNode?.(result.qname, "presentation", presentationOccurrences[0].elr);
+                                onNavigateToSearchNode?.(
+                                  result.qname,
+                                  "presentation",
+                                  presentationOccurrences[0].elr,
+                                  undefined,
+                                  presentationOccurrences[0].uuid
+                                );
                                 return;
                               }
                               if (presentationElrs.length === 0) {
@@ -858,15 +884,21 @@ const SearchResultsTab: React.FC<SearchResultsTabProps> = ({
                                           ]
                                         : []),
                                     ]
-                                  : group.occurrences.map((occurrence) => (
+                                  : group.occurrences.map((occurrence, occurrenceIndex) => (
                                       <DropdownMenuItem
-                                        key={`${result.id}-${group.network}-${occurrence.elr}-${occurrence.entrypoint ?? ""}`}
+                                        key={`${result.id}-${group.network}-${occurrence.elr}-${occurrence.uuid ?? occurrenceIndex}-${occurrence.entrypoint ?? ""}`}
                                         className="text-xs transition-all duration-150 data-[highlighted]:bg-sky-50 data-[highlighted]:text-slate-900"
                                         onClick={() =>
-                                          onNavigateToSearchNode?.(result.qname, group.network, occurrence.elr, occurrence.entrypoint)
+                                          onNavigateToSearchNode?.(
+                                            result.qname,
+                                            group.network,
+                                            occurrence.elr,
+                                            occurrence.entrypoint,
+                                            occurrence.uuid
+                                          )
                                         }
                                       >
-                                        {occurrence.elr}
+                                        {occurrence.elrDefinition}
                                       </DropdownMenuItem>
                                     ))),
                               ];
