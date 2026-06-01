@@ -1,6 +1,7 @@
 import json
 import os
 import re
+from functools import lru_cache
 
 from services.taxonomy_service import get_entrypoints_for_year
 
@@ -119,6 +120,13 @@ def load_concepts_json_for_entrypoint(taxonomy_base_dir: str, year: str, href: s
         return {}
     with open(concepts_path, "r", encoding="utf-8") as f:
         return json.load(f)
+
+
+@lru_cache(maxsize=32)
+def load_cached_concepts_json_for_entrypoint(
+    taxonomy_base_dir: str, year: str, href: str
+) -> dict:
+    return load_concepts_json_for_entrypoint(taxonomy_base_dir, year, href)
 
 
 def normalize_tree_key(value: str) -> str:

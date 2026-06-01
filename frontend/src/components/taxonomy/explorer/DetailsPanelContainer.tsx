@@ -126,13 +126,16 @@ const DetailPanelContainer: React.FC<DetailPanelProps> = ({
   const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
   const getConceptCacheKey = useCallback(
-    (qname: string) => `${year ?? ""}::${entrypoint ?? ""}::${qname}`,
-    [entrypoint, year]
+    (conceptYear: string, conceptEntrypoint: string, qname: string) =>
+      `${conceptYear}::${conceptEntrypoint}::${qname}`,
+    []
   );
 
   const fetchConceptDetailsWithRetry = useCallback(
     async (
       qname: string,
+      conceptYear: string,
+      conceptEntrypoint: string,
       signal: AbortSignal,
       maxAttempts = 3
     ): Promise<ConceptDetailsResponse> => {
@@ -140,9 +143,12 @@ const DetailPanelContainer: React.FC<DetailPanelProps> = ({
 
       for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
         try {
-          const response = await fetch(`/api/concept-details?qname=${encodeURIComponent(qname)}`, {
-            signal,
-          });
+          const response = await fetch(
+            `/api/concept-details?year=${encodeURIComponent(conceptYear)}` +
+              `&href=${encodeURIComponent(conceptEntrypoint)}` +
+              `&qname=${encodeURIComponent(qname)}`,
+            { signal }
+          );
 
           const payload = await response.json();
 
@@ -186,9 +192,12 @@ const DetailPanelContainer: React.FC<DetailPanelProps> = ({
   );
 
   useEffect(() => {
-    if (selectedNode?.data?.qname) {
-      const qname = selectedNode.data.qname;
-      const cacheKey = getConceptCacheKey(qname);
+    const conceptYear = year?.trim();
+    const conceptEntrypoint = entrypoint?.trim();
+    const qname = selectedNode?.data?.qname?.trim();
+
+    if (conceptYear && conceptEntrypoint && qname) {
+      const cacheKey = getConceptCacheKey(conceptYear, conceptEntrypoint, qname);
       const cached = conceptCacheRef.current.get(cacheKey);
       const controller = new AbortController();
       let isActive = true;
@@ -211,7 +220,7 @@ const DetailPanelContainer: React.FC<DetailPanelProps> = ({
         }
       }, 250);
 
-      fetchConceptDetailsWithRetry(qname, controller.signal)
+      fetchConceptDetailsWithRetry(qname, conceptYear, conceptEntrypoint, controller.signal)
         .then((data) => {
           if (!isActive) return;
           conceptCacheRef.current.set(cacheKey, data);
@@ -249,7 +258,7 @@ const DetailPanelContainer: React.FC<DetailPanelProps> = ({
       setConceptError(null);
       setIsConceptLoading(false);
     }
-  }, [fetchConceptDetailsWithRetry, getConceptCacheKey, selectedNode]);
+  }, [entrypoint, fetchConceptDetailsWithRetry, getConceptCacheKey, selectedNode, year]);
 
   useEffect(() => {
     if (hasNodeSelection) {
