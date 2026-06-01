@@ -91,8 +91,8 @@ const XBRLTaxonomyExplorerContainer: React.FC = () => {
   const currentTreeNodes: TreeNode[] = useMemo(() => {
     const raw = rawTreeData?.[network];
     if (!raw || !Array.isArray(raw)) return [];
-    return mapElrGroupedTreeToTreeNodes(raw, language);
-  }, [language, rawTreeData, network]);
+    return mapElrGroupedTreeToTreeNodes(raw);
+  }, [rawTreeData, network]);
 
   const { treeLocations, expandPathToQName, clearPendingNavigation, navigateToLocation, navigateToQNameInNetwork } = useTreeNavigation({
     currentTreeNodes,
