@@ -138,7 +138,7 @@ export async function exportSearchConcepts(
   }
 
   const contentDisposition = response.headers.get("Content-Disposition") ?? "";
-  const filenameMatch = /filename=\"?([^"]+)\"?/i.exec(contentDisposition);
+  const filenameMatch = /filename="?([^"]+)"?/i.exec(contentDisposition);
 
   return {
     blob: await response.blob(),
@@ -158,8 +158,4 @@ export async function fetchPresentationEntrypointLocations(
   const response = await fetch(url);
   const payload = await parseJsonResponse<PresentationEntrypointLocationsResponse>(response);
   return payload.matches ?? [];
-}
-
-export async function warmConceptDetails(): Promise<void> {
-  await fetch("/api/warm-concept-details");
 }
