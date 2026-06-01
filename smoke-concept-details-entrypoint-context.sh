@@ -47,13 +47,42 @@ info() { echo "ℹ️  $1"; }
 
 need_cmd() { command -v "$1" >/dev/null 2>&1 || fail "Missing command: $1"; }
 need_cmd curl
-if command -v python3 >/dev/null 2>&1; then
-  PYTHON_BIN=python3
-elif command -v python >/dev/null 2>&1; then
-  PYTHON_BIN=python
-else
-  fail "Missing command: python3 or python"
-fi
+
+PYTHON_CMD=()
+
+try_python_cmd() {
+  local candidate="$1"
+  local -a parts=()
+  read -r -a parts <<<"$candidate"
+
+  if [[ ${#parts[@]} -eq 0 ]] || ! command -v "${parts[0]}" >/dev/null 2>&1; then
+    return 1
+  fi
+
+  "${parts[@]}" -c 'import json, urllib.parse' >/dev/null 2>&1
+}
+
+select_python_cmd() {
+  local candidates=()
+
+  if [[ -n "${PYTHON:-}" ]]; then
+    candidates+=("$PYTHON")
+  fi
+
+  candidates+=("python3" "python" "py -3" "py")
+
+  local candidate
+  for candidate in "${candidates[@]}"; do
+    if try_python_cmd "$candidate"; then
+      read -r -a PYTHON_CMD <<<"$candidate"
+      return 0
+    fi
+  done
+
+  fail "Could not find a working Python command. Set PYTHON=/path/to/python and try again."
+}
+
+select_python_cmd
 
 healthcheck() {
   curl -fsS --max-time 2 "$BASE_URL/api/health" >/dev/null 2>&1
@@ -83,7 +112,7 @@ maybe_start_backend() {
   case "$BASE_URL" in
     "http://127.0.0.1:${BACKEND_PORT}"|"http://localhost:${BACKEND_PORT}")
       info "backend not reachable; starting backend on port $BACKEND_PORT"
-      (cd "$SCRIPT_DIR/backend" && "$PYTHON_BIN" app.py --port "$BACKEND_PORT") >"$TMP_DIR/backend.log" 2>&1 &
+      (cd "$SCRIPT_DIR/backend" && "${PYTHON_CMD[@]}" app.py --port "$BACKEND_PORT") >"$TMP_DIR/backend.log" 2>&1 &
       BACKEND_PID="$!"
       if ! wait_for_backend 45; then
         echo "---- backend log ----"
@@ -100,7 +129,7 @@ maybe_start_backend() {
 }
 
 urlencode() {
-  "$PYTHON_BIN" -c 'import sys, urllib.parse; print(urllib.parse.quote(sys.argv[1], safe=""))' "$1"
+  "${PYTHON_CMD[@]}" -c 'import sys, urllib.parse; print(urllib.parse.quote(sys.argv[1], safe=""))' "$1"
 }
 
 concept_url() {
@@ -139,7 +168,7 @@ QNAME_A="$QNAME_A" \
 QNAME_B="$QNAME_B" \
 EXPECTED_NAMESPACE_A="$EXPECTED_NAMESPACE_A" \
 EXPECTED_NAMESPACE_B="$EXPECTED_NAMESPACE_B" \
-"$PYTHON_BIN" - <<'PY'
+"${PYTHON_CMD[@]}" - <<'PY'
 import json
 import os
 from pathlib import Path
