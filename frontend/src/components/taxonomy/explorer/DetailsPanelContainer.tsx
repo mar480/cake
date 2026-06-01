@@ -15,6 +15,7 @@ import {
   PrefetchedDimensionalRelationshipsState,
 } from "./apiTypes";
 import { TreeNode } from "./tree_utils";
+import type { RawElrGroup } from "./explorerTypes";
 
 type DetailsTabName =
   | "Details"
@@ -39,6 +40,7 @@ interface DetailPanelProps {
   resultNetworks?: Record<string, string[]>;
   resultPresentationElrs?: Record<string, string[]>;
   hypercubeElrDefinitionsByQname?: Record<string, string[]>;
+  rawTreeData?: Record<string, RawElrGroup[]>;
   treeLocations: TreeLocationTarget[];
   language: "en" | "cy";
   network: string;
@@ -69,6 +71,7 @@ const DetailPanelContainer: React.FC<DetailPanelProps> = ({
   resultNetworks,
   resultPresentationElrs,
   hypercubeElrDefinitionsByQname,
+  rawTreeData,
   treeLocations,
   language,
   network,
@@ -391,6 +394,7 @@ const DetailPanelContainer: React.FC<DetailPanelProps> = ({
             resultNetworks={resultNetworks}
             resultPresentationElrs={resultPresentationElrs}
             hypercubeElrDefinitionsByQname={hypercubeElrDefinitionsByQname}
+            rawTreeData={rawTreeData}
             year={year}
             currentEntrypoint={entrypoint}
           />
