@@ -1,4 +1,5 @@
 import json
+from copy import deepcopy
 import os
 import time
 from csv import DictWriter
@@ -15,6 +16,7 @@ from services.search_filters import (
     build_search_filter_options_from_concepts,
     entrypoint_cache_key,
     entrypoint_name_from_href,
+    load_cached_concepts_json_for_entrypoint,
     load_concepts_json_for_entrypoint,
     resolve_tree_dir_for_entrypoint,
 )
@@ -241,112 +243,53 @@ def register_api_routes(app, taxonomy_base_dir: str):
 
     @app.route("/api/concept-details")
     def concept_details():
+        year = request.args.get("year", "").strip()
+        href = request.args.get("href", "").strip()
         qname = request.args.get("qname", "").strip()
 
+        if not year or not href or not qname:
+            return jsonify({"error": "Missing year, href, or qname"}), 400
+
         if ":" not in qname:
-            print("[concept-details] invalid qname format")
-            return jsonify({"error": "Invalid qname"}), 400
+            return (
+                jsonify(
+                    {"error": "Invalid qname: expected a prefixed name like 'prefix:localName'"}
+                ),
+                400,
+            )
 
-        taxonomy = getattr(g, "taxonomy", None)
-        if taxonomy is None:
-            taxonomy = get_active_taxonomy_with_retry()
+        try:
+            concepts_payload = load_cached_concepts_json_for_entrypoint(
+                taxonomy_base_dir, year, href
+            )
+        except FileNotFoundError as exc:
+            return jsonify({"error": str(exc)}), 404
+        except Exception as exc:
+            print(f"[concept-details] ERROR loading concepts.json: {exc}")
+            return jsonify({"error": "Failed to load concept details"}), 500
 
-        print("\n[concept-details] ===== START =====")
-        print(f"[concept-details] requested qname={qname}")
-        print(f"[concept-details] g has taxonomy? {hasattr(g, 'taxonomy')}")
-        print(
-            f"[concept-details] cache has active? {'active' in taxonomy_cache and taxonomy_cache.get('active') is not None}"
-        )
+        if not concepts_payload:
+            return (
+                jsonify({"error": "concepts.json not found or empty for entrypoint"}),
+                404,
+            )
 
-        if taxonomy is None:
-            print("[concept-details] taxonomy is None")
-            with taxonomy_lock:
-                is_loading = taxonomy_cache.get("is_loading", False)
+        concept_data = concepts_payload.get(qname)
+        if not concept_data:
             return (
                 jsonify(
                     {
                         "error": (
-                            "Taxonomy is still loading"
-                            if is_loading
-                            else "Taxonomy temporarily unavailable"
-                        ),
-                        "retryable": True,
-                    }
-                ),
-                503,
-            )
-
-        g.taxonomy = taxonomy
-
-        print(f"[concept-details] taxonomy id={id(g.taxonomy)}")
-        print(f"[concept-details] model id={id(getattr(g.taxonomy, 'model', None))}")
-
-        try:
-            qdict = getattr(g.taxonomy.model, "qnameConcepts", {})
-            qcount = len(qdict)
-            print(f"[concept-details] qnameConcepts count={qcount}")
-
-            sample_qnames = [str(qn) for qn in list(qdict.keys())[:10]]
-            print(f"[concept-details] sample qnames={sample_qnames}")
-
-            available_prefixes = sorted(
-                {
-                    getattr(qn, "prefix", "")
-                    for qn in qdict.keys()
-                    if getattr(qn, "prefix", None)
-                }
-            )
-            print(
-                f"[concept-details] available prefixes (sample): {available_prefixes[:50]}"
-            )
-        except Exception as ex:
-            print(f"[concept-details] model inspection error: {ex}")
-            available_prefixes = []
-
-        prefix, local_name = qname.split(":", 1)
-        print(f"[concept-details] requested prefix={prefix}, local_name={local_name}")
-
-        # Keep existing resolution logic with logs
-        ns = None
-        for qn in g.taxonomy.model.qnameConcepts.keys():
-            if getattr(qn, "prefix", None) == prefix:
-                ns = qn.namespaceURI
-                break
-
-        print(f"[concept-details] resolved namespace={ns}")
-
-        if ns is None:
-            print("[concept-details] namespace resolution failed")
-            return (
-                jsonify(
-                    {
-                        "error": f"Prefix '{prefix}' not found in loaded taxonomy",
-                        "available_prefixes": available_prefixes[:50],
+                            f"Concept '{qname}' not found in concepts.json for "
+                            f"year '{year}' and href '{href}'"
+                        )
                     }
                 ),
                 404,
             )
 
-        try:
-            concept_data = g.taxonomy.concepts.get_concept_json(ns, local_name)
-        except Exception as ex:
-            print(f"[concept-details] get_concept_json error: {ex}")
-            return (
-                jsonify(
-                    {
-                        "error": "Failed to resolve concept details",
-                        "retryable": True,
-                    }
-                ),
-                503,
-            )
-
-        if not concept_data:
-            print("[concept-details] concept_data not found")
-            return jsonify({"error": f"Concept '{qname}' not found"}), 404
-
-        concept_data["concept"]["qname"] = qname
-        print("[concept-details] ===== END OK =====\n")
+        concept_data = deepcopy(concept_data)
+        concept_data.setdefault("concept", {})["qname"] = qname
         return jsonify(concept_data)
 
     @app.route("/api/warm-concept-details")
