@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { AdvancedSearchFilters, AdvancedSearchState } from "@/types/advancedSearch";
 import { collectTreeNodeOccurrences } from "./explorerDataUtils";
+import { getDefinitionElrLabelsForOccurrences } from "./searchResultDisplayUtils";
 import type { RawElrGroup } from "./explorerTypes";
 import { fetchPresentationEntrypointLocations } from "./services/explorerApi";
 
@@ -126,7 +127,6 @@ interface SearchResultsTabProps {
   networkLabels?: Record<string, string>;
   resultNetworks?: Record<string, string[]>;
   resultPresentationElrs?: Record<string, string[]>;
-  hypercubeElrDefinitionsByQname?: Record<string, string[]>;
   rawTreeData?: Record<string, RawElrGroup[]>;
   year?: string | null;
   currentEntrypoint?: string | null;
@@ -143,7 +143,6 @@ const SearchResultsTab: React.FC<SearchResultsTabProps> = ({
   networkLabels,
   resultNetworks,
   resultPresentationElrs,
-  hypercubeElrDefinitionsByQname,
   rawTreeData = {},
   year,
   currentEntrypoint,
@@ -606,7 +605,7 @@ const SearchResultsTab: React.FC<SearchResultsTabProps> = ({
               const presentationElrs = presentationOccurrences.map(
                 (occurrence) => occurrence.elrDefinition
               );
-              const definitionHypercubeElrs = hypercubeElrDefinitionsByQname?.[result.qname] ?? [];
+              const definitionElrs = getDefinitionElrLabelsForOccurrences(resultOccurrences);
               const presentationFallbackCacheKey = `${year ?? ""}::${currentEntrypoint ?? ""}::${result.qname}`;
               const alternatePresentationEntrypoints =
                 presentationFallbacksByKey[presentationFallbackCacheKey] ?? [];
@@ -617,7 +616,7 @@ const SearchResultsTab: React.FC<SearchResultsTabProps> = ({
               const conceptType = result.conceptType ?? "concept";
               const goToNodeLabel = networkLabels?.presentation ?? "Presentation";
               const showDefinitionBeforePresentation =
-                presentationElrs.length === 0 && definitionHypercubeElrs.length > 0;
+                presentationElrs.length === 0 && definitionElrs.length > 0;
 
               return (
                 <li key={result.id} className="p-3 flex items-start justify-between gap-3">
@@ -626,7 +625,7 @@ const SearchResultsTab: React.FC<SearchResultsTabProps> = ({
                     <div className="text-xs text-gray-500 break-all">{result.qname}</div>
                     {showDefinitionBeforePresentation && (
                       <div className="text-xs text-gray-500 break-words">
-                        Definition ELR: {definitionHypercubeElrs.join(", ")}
+                        Definition ELR: {definitionElrs.join(", ")}
                       </div>
                     )}
                     <div
@@ -645,9 +644,9 @@ const SearchResultsTab: React.FC<SearchResultsTabProps> = ({
                         </span>
                       )}
                     </div>
-                    {definitionHypercubeElrs.length > 0 && !showDefinitionBeforePresentation && (
+                    {definitionElrs.length > 0 && !showDefinitionBeforePresentation && (
                       <div className="text-xs text-gray-500 break-words">
-                        Definition ELR: {definitionHypercubeElrs.join(", ")}
+                        Definition ELR: {definitionElrs.join(", ")}
                       </div>
                     )}
                     <div className="space-y-1 pt-1">

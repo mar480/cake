@@ -39,7 +39,6 @@ interface DetailPanelProps {
   networkLabels?: Record<string, string>;
   resultNetworks?: Record<string, string[]>;
   resultPresentationElrs?: Record<string, string[]>;
-  hypercubeElrDefinitionsByQname?: Record<string, string[]>;
   rawTreeData?: Record<string, RawElrGroup[]>;
   treeLocations: TreeLocationTarget[];
   language: "en" | "cy";
@@ -70,7 +69,6 @@ const DetailPanelContainer: React.FC<DetailPanelProps> = ({
   networkLabels,
   resultNetworks,
   resultPresentationElrs,
-  hypercubeElrDefinitionsByQname,
   rawTreeData,
   treeLocations,
   language,
@@ -384,16 +382,15 @@ const DetailPanelContainer: React.FC<DetailPanelProps> = ({
         {activeTab === "Search Results" && (
           <SearchResultsTab
             state={advancedSearchState}
-        onFiltersChange={onAdvancedSearchFiltersChange}
-        onRunSearch={onRunAdvancedSearch}
-        onRunExport={onRunAdvancedSearchExport}
-        onResetSearch={onResetAdvancedSearch}
-        onNavigateToSearchNode={onNavigateToSearchNode}
+            onFiltersChange={onAdvancedSearchFiltersChange}
+            onRunSearch={onRunAdvancedSearch}
+            onRunExport={onRunAdvancedSearchExport}
+            onResetSearch={onResetAdvancedSearch}
+            onNavigateToSearchNode={onNavigateToSearchNode}
             onReturnToSearch={() => setActiveTab("Advanced Search")}
             networkLabels={networkLabels}
             resultNetworks={resultNetworks}
             resultPresentationElrs={resultPresentationElrs}
-            hypercubeElrDefinitionsByQname={hypercubeElrDefinitionsByQname}
             rawTreeData={rawTreeData}
             year={year}
             currentEntrypoint={entrypoint}

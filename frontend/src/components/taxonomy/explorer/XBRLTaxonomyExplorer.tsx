@@ -57,7 +57,6 @@ interface Props {
   networkLabels: Record<string, string>;
   resultNetworks: Record<string, string[]>;
   resultPresentationElrs: Record<string, string[]>;
-  hypercubeElrDefinitionsByQname: Record<string, string[]>;
   rawTreeData: Record<string, RawElrGroup[]>;
 }
 
@@ -96,7 +95,6 @@ const XBRLTaxonomyExplorer: React.FC<Props> = ({
   networkLabels,
   resultNetworks,
   resultPresentationElrs,
-  hypercubeElrDefinitionsByQname,
   rawTreeData,
 }) => {
   return (
@@ -201,7 +199,6 @@ const XBRLTaxonomyExplorer: React.FC<Props> = ({
             networkLabels={networkLabels}
             resultNetworks={resultNetworks}
             resultPresentationElrs={resultPresentationElrs}
-            hypercubeElrDefinitionsByQname={hypercubeElrDefinitionsByQname}
             rawTreeData={rawTreeData}
           />
         </div>

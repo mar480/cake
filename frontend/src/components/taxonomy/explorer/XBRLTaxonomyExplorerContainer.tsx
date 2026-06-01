@@ -138,66 +138,6 @@ const XBRLTaxonomyExplorerContainer: React.FC = () => {
     return buildElrMap("presentation");
   }, [buildElrMap]);
 
-  const directDefinitionElrsByQname = useMemo(() => {
-    const definitionNetworks = [
-      "definition_hydim",
-      "definition_dimdom",
-      "definition_dimdef",
-      "definition_dommem",
-      "definition_all",
-    ] as const;
-
-    const merged = new Map<string, Set<string>>();
-
-    definitionNetworks.forEach((networkKey) => {
-      const networkMap = buildElrMap(networkKey);
-      Object.entries(networkMap).forEach(([qname, elrs]) => {
-        if (!merged.has(qname)) merged.set(qname, new Set());
-        elrs.forEach((elr) => merged.get(qname)?.add(elr));
-      });
-    });
-
-    return Object.fromEntries(
-      Array.from(merged.entries()).map(([qname, elrSet]) => [qname, Array.from(elrSet)])
-    );
-  }, [buildElrMap]);
-
-  const hypercubeToDefinitionElrs = useMemo(() => {
-    const mapped = new Map<string, string[]>();
-    const groups = rawTreeData.definition_hydim ?? [];
-
-    groups.forEach((group) => {
-      const elrDefinition = group.definition ?? group.elr ?? "";
-      (group.root_tree ?? []).forEach((root) => {
-        const hypercubeQname = root.qname;
-        if (!hypercubeQname || !elrDefinition) return;
-        const existing = mapped.get(hypercubeQname) ?? [];
-        if (!existing.includes(elrDefinition)) {
-          existing.push(elrDefinition);
-          mapped.set(hypercubeQname, existing);
-        }
-      });
-    });
-
-    return Object.fromEntries(mapped);
-  }, [rawTreeData]);
-
-  const hypercubeElrDefinitionsByQname = useMemo(() => {
-    const mapped: Record<string, string[]> = {};
-
-    advancedSearchState.allResults.forEach((result) => {
-      const elrs = new Set<string>(directDefinitionElrsByQname[result.qname] ?? []);
-      (result.hypercubes ?? []).forEach((hypercubeQname) => {
-        (hypercubeToDefinitionElrs[hypercubeQname] ?? []).forEach((elrDefinition) => {
-          elrs.add(elrDefinition);
-        });
-      });
-      mapped[result.qname] = Array.from(elrs);
-    });
-
-    return mapped;
-  }, [advancedSearchState.allResults, directDefinitionElrsByQname, hypercubeToDefinitionElrs]);
-
   const navigateFromSearch = useCallback(
     (qname: string, targetNetwork?: string, elr?: string, targetEntrypoint?: string, uuid?: string) => {
       const destinationNetwork = targetNetwork || "presentation";
@@ -352,7 +292,6 @@ const XBRLTaxonomyExplorerContainer: React.FC = () => {
         networkLabels={NETWORK_LABELS}
         resultNetworks={resultNetworks}
         resultPresentationElrs={resultPresentationElrs}
-        hypercubeElrDefinitionsByQname={hypercubeElrDefinitionsByQname}
         rawTreeData={rawTreeData}
       />
     </>
