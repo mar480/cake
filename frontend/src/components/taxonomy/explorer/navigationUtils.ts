@@ -124,6 +124,16 @@ export function chooseNavigationMatcher(
 
   collectMatches(currentTreeNodes);
 
+  if (pendingNavigation.uuid && uuidMatches.length > 0) {
+    return {
+      matcher: (node) => node.data?.uuid === pendingNavigation.uuid,
+      matchStrategy: "uuid",
+      uuidMatches,
+      elrQNameMatches,
+      qnameMatches,
+    };
+  }
+
   if (elrQNameMatches.length > 0) {
     return {
       matcher: (node) =>
