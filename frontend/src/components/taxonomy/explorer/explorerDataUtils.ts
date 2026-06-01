@@ -57,11 +57,21 @@ export function collectTreeNodeOccurrences(
 ): TreeNodeOccurrence[] {
   if (!qname) return [];
 
-  const occurrences: TreeNodeOccurrence[] = [];
+  const occurrencesByTarget = new Map<string, TreeNodeOccurrence>();
+
+  // The same QName can be encountered multiple times for the same network/ELR target;
+  // keep one concrete UUID-backed representative so the menu does not show duplicates.
+  const addOccurrence = (occurrence: TreeNodeOccurrence) => {
+    const occurrenceKey = `${occurrence.network}::${occurrence.elr}::${occurrence.qname}`;
+    const existing = occurrencesByTarget.get(occurrenceKey);
+    if (!existing || (!existing.uuid && occurrence.uuid)) {
+      occurrencesByTarget.set(occurrenceKey, occurrence);
+    }
+  };
 
   const visitNode = (network: string, elr: string, elrDefinition: string, node: RawTreeNode) => {
     if (node.qname === qname) {
-      occurrences.push({
+      addOccurrence({
         network,
         elr,
         elrDefinition,
@@ -81,7 +91,7 @@ export function collectTreeNodeOccurrences(
     });
   });
 
-  return occurrences;
+  return Array.from(occurrencesByTarget.values());
 }
 
 export function buildConceptElrMapForNetwork(groups: RawElrGroup[]): ConceptElrMap {
