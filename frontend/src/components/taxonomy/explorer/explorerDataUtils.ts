@@ -1,6 +1,6 @@
-import { AdvancedSearchFilterOptions, AdvancedSearchFilters, AdvancedSearchResult } from "@/types/advancedSearch";
+import type { AdvancedSearchFilterOptions, AdvancedSearchFilters, AdvancedSearchResult } from "@/types/advancedSearch";
 
-import { RawElrGroup, RawTreeNode, SearchConceptApiResult } from "./explorerTypes";
+import type { RawElrGroup, RawTreeNode, SearchConceptApiResult } from "./explorerTypes";
 
 export type ConceptElrMap = Record<string, string[]>;
 export type ConceptNetworksMap = Record<string, string[]>;
