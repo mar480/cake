@@ -175,28 +175,58 @@ def register_api_routes(app, taxonomy_base_dir: str):
 
         return qname_to_elrs
 
-    @app.route("/api/hello", methods=["POST"])
-    def get_hypercubes():
-        taxonomy = getattr(g, "taxonomy", taxonomy_cache.get("active"))
+    @app.route("/api/hypercubes-for-concept", methods=["POST"])
+    def hypercubes_for_concept():
+        data = request.get_json(silent=True) or {}
+        if not isinstance(data, dict):
+            return jsonify({"error": "Missing year, href, or qname"}), 400
 
-        if taxonomy is None:
-            return jsonify({"error": "No taxonomy loaded"}), 400
+        year = (data.get("year") or "").strip()
+        href = (data.get("href") or "").strip()
+        qname = (data.get("qname") or "").strip()
 
-        g.taxonomy = taxonomy
+        if not year or not href or not qname:
+            return jsonify({"error": "Missing year, href, or qname"}), 400
 
-        data = request.get_json()
-        qname = data.get("qname", "")
-        if not qname or ":" not in qname:
-            return jsonify({"error": "Invalid qname"}), 400
+        if ":" not in qname:
+            return (
+                jsonify(
+                    {"error": "Invalid qname: expected a prefixed name like 'prefix:localName'"}
+                ),
+                400,
+            )
 
-        ns_prefix, local_name = qname.split(":", 1)
-        concept_ns = g.taxonomy.model.prefixedNamespaces.get(ns_prefix)
+        try:
+            concepts_payload = load_cached_concepts_json_for_entrypoint(
+                taxonomy_base_dir, year, href
+            )
+        except FileNotFoundError as exc:
+            return jsonify({"error": str(exc)}), 404
+        except Exception as exc:
+            print(f"[hypercubes-for-concept] ERROR loading concepts.json: {exc}")
+            return jsonify({"error": "Failed to load hypercubes for concept"}), 500
 
-        results = g.taxonomy.hypercubes.find_hypercubes_for_concept(
-            concept_ns=concept_ns, concept_name=local_name
-        )
+        if not concepts_payload:
+            return (
+                jsonify({"error": "concepts.json not found or empty for entrypoint"}),
+                404,
+            )
 
-        return jsonify({"hypercubes": results})
+        concept_data = concepts_payload.get(qname)
+        if not concept_data:
+            return (
+                jsonify(
+                    {
+                        "error": (
+                            f"Concept '{qname}' not found in concepts.json for "
+                            f"year '{year}' and href '{href}'"
+                        )
+                    }
+                ),
+                404,
+            )
+
+        return jsonify({"hypercubes": deepcopy(concept_data.get("hypercubes") or [])})
 
     @app.route("/api/dimensional-relationships", methods=["POST"])
     def dimensional_relationships():
