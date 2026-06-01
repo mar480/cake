@@ -47,6 +47,10 @@ def get_active_taxonomy_with_retry(max_attempts: int = 3, delay_seconds: float =
 
 
 def register_api_routes(app, taxonomy_base_dir: str):
+    @app.route("/api/health", methods=["GET"])
+    def health_check():
+        return jsonify({"status": "ok"})
+
     SEARCH_EXPORT_MAX_ROWS = 10000
     SEARCH_EXPORT_FIELDS = {
         "qname": "qname",
