@@ -1,5 +1,8 @@
 from .types import SearchIndex
 
+# Search indexes are intentionally keyed by entrypoint_cache_key(year, href).
+# Never store user-facing search indexes under a process-global active key: multiple
+# users can search different entrypoints in the same backend process.
 _search_index_cache: dict[str, SearchIndex] = {}
 
 

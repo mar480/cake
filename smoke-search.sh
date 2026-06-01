@@ -5,6 +5,7 @@ BASE_URL="${BASE_URL:-http://localhost:5000}"
 YEAR="${YEAR:-2026}"
 Q="${Q:-turnover}"
 HREF="${HREF:-https://xbrl.frc.org.uk/FRS-102/2026-01-01/FRS-102-2026-01-01.xsd}" # optional override
+HREF2="${HREF2:-}" # optional second entrypoint override for cache-isolation smoke
 
 pass() { echo "✅ $1"; }
 fail() { echo "❌ $1"; exit 1; }
@@ -56,6 +57,15 @@ if [[ -z "$HREF" ]]; then
 fi
 [[ -n "$HREF" ]] || fail "No href available. Set HREF env var or check /api/entrypoints output."
 pass "resolved href: $HREF"
+
+if [[ -z "$HREF2" ]]; then
+  HREF2="$(jq -r --arg h "$HREF" '.entrypoints[]?.href | select(. != $h) | . // empty' "$ep_file" | head -n 1)"
+fi
+if [[ -n "$HREF2" ]]; then
+  pass "resolved second href for isolation smoke: $HREF2"
+else
+  info "No second href available; cache-isolation smoke will be skipped"
+fi
 
 # 2) Load entrypoint
 load_body="$(jq -cn --arg y "$YEAR" --arg h "$HREF" '{year:$y, href:$h}')"
@@ -161,6 +171,38 @@ pass "filter path executes"
 jq -e '(.results|length)==0 or (.results[0].score_breakdown|type=="object")' "$happy_file" >/dev/null \
   || fail "score_breakdown missing from result payload"
 pass "score breakdown present for explainability"
+
+
+# 11) Entrypoint cache isolation: search entrypoint A, then B, then A again.
+# A must remain stable after B so multi-user search cannot bleed across entrypoints.
+if [[ -n "$HREF2" && "$HREF2" != "$HREF" ]]; then
+  baseline_first_search="$(jq -c '{total, qnames:[.results[].qname]}' "$happy_file")"
+
+  load2_body="$(jq -cn --arg y "$YEAR" --arg h "$HREF2" '{year:$y, href:$h}')"
+  load2_resp="$(request_json POST "$BASE_URL/api/load-entrypoint" "$load2_body")"
+  load2_status="${load2_resp%%|*}"
+  load2_file="${load2_resp##*|}"
+  assert_status "$load2_status" "200" "load second entrypoint" "$load2_file"
+
+  second_body="$(jq -cn --arg y "$YEAR" --arg h "$HREF2" --arg q "$Q" \
+    '{year:$y, href:$h, q:$q, filters:{}, limit:25, offset:0}')"
+  second_resp="$(search_call "$second_body")"
+  second_status="${second_resp%%|*}"
+  second_file="${second_resp##*|}"
+  assert_status "$second_status" "200" "second entrypoint search" "$second_file"
+
+  first_again_resp="$(search_call "$happy_body")"
+  first_again_status="${first_again_resp%%|*}"
+  first_again_file="${first_again_resp##*|}"
+  assert_status "$first_again_status" "200" "first entrypoint search after second" "$first_again_file"
+  first_again_search="$(jq -c '{total, qnames:[.results[].qname]}' "$first_again_file")"
+
+  [[ "$baseline_first_search" == "$first_again_search" ]] \
+    || fail "First entrypoint search changed after searching second entrypoint"
+  pass "entrypoint-keyed search cache remains isolated across sequential entrypoints"
+else
+  info "Skipped entrypoint cache isolation smoke because only one href is available"
+fi
 
 echo
 pass "All smoke checks passed"

@@ -29,7 +29,9 @@ def _normalize_bool(value):
     return None
 
 
-def _classify_concept_type(full_type: str | None, substitution_group: str | None) -> str:
+def _classify_concept_type(
+    full_type: str | None, substitution_group: str | None
+) -> str:
     substitution_group_normalized = (substitution_group or "").strip().lower()
     full_type_normalized = (full_type or "").strip().lower()
 
@@ -87,6 +89,8 @@ def _build_reference_display(ref: dict) -> str | None:
 
 
 def build_search_index(concepts: dict) -> SearchIndex:
+    # The caller must pass only the requested entrypoint's concepts.json payload.
+    # The built index is cached under entrypoint_cache_key(year, href) by the route layer.
     concepts_by_qname: dict[str, IndexedConcept] = {}
     token_index: dict[str, set[str]] = defaultdict(set)
 
