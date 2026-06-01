@@ -146,7 +146,6 @@ export function chooseNavigationMatcher(
     };
   }
 
-
   return {
     matcher: (node) => node.data?.qname === pendingNavigation.qname,
     matchStrategy: "qname",
