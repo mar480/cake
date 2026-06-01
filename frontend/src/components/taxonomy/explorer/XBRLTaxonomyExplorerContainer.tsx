@@ -353,6 +353,7 @@ const XBRLTaxonomyExplorerContainer: React.FC = () => {
         resultNetworks={resultNetworks}
         resultPresentationElrs={resultPresentationElrs}
         hypercubeElrDefinitionsByQname={hypercubeElrDefinitionsByQname}
+        rawTreeData={rawTreeData}
       />
     </>
   );
