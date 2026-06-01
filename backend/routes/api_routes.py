@@ -105,17 +105,11 @@ def register_api_routes(app, taxonomy_base_dir: str):
 
     def _build_search_export_filename(year, href, query, export_format):
         timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
-        href_slug = "".join(
-            ch if ch.isalnum() else "-" for ch in (href or "").lower()
-        ).strip("-")
-        query_slug = "".join(
-            ch if ch.isalnum() else "-" for ch in (query or "").lower()
-        ).strip("-")
+        href_slug = "".join(ch if ch.isalnum() else "-" for ch in (href or "").lower()).strip("-")
+        query_slug = "".join(ch if ch.isalnum() else "-" for ch in (query or "").lower()).strip("-")
         href_slug = href_slug[:40] or "entrypoint"
         query_slug = query_slug[:40] or "all-results"
-        return (
-            f"search-export-{year}-{href_slug}-{query_slug}-{timestamp}.{export_format}"
-        )
+        return f"search-export-{year}-{href_slug}-{query_slug}-{timestamp}.{export_format}"
 
     def _get_presentation_qnames_for_entrypoint(year, href):
         cache_key = entrypoint_cache_key(year, href)
@@ -142,9 +136,7 @@ def register_api_routes(app, taxonomy_base_dir: str):
 
         visible_qnames = _get_presentation_qnames_for_entrypoint(year, href)
         filtered_results = [
-            item
-            for item in (payload.get("results") or [])
-            if item.get("qname") in visible_qnames
+            item for item in (payload.get("results") or []) if item.get("qname") in visible_qnames
         ]
 
         return {
@@ -163,9 +155,7 @@ def register_api_routes(app, taxonomy_base_dir: str):
                 offset=0,
                 filters=filters,
             )
-            filtered_payload = _apply_presentation_tree_filter(
-                unpaged_payload, year, href, filters
-            )
+            filtered_payload = _apply_presentation_tree_filter(unpaged_payload, year, href, filters)
             paged_results = filtered_payload.get("results", [])[offset : offset + limit]
             return {
                 **filtered_payload,
@@ -246,10 +236,7 @@ def register_api_routes(app, taxonomy_base_dir: str):
             return jsonify({"error": str(exc)}), 404
         except Exception as exc:
             print(f"[dimensional-relationships] ERROR: {exc}")
-            return (
-                jsonify({"error": "Failed to resolve dimensional relationships"}),
-                500,
-            )
+            return jsonify({"error": "Failed to resolve dimensional relationships"}), 500
 
         return jsonify(payload)
 
@@ -265,9 +252,7 @@ def register_api_routes(app, taxonomy_base_dir: str):
         if ":" not in qname:
             return (
                 jsonify(
-                    {
-                        "error": "Invalid qname: expected a prefixed name like 'prefix:localName'"
-                    }
+                    {"error": "Invalid qname: expected a prefixed name like 'prefix:localName'"}
                 ),
                 400,
             )
@@ -363,8 +348,8 @@ def register_api_routes(app, taxonomy_base_dir: str):
     @app.route("/api/load-entrypoint", methods=["POST"])
     def load_entrypoint():
         data = request.get_json() or {}
-        year = (data.get("year") or "").strip()
-        href = (data.get("href") or "").strip()
+        year = data.get("year")
+        href = data.get("href")
 
         if not year or not href:
             return jsonify({"error": "Missing year or href"}), 400
@@ -383,9 +368,7 @@ def register_api_routes(app, taxonomy_base_dir: str):
             trees = {}
             for file in os.listdir(tree_files):
                 if file.endswith(".json"):
-                    with open(
-                        os.path.join(tree_files, file), "r", encoding="utf-8"
-                    ) as f:
+                    with open(os.path.join(tree_files, file), "r", encoding="utf-8") as f:
                         tree_name = file.replace(".json", "")
                         trees[tree_name] = json.load(f)
 
@@ -405,11 +388,7 @@ def register_api_routes(app, taxonomy_base_dir: str):
             print("[load-entrypoint] ===== END OK =====\n")
 
             return jsonify(
-                {
-                    "status": "loaded",
-                    "entrypoint": os.path.basename(href),
-                    "trees": trees,
-                }
+                {"status": "loaded", "entrypoint": os.path.basename(href), "trees": trees}
             )
 
         except Exception as e:
@@ -438,9 +417,7 @@ def register_api_routes(app, taxonomy_base_dir: str):
                 qname_to_elrs = presentation_locations_cache.get(cache_key)
 
                 if qname_to_elrs is None:
-                    tree_dir = resolve_tree_dir_for_entrypoint(
-                        taxonomy_base_dir, year, href
-                    )
+                    tree_dir = resolve_tree_dir_for_entrypoint(taxonomy_base_dir, year, href)
                     presentation_path = os.path.join(tree_dir, "presentation_tree.json")
                     if not os.path.exists(presentation_path):
                         presentation_locations_cache[cache_key] = {}
@@ -448,9 +425,7 @@ def register_api_routes(app, taxonomy_base_dir: str):
 
                     with open(presentation_path, "r", encoding="utf-8") as handle:
                         presentation_tree = json.load(handle)
-                    qname_to_elrs = collect_presentation_elrs_by_qname(
-                        presentation_tree
-                    )
+                    qname_to_elrs = collect_presentation_elrs_by_qname(presentation_tree)
                     presentation_locations_cache[cache_key] = qname_to_elrs
 
                 elrs = qname_to_elrs.get(qname, [])
@@ -470,10 +445,7 @@ def register_api_routes(app, taxonomy_base_dir: str):
             return jsonify({"error": str(exc)}), 404
         except Exception as exc:
             print(f"[presentation-entrypoint-locations] ERROR: {exc}")
-            return (
-                jsonify({"error": "Failed to load presentation entrypoint locations"}),
-                500,
-            )
+            return jsonify({"error": "Failed to load presentation entrypoint locations"}), 500
 
     @app.route("/api/search-filter-options", methods=["GET"])
     def search_filter_options():
@@ -498,9 +470,7 @@ def register_api_routes(app, taxonomy_base_dir: str):
             return jsonify(cached)
 
         # Fallback: build from the requested entrypoint's concepts.json on disk if cache miss.
-        concepts_payload = load_concepts_json_for_entrypoint(
-            taxonomy_base_dir, year, href
-        )
+        concepts_payload = load_concepts_json_for_entrypoint(taxonomy_base_dir, year, href)
         if not concepts_payload:
             return (
                 jsonify({"error": "concepts.json not found or empty for entrypoint"}),
@@ -543,17 +513,11 @@ def register_api_routes(app, taxonomy_base_dir: str):
         index = get_search_index(cache_key)
 
         if index is None:
-            print(
-                f"[search-concepts] cache miss entrypoint_key={cache_key}; loading entrypoint concepts.json only"
-            )
-            concepts_payload = load_concepts_json_for_entrypoint(
-                taxonomy_base_dir, year, href
-            )
+            print(f"[search-concepts] cache miss entrypoint_key={cache_key}; loading entrypoint concepts.json only")
+            concepts_payload = load_concepts_json_for_entrypoint(taxonomy_base_dir, year, href)
             if not concepts_payload:
                 return (
-                    jsonify(
-                        {"error": "concepts.json not found or empty for entrypoint"}
-                    ),
+                    jsonify({"error": "concepts.json not found or empty for entrypoint"}),
                     404,
                 )
             index = build_search_index(concepts_payload)
@@ -596,37 +560,24 @@ def register_api_routes(app, taxonomy_base_dir: str):
         if export_format not in {"csv", "json"}:
             return jsonify({"error": "format must be csv or json"}), 400
         if fields is None or len(fields) == 0:
-            return (
-                jsonify(
-                    {"error": "fields must be a non-empty list of allowed field names"}
-                ),
-                400,
-            )
+            return jsonify({"error": "fields must be a non-empty list of allowed field names"}), 400
 
         cache_key = entrypoint_cache_key(year, href)
         index = get_search_index(cache_key)
 
         if index is None:
-            print(
-                f"[search-concepts/export] cache miss entrypoint_key={cache_key}; loading entrypoint concepts.json only"
-            )
-            concepts_payload = load_concepts_json_for_entrypoint(
-                taxonomy_base_dir, year, href
-            )
+            print(f"[search-concepts/export] cache miss entrypoint_key={cache_key}; loading entrypoint concepts.json only")
+            concepts_payload = load_concepts_json_for_entrypoint(taxonomy_base_dir, year, href)
             if not concepts_payload:
                 return (
-                    jsonify(
-                        {"error": "concepts.json not found or empty for entrypoint"}
-                    ),
+                    jsonify({"error": "concepts.json not found or empty for entrypoint"}),
                     404,
                 )
             index = build_search_index(concepts_payload)
             # Search indexes must remain entrypoint-keyed so separate users/entrypoints never share exports.
             set_search_index(cache_key, index)
 
-        total_matches = _run_search_payload(index, year, href, q, filters, 1, 0).get(
-            "total", 0
-        )
+        total_matches = _run_search_payload(index, year, href, q, filters, 1, 0).get("total", 0)
 
         if total_matches > SEARCH_EXPORT_MAX_ROWS:
             return (
@@ -641,9 +592,7 @@ def register_api_routes(app, taxonomy_base_dir: str):
                 400,
             )
 
-        payload = _run_search_payload(
-            index, year, href, q, filters, max(total_matches, 1), 0
-        )
+        payload = _run_search_payload(index, year, href, q, filters, max(total_matches, 1), 0)
         projected_rows = _project_search_export_rows(
             payload.get("results") or [],
             fields,
@@ -663,9 +612,7 @@ def register_api_routes(app, taxonomy_base_dir: str):
         }
 
         if export_format == "json":
-            response = make_response(
-                json.dumps(projected_rows, ensure_ascii=False, indent=2)
-            )
+            response = make_response(json.dumps(projected_rows, ensure_ascii=False, indent=2))
             response.mimetype = "application/json"
             response.headers.extend(response_headers)
             return response

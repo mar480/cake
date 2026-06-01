@@ -29,9 +29,7 @@ def _normalize_bool(value):
     return None
 
 
-def _classify_concept_type(
-    full_type: str | None, substitution_group: str | None
-) -> str:
+def _classify_concept_type(full_type: str | None, substitution_group: str | None) -> str:
     substitution_group_normalized = (substitution_group or "").strip().lower()
     full_type_normalized = (full_type or "").strip().lower()
 
