@@ -21,7 +21,9 @@ export interface ConceptLabel {
 }
 
 export interface ConceptReference {
+  source?: string | null;
   reference_role?: string | null;
+  /** Canonical generated reference source used as the Type display when reference_role is absent. */
   reference_key_values?: Record<string, unknown>;
   name?: string;
   number?: string;

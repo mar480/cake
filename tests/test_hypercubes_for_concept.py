@@ -58,6 +58,16 @@ def _make_client(tmp_path):
             "core:Revenue": {
                 "concept": {"qname": "core:Revenue"},
                 "hypercubes": ["core:HypercubeForA"],
+                "references": [
+                    {
+                        "reference_key_values": {
+                            "Name": "ICAEW AFF 03/06",
+                            "Paragraph": "50-59",
+                        },
+                        "name": "ICAEW AFF 03/06",
+                        "paragraph": "50-59",
+                    }
+                ],
             }
         },
     )
@@ -105,3 +115,21 @@ def test_hypercube_lookup_requires_entrypoint_parameters(tmp_path):
 
     assert response.status_code == 400
     assert response.get_json() == {"error": "Missing year, href, or qname"}
+
+
+def test_concept_details_normalizes_reference_source_for_existing_payload(tmp_path):
+    client = _make_client(tmp_path)
+
+    response = client.get(
+        "/api/concept-details",
+        query_string={
+            "year": "2099",
+            "href": "entry-a.xsd",
+            "qname": "core:Revenue",
+        },
+    )
+
+    assert response.status_code == 200
+    reference = response.get_json()["references"][0]
+    assert reference["source"] == "ICAEW AFF 03/06"
+    assert reference["paragraph"] == "50-59"
