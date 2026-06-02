@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/accordion";
 
 import { ConceptDetailsResponse, ConceptReference } from "./apiTypes";
+import { REFERENCE_TYPE_KEYS, getReferenceType } from "./referenceDisplayUtils";
 import { TreeNode } from "./tree_utils";
 
 
@@ -283,15 +284,21 @@ const DetailsTab: React.FC<Props> = ({
                         if (role === "Companies Act") return 2;
                         return 3;
                       };
-                      const aRole = a.reference_role || "";
-                      const bRole = b.reference_role || "";
+                      const aRole = getReferenceType(a);
+                      const bRole = getReferenceType(b);
                       const aP = priority(aRole);
                       const bP = priority(bRole);
                       return aP !== bP ? aP - bP : aRole.localeCompare(bRole);
                     })
                     .map((ref: ConceptReference, idx: number) => {
 
-                      const { reference_role, reference_key_values, ...details } = ref;
+                      const referenceType = getReferenceType(ref);
+                      const {
+                        reference_role,
+                        source,
+                        reference_key_values,
+                        ...details
+                      } = ref;
 
                       // Preferred display order for known keys
                       const preferredOrder = [
@@ -317,6 +324,7 @@ const DetailsTab: React.FC<Props> = ({
                       const dynamicEntries = Object.entries((reference_key_values || {}) as Record<string, unknown>)
                         .filter(([k, v]) => v !== null && v !== undefined && String(v).trim() !== "")
                         .filter(([k]) => !preferredLower.has(k.toLowerCase()))
+                        .filter(([k]) => !REFERENCE_TYPE_KEYS.has(k))
                         .map(([k, v]) => ({ label: k, value: v }));
 
                       const displayEntries = [...preferredEntries, ...dynamicEntries];
@@ -327,7 +335,7 @@ const DetailsTab: React.FC<Props> = ({
                           className={idx % 2 === 0 ? "bg-white" : "bg-gray-50"}
                         >
                           <td className="py-1 px-2 border align-top text-sm w-1/4 whitespace-nowrap">
-                            {reference_role || "—"}
+                            {referenceType || "—"}
                           </td>
                           <td className="py-1 px-2 border text-sm align-top">
                             {

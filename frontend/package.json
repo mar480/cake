@@ -10,7 +10,8 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "test:search-results": "esbuild src/components/taxonomy/explorer/searchResultDisplayUtils.test.ts --bundle --platform=node --format=esm --outfile=/tmp/searchResultDisplayUtils.test.mjs && node --test /tmp/searchResultDisplayUtils.test.mjs",
-    "test": "npm run test:search-results"
+    "test": "npm run test:search-results && npm run test:details-tab",
+    "test:details-tab": "esbuild src/components/taxonomy/explorer/DetailsTab.test.tsx --bundle --platform=node --format=cjs --alias:@=./src --outfile=/tmp/DetailsTab.test.cjs && node --test /tmp/DetailsTab.test.cjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
