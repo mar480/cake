@@ -3,6 +3,17 @@
 from arelle import ModelXbrl, XbrlConst
 from arelle.ModelDtsObject import ModelConcept
 
+FRC_REFERENCE_ROLE_LABELS = {
+    "http://www.xbrl.org/2003/role/reference": "Reference",
+    "http://xbrl.frc.org.uk/general/ref/roles/FRS101": "FRS 101",
+    "http://xbrl.frc.org.uk/general/ref/roles/FRS102": "FRS 102",
+    "http://xbrl.frc.org.uk/general/ref/roles/Full": "Full",
+    "http://xbrl.frc.org.uk/general/ref/roles/fullFRS101": "Full / FRS101",
+    "http://xbrl.frc.org.uk/general/ref/roles/AuditRegs": "Audit Regulations",
+    "http://xbrl.frc.org.uk/general/ref/roles/CompaniesAct": "Companies Act",
+    "http://xbrl.frc.org.uk/general/ref/roles/Standard": "Standard",
+}
+
 
 class SimpleHypercubeFinder:
     """
@@ -154,12 +165,11 @@ class ConceptDetailsExtractor:
                     )  # use lowercase keys for uniformity
 
                 role_uri = ref_resource.role
-                role_label = (
-                    self.model_taxonomy.roleTypeDefinition(role_uri) or "Standard"
-                )
+                role_label = FRC_REFERENCE_ROLE_LABELS.get(role_uri, role_uri)
 
                 references.append(
                     {
+                        "reference_role_uri": role_uri,
                         "reference_role": role_label,
                         "name": ref_data.get("name"),
                         "number": ref_data.get("number"),
