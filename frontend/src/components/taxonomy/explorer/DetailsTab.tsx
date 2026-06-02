@@ -15,8 +15,34 @@ const LABEL_ROLE_DISPLAY_NAMES: Record<string, string> = {
   "http://www.lloyds.com/lloyds/roles/idLabel": "ID Label (Lloyd's)",
 };
 
+const REFERENCE_ROLE_DISPLAY_NAMES: Record<string, string> = {
+  "http://www.xbrl.org/2003/role/reference": "Reference",
+  "http://xbrl.frc.org.uk/general/ref/roles/FRS101": "FRS 101",
+  "http://xbrl.frc.org.uk/general/ref/roles/FRS102": "FRS 102",
+  "http://xbrl.frc.org.uk/general/ref/roles/Full": "Full",
+  "http://xbrl.frc.org.uk/general/ref/roles/fullFRS101": "Full / FRS101",
+  "http://xbrl.frc.org.uk/general/ref/roles/AuditRegs": "Audit Regulations",
+  "http://xbrl.frc.org.uk/general/ref/roles/CompaniesAct": "Companies Act",
+  "http://xbrl.frc.org.uk/general/ref/roles/Standard": "Standard",
+};
+
 const getLabelRoleDisplayName = (role: string): string =>
   LABEL_ROLE_DISPLAY_NAMES[role] ?? role;
+
+const getReferenceRoleDisplayName = (ref: ConceptReference): string => {
+  if (ref.reference_role_uri) {
+    const roleFromUri = REFERENCE_ROLE_DISPLAY_NAMES[ref.reference_role_uri];
+    if (roleFromUri) return roleFromUri;
+  }
+
+  if (ref.reference_role) {
+    return (
+      REFERENCE_ROLE_DISPLAY_NAMES[ref.reference_role] ?? ref.reference_role
+    );
+  }
+
+  return "—";
+};
 
 interface Props {
   concept: ConceptDetailsResponse;
@@ -290,8 +316,12 @@ const DetailsTab: React.FC<Props> = ({
                       return aP !== bP ? aP - bP : aRole.localeCompare(bRole);
                     })
                     .map((ref: ConceptReference, idx: number) => {
-
-                      const { reference_role, reference_key_values, ...details } = ref;
+                      const {
+                        reference_role,
+                        reference_role_uri,
+                        reference_key_values,
+                        ...details
+                      } = ref;
 
                       // Preferred display order for known keys
                       const preferredOrder = [
@@ -327,7 +357,7 @@ const DetailsTab: React.FC<Props> = ({
                           className={idx % 2 === 0 ? "bg-white" : "bg-gray-50"}
                         >
                           <td className="py-1 px-2 border align-top text-sm w-1/4 whitespace-nowrap">
-                            {reference_role || "—"}
+                            {getReferenceRoleDisplayName(ref)}
                           </td>
                           <td className="py-1 px-2 border text-sm align-top">
                             {
