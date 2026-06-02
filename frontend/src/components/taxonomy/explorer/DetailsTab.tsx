@@ -284,21 +284,16 @@ const DetailsTab: React.FC<Props> = ({
                         if (role === "Companies Act") return 2;
                         return 3;
                       };
-                      const aRole = getReferenceType(a);
-                      const bRole = getReferenceType(b);
+                      const aRole = a.source || a.reference_role || "";
+                      const bRole = b.source || b.reference_role || "";
                       const aP = priority(aRole);
                       const bP = priority(bRole);
                       return aP !== bP ? aP - bP : aRole.localeCompare(bRole);
                     })
                     .map((ref: ConceptReference, idx: number) => {
 
-                      const referenceType = getReferenceType(ref);
-                      const {
-                        reference_role,
-                        source,
-                        reference_key_values,
-                        ...details
-                      } = ref;
+                      const { source, reference_role, reference_key_values, ...details } = ref;
+                      const displayType = source || reference_role || "";
 
                       // Preferred display order for known keys
                       const preferredOrder = [
@@ -335,7 +330,7 @@ const DetailsTab: React.FC<Props> = ({
                           className={idx % 2 === 0 ? "bg-white" : "bg-gray-50"}
                         >
                           <td className="py-1 px-2 border align-top text-sm w-1/4 whitespace-nowrap">
-                            {referenceType || "—"}
+                            {displayType || "—"}
                           </td>
                           <td className="py-1 px-2 border text-sm align-top">
                             {

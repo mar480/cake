@@ -21,10 +21,9 @@ export interface ConceptLabel {
 }
 
 export interface ConceptReference {
-  /** Legacy/display role for the Type column; generated payloads now commonly use source. */
+  source?: string | null;
   reference_role?: string | null;
   /** Canonical generated reference source used as the Type display when reference_role is absent. */
-  source?: string | null;
   reference_key_values?: Record<string, unknown>;
   name?: string;
   number?: string;
