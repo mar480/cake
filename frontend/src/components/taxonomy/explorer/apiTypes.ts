@@ -21,6 +21,7 @@ export interface ConceptLabel {
 }
 
 export interface ConceptReference {
+  source?: string | null;
   reference_role?: string | null;
   reference_key_values?: Record<string, unknown>;
   name?: string;

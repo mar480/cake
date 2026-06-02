@@ -3,6 +3,8 @@
 from arelle import ModelXbrl, XbrlConst
 from arelle.ModelDtsObject import ModelConcept
 
+from reference_utils import normalize_reference
+
 
 class SimpleHypercubeFinder:
     """
@@ -145,10 +147,12 @@ class ConceptDetailsExtractor:
             ref_resource = ref_rel.toModelObject
             if ref_resource is not None:
                 ref_data = {}
+                ref_key_values = {}
                 for child in ref_resource.iterchildren():
                     local_tag = (
                         child.tag.split("}")[1] if "}" in child.tag else child.tag
                     )
+                    ref_key_values[local_tag] = child.text
                     ref_data[local_tag.lower()] = (
                         child.text
                     )  # use lowercase keys for uniformity
@@ -159,17 +163,20 @@ class ConceptDetailsExtractor:
                 )
 
                 references.append(
-                    {
-                        "reference_role": role_label,
-                        "name": ref_data.get("name"),
-                        "number": ref_data.get("number"),
-                        "year": ref_data.get("year"),
-                        "schedule": ref_data.get("schedule"),
-                        "part": ref_data.get("part"),
-                        "section": ref_data.get("section"),
-                        "paragraph": ref_data.get("paragraph"),
-                        "report": ref_data.get("report"),
-                    }
+                    normalize_reference(
+                        {
+                            "reference_role": role_label,
+                            "reference_key_values": ref_key_values,
+                            "name": ref_data.get("name"),
+                            "number": ref_data.get("number"),
+                            "year": ref_data.get("year"),
+                            "schedule": ref_data.get("schedule"),
+                            "part": ref_data.get("part"),
+                            "section": ref_data.get("section"),
+                            "paragraph": ref_data.get("paragraph"),
+                            "report": ref_data.get("report"),
+                        }
+                    )
                 )
 
         # Hypercubes

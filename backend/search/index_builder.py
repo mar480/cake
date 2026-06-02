@@ -1,6 +1,8 @@
 import re
 from collections import defaultdict
 
+from reference_utils import build_reference_source
+
 from .types import IndexedConcept, SearchIndex
 
 # TOKEN_PATTERN = re.compile(r"[a-z0-9]+")
@@ -74,9 +76,7 @@ def _extract_label_texts(entry: dict) -> tuple[str, list[str]]:
 
 
 def _build_reference_display(ref: dict) -> str | None:
-    source_name = (ref.get("name") or "").strip()
-    source_number = (ref.get("number") or "").strip()
-    source = f"{source_name} {source_number}".strip()
+    source = build_reference_source(ref) or ""
     paragraph = (ref.get("paragraph") or "").strip()
 
     if source and paragraph:
@@ -106,9 +106,7 @@ def build_search_index(concepts: dict) -> SearchIndex:
         for ref in entry.get("references") or []:
             if not isinstance(ref, dict):
                 continue
-            source_name = (ref.get("name") or "").strip()
-            source_number = (ref.get("number") or "").strip()
-            source = f"{source_name} {source_number}".strip()
+            source = build_reference_source(ref)
             paragraph = (ref.get("paragraph") or "").strip()
 
             if not source:
