@@ -304,7 +304,7 @@ const DetailsTab: React.FC<Props> = ({
                   {[...(concept.references || [])]
                     .sort((a, b) => {
                       const priority = (role: string | null) => {
-                        if (role === "Full / FRS101") return 0;
+                        if (role === "Full / FRS 101") return 0;
                         if (role === "FRS 102") return 1;
                         if (role === "Companies Act") return 2;
                         return 3;
