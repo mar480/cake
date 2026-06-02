@@ -22,6 +22,7 @@ export interface ConceptLabel {
 
 export interface ConceptReference {
   reference_role?: string | null;
+  reference_role_uri?: string | null;
   reference_key_values?: Record<string, unknown>;
   name?: string;
   number?: string;
