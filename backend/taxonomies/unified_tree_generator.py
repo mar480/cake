@@ -22,6 +22,16 @@ from lxml import etree
 TAXONOMY_PACKAGE_NS = {"tp": "http://xbrl.org/2016/taxonomy-package"}
 LLOYDS_HINTS = ("lloyds", "lloyd's")
 STANDARD_HINTS = ("frc", "xbrl.frc.org.uk")
+REFERENCE_ROLE_URI_TO_LABEL = {
+    "http://xbrl.frc.org.uk/general/ref/roles/AuditRegs": "Audit Regulations",
+    "http://xbrl.frc.org.uk/general/ref/roles/Cic34": "CIC 34",
+    "http://xbrl.frc.org.uk/general/ref/roles/CompaniesAct": "Companies Act",
+    "http://xbrl.frc.org.uk/general/ref/roles/FRS101": "FRS 101",
+    "http://xbrl.frc.org.uk/general/ref/roles/FRS102": "FRS 102",
+    "http://xbrl.frc.org.uk/general/ref/roles/Full": "Full",
+    "http://xbrl.frc.org.uk/general/ref/roles/Standard": "Standard",
+    "http://xbrl.frc.org.uk/general/ref/roles/fullFRS101": "Full / FRS 101",
+}
 
 
 @dataclass(frozen=True)
