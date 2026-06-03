@@ -91,6 +91,17 @@ def _walk_members(
         )
 
 
+def _sorted_hypercube_qnames(hypercube_qnames, hypercube_by_qname: dict) -> list[str]:
+    return sorted(
+        {qname for qname in (hypercube_qnames or []) if qname in hypercube_by_qname},
+        key=lambda qname: (
+            hypercube_by_qname.get(qname, {}).get("elr_id") is None,
+            hypercube_by_qname.get(qname, {}).get("elr_id"),
+            qname,
+        ),
+    )
+
+
 @lru_cache(maxsize=32)
 def load_dimensional_relationship_index(taxonomy_base_dir: str, year: str, href: str) -> dict:
     tree_dir = resolve_tree_dir_for_entrypoint(taxonomy_base_dir, year, href)
@@ -103,6 +114,7 @@ def load_dimensional_relationship_index(taxonomy_base_dir: str, year: str, href:
     primary_items = _read_json(os.path.join(tree_dir, "primary_items.json")) or []
 
     concept_meta = {}
+    concept_to_hypercubes_from_concepts: dict[str, set[str]] = {}
     for qname, entry in (concepts or {}).items():
         concept = (entry or {}).get("concept", {}) or {}
         label, label_cy = _standard_labels_from_entry(entry or {})
@@ -117,6 +129,13 @@ def load_dimensional_relationship_index(taxonomy_base_dir: str, year: str, href:
             "full_type": concept.get("full_type"),
             "substitution_group": concept.get("substitution_group"),
         }
+        concept_hypercubes = {
+            str(hypercube).strip()
+            for hypercube in (entry or {}).get("hypercubes") or []
+            if str(hypercube).strip()
+        }
+        if concept_hypercubes:
+            concept_to_hypercubes_from_concepts[qname] = concept_hypercubes
 
     primary_items_by_elr = {
         item.get("elr"): item for item in primary_items if isinstance(item, dict) and item.get("elr")
@@ -213,14 +232,39 @@ def load_dimensional_relationship_index(taxonomy_base_dir: str, year: str, href:
             },
         )
 
+    concept_membership_edges_only = 0
+    derived_membership_edges_only = 0
+    disagreement_qnames = 0
+
+    for qname in set(concept_to_hypercubes_from_concepts) | set(primary_item_to_hypercubes):
+        concept_memberships = concept_to_hypercubes_from_concepts.get(qname, set())
+        derived_memberships = primary_item_to_hypercubes.get(qname, set())
+        if concept_memberships != derived_memberships:
+            disagreement_qnames += 1
+        concept_membership_edges_only += len(concept_memberships - derived_memberships)
+        derived_membership_edges_only += len(derived_memberships - concept_memberships)
+
+    if disagreement_qnames:
+        print(
+            "[dimensional-relationships] membership disagreement "
+            f"year={year} href={href} qnames={disagreement_qnames} "
+            f"concept_only_edges={concept_membership_edges_only} "
+            f"derived_only_edges={derived_membership_edges_only}"
+        )
+
     return {
         "concept_meta": concept_meta,
         "hypercube_by_qname": hypercube_by_qname,
         "dimension_by_qname": dimension_by_qname,
         "dimension_to_hypercubes": {key: sorted(value) for key, value in dimension_to_hypercubes.items()},
         "member_to_dimensions": {key: sorted(value) for key, value in member_to_dimensions.items()},
+        "concept_to_hypercubes_from_concepts": {
+            key: _sorted_hypercube_qnames(value, hypercube_by_qname)
+            for key, value in concept_to_hypercubes_from_concepts.items()
+        },
         "primary_item_to_hypercubes": {
-            key: sorted(value) for key, value in primary_item_to_hypercubes.items()
+            key: _sorted_hypercube_qnames(value, hypercube_by_qname)
+            for key, value in primary_item_to_hypercubes.items()
         },
         "member_to_dimension_paths": member_to_dimension_paths,
     }
@@ -244,9 +288,13 @@ def resolve_dimensional_relationships(taxonomy_base_dir: str, year: str, href: s
         cube_set = set()
         for dimension_qname in matched_dimensions:
             cube_set.update(index["dimension_to_hypercubes"].get(dimension_qname, []))
-        matched_hypercubes = sorted(cube_set)
+        matched_hypercubes = _sorted_hypercube_qnames(cube_set, index["hypercube_by_qname"])
     else:
-        matched_hypercubes = index["primary_item_to_hypercubes"].get(qname, [])
+        matched_hypercubes = _sorted_hypercube_qnames(
+            set(index["primary_item_to_hypercubes"].get(qname, []))
+            | set(index["concept_to_hypercubes_from_concepts"].get(qname, [])),
+            index["hypercube_by_qname"],
+        )
 
     resolved_hypercubes = []
     for hypercube_qname in matched_hypercubes:

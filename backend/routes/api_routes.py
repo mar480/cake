@@ -197,9 +197,7 @@ def register_api_routes(app, taxonomy_base_dir: str):
             )
 
         try:
-            concepts_payload = load_cached_concepts_json_for_entrypoint(
-                taxonomy_base_dir, year, href
-            )
+            concepts_payload = load_cached_concepts_json_for_entrypoint(taxonomy_base_dir, year, href)
         except FileNotFoundError as exc:
             return jsonify({"error": str(exc)}), 404
         except Exception as exc:
@@ -207,13 +205,9 @@ def register_api_routes(app, taxonomy_base_dir: str):
             return jsonify({"error": "Failed to load hypercubes for concept"}), 500
 
         if not concepts_payload:
-            return (
-                jsonify({"error": "concepts.json not found or empty for entrypoint"}),
-                404,
-            )
+            return jsonify({"error": "concepts.json not found or empty for entrypoint"}), 404
 
-        concept_data = concepts_payload.get(qname)
-        if not concept_data:
+        if qname not in concepts_payload:
             return (
                 jsonify(
                     {
@@ -226,7 +220,22 @@ def register_api_routes(app, taxonomy_base_dir: str):
                 404,
             )
 
-        return jsonify({"hypercubes": deepcopy(concept_data.get("hypercubes") or [])})
+        try:
+            payload = resolve_dimensional_relationships(
+                taxonomy_base_dir=taxonomy_base_dir,
+                year=year,
+                href=href,
+                qname=qname,
+            )
+        except FileNotFoundError as exc:
+            return jsonify({"error": str(exc)}), 404
+        except Exception as exc:
+            print(f"[hypercubes-for-concept] ERROR resolving relationships: {exc}")
+            return jsonify({"error": "Failed to load hypercubes for concept"}), 500
+
+        return jsonify(
+            {"hypercubes": [hypercube.get("hypercubeName") for hypercube in payload.get("hypercubes") or []]}
+        )
 
     @app.route("/api/dimensional-relationships", methods=["POST"])
     def dimensional_relationships():
