@@ -34,6 +34,9 @@ interface Props {
   onNetworkChange: (network: string) => void;
   year: string | null;
   entrypoint: string | null;
+  loadedYear: string | null;
+  loadedEntrypoint: string | null;
+  loadedEntrypointName: string | null;
   entrypoints: EntrypointOption[];
   onYearChange: (year: string | null) => void;
   onEntrypointChange: (entrypoint: string | null) => void;
@@ -76,6 +79,9 @@ const XBRLTaxonomyExplorer: React.FC<Props> = ({
   onLanguageChange,
   year,
   entrypoint,
+  loadedYear,
+  loadedEntrypoint,
+  loadedEntrypointName,
   entrypoints,
   onYearChange,
   onEntrypointChange,
@@ -97,6 +103,12 @@ const XBRLTaxonomyExplorer: React.FC<Props> = ({
   resultPresentationElrs,
   rawTreeData,
 }) => {
+  const viewingLabel = loadedYear
+    ? `Viewing: ${loadedYear} / ${loadedEntrypointName || loadedEntrypoint || "Unknown entrypoint"}`
+    : "";
+  const activeViewYear = loadedYear;
+  const activeViewEntrypoint = loadedEntrypoint;
+
   return (
     <div className="flex flex-col h-screen bg-white">
       <header className="bg-blue-800 text-white p-2 flex justify-between items-center">
@@ -167,6 +179,10 @@ const XBRLTaxonomyExplorer: React.FC<Props> = ({
             </select>
           </div>
         </div>
+
+        <div className="text-sm text-blue-100 whitespace-nowrap pl-4">
+          {viewingLabel}
+        </div>
       </header>
 
       <Split
@@ -180,8 +196,8 @@ const XBRLTaxonomyExplorer: React.FC<Props> = ({
             selectedNode={detailNode}
             onNavigateToNode={onNavigateToNode}
             onNavigateToSearchNode={onNavigateToSearchNode}
-            year={year}
-            entrypoint={entrypoint}
+            year={activeViewYear}
+            entrypoint={activeViewEntrypoint}
             onNavigateToCrossReference={(qname) => onNavigateToNode(qname, { preserveDetails: true })}
             onNavigateToLocation={onNavigateToLocation}
             treeLocations={treeLocations}
@@ -209,8 +225,8 @@ const XBRLTaxonomyExplorer: React.FC<Props> = ({
             key={network}
             network={network}
             networkLabel={networkLabels[network] ?? network}
-            year={year}
-            entrypoint={entrypoint}
+            year={activeViewYear}
+            entrypoint={activeViewEntrypoint}
             treeFilter={treeFilter}
             onTreeFilterChange={onTreeFilterChange}
             expandedKeys={expandedKeys}

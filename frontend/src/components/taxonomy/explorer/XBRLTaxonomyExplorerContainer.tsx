@@ -52,6 +52,14 @@ const XBRLTaxonomyExplorerContainer: React.FC = () => {
   // Taxonomy selection state
   const [year, setYear] = useState<string | null>(null);
   const [entrypoint, setEntrypoint] = useState<string | null>(null);
+  const [activeLoadRequest, setActiveLoadRequest] = useState<{
+    year: string;
+    entrypoint: string;
+    entrypointName?: string | null;
+  } | null>(null);
+  const [loadedYear, setLoadedYear] = useState<string | null>(null);
+  const [loadedEntrypoint, setLoadedEntrypoint] = useState<string | null>(null);
+  const [loadedEntrypointName, setLoadedEntrypointName] = useState<string | null>(null);
   const [pendingEntrypointNavigation, setPendingEntrypointNavigation] = useState<{
     targetEntrypoint: string;
     qname: string;
@@ -68,7 +76,7 @@ const XBRLTaxonomyExplorerContainer: React.FC = () => {
     updateAdvancedSearchFilters,
     runAdvancedSearch,
     runAdvancedSearchExport,
-  } = useAdvancedSearch(year, entrypoint);
+  } = useAdvancedSearch(loadedYear, loadedEntrypoint);
 
   const clearTreeUiState = useCallback(() => {
     setNetwork("");
@@ -79,14 +87,64 @@ const XBRLTaxonomyExplorerContainer: React.FC = () => {
     setHighlightedKey(null);
   }, []);
 
+  const handleEntrypointLoadSuccess = useCallback((
+    {
+      year: nextLoadedYear,
+      entrypoint: nextLoadedEntrypoint,
+      entrypointName,
+    }: {
+      year: string;
+      entrypoint: string;
+      entrypointName?: string | null;
+    }
+  ) => {
+    setLoadedYear(nextLoadedYear);
+    setLoadedEntrypoint(nextLoadedEntrypoint);
+    setLoadedEntrypointName(entrypointName ?? nextLoadedEntrypoint);
+  }, []);
+
   const {
     entrypoints,
+    entrypointsYear,
     rawTreeData,
     entrypointLoaded,
     loadingEntrypoint,
     advancedSearchFilterOptions,
     referenceParagraphsBySource,
-  } = useEntrypointData(year, entrypoint, resetAdvancedSearch, clearTreeUiState);
+  } = useEntrypointData(
+    year,
+    activeLoadRequest,
+    resetAdvancedSearch,
+    clearTreeUiState,
+    handleEntrypointLoadSuccess
+  );
+
+  useEffect(() => {
+    if (!year || !entrypoint || entrypointsYear !== year) {
+      return;
+    }
+
+    if (entrypoints.some((ep) => ep.href === entrypoint)) {
+      return;
+    }
+
+    setEntrypoint(null);
+  }, [entrypoint, entrypoints, entrypointsYear, year]);
+
+  const requestEntrypointLoad = useCallback((nextEntrypoint: string) => {
+    if (!year) {
+      return;
+    }
+
+    const matchingEntrypoint = entrypoints.find((ep) => ep.href === nextEntrypoint);
+
+    setEntrypoint(nextEntrypoint);
+    setActiveLoadRequest({
+      year,
+      entrypoint: nextEntrypoint,
+      entrypointName: matchingEntrypoint?.name ?? nextEntrypoint,
+    });
+  }, [entrypoints, year]);
 
   const currentTreeNodes: TreeNode[] = useMemo(() => {
     const raw = rawTreeData?.[network];
@@ -99,7 +157,7 @@ const XBRLTaxonomyExplorerContainer: React.FC = () => {
     rawTreeData,
     detailNode,
     network,
-    entrypoint,
+    entrypoint: loadedEntrypoint,
     setNetwork,
     setExpandedKeys,
     setHighlightedKey,
@@ -109,7 +167,7 @@ const XBRLTaxonomyExplorerContainer: React.FC = () => {
       toast({
         title: "Navigation failed",
         description:
-          pendingNavigation.targetEntrypoint && pendingNavigation.targetEntrypoint !== entrypoint
+          pendingNavigation.targetEntrypoint && pendingNavigation.targetEntrypoint !== loadedEntrypoint
             ? "The target concept could not be found in the selected entrypoint."
             : "The target concept could not be found in the current tree.",
         variant: "destructive",
@@ -141,7 +199,7 @@ const XBRLTaxonomyExplorerContainer: React.FC = () => {
   const navigateFromSearch = useCallback(
     (qname: string, targetNetwork?: string, elr?: string, targetEntrypoint?: string, uuid?: string) => {
       const destinationNetwork = targetNetwork || "presentation";
-      if (targetEntrypoint && targetEntrypoint !== entrypoint) {
+      if (targetEntrypoint && targetEntrypoint !== loadedEntrypoint) {
         setPendingEntrypointNavigation({
           targetEntrypoint,
           qname,
@@ -149,13 +207,13 @@ const XBRLTaxonomyExplorerContainer: React.FC = () => {
           elr,
           uuid,
         });
-        setEntrypoint(targetEntrypoint);
+        requestEntrypointLoad(targetEntrypoint);
         return;
       }
 
       navigateToQNameInNetwork(qname, destinationNetwork, elr, { uuid });
     },
-    [entrypoint, navigateToQNameInNetwork]
+    [loadedEntrypoint, navigateToQNameInNetwork, requestEntrypointLoad]
   );
 
   const runAfterTreeFilterClears = useCallback((action: () => void) => {
@@ -185,7 +243,7 @@ const XBRLTaxonomyExplorerContainer: React.FC = () => {
   useEffect(() => {
     if (!pendingEntrypointNavigation) return;
     if (!entrypointLoaded) return;
-    if (entrypoint !== pendingEntrypointNavigation.targetEntrypoint) return;
+    if (loadedEntrypoint !== pendingEntrypointNavigation.targetEntrypoint) return;
 
     navigateToQNameInNetwork(
       pendingEntrypointNavigation.qname,
@@ -197,19 +255,29 @@ const XBRLTaxonomyExplorerContainer: React.FC = () => {
       }
     );
     setPendingEntrypointNavigation(null);
-  }, [entrypoint, entrypointLoaded, navigateToQNameInNetwork, pendingEntrypointNavigation]);
+  }, [entrypointLoaded, loadedEntrypoint, navigateToQNameInNetwork, pendingEntrypointNavigation]);
 
   const handleYearChange = useCallback((nextYear: string | null) => {
     setPendingEntrypointNavigation(null);
     clearPendingNavigation();
     setYear(nextYear);
+
+    if (!nextYear) {
+      setEntrypoint(null);
+    }
   }, [clearPendingNavigation]);
 
   const handleEntrypointChange = useCallback((nextEntrypoint: string | null) => {
     setPendingEntrypointNavigation(null);
     clearPendingNavigation();
-    setEntrypoint(nextEntrypoint);
-  }, [clearPendingNavigation]);
+
+    if (!nextEntrypoint) {
+      setEntrypoint(null);
+      return;
+    }
+
+    requestEntrypointLoad(nextEntrypoint);
+  }, [clearPendingNavigation, requestEntrypointLoad]);
 
   // Default network
   useEffect(() => {
@@ -238,6 +306,9 @@ const XBRLTaxonomyExplorerContainer: React.FC = () => {
         network={network}
         year={year}
         entrypoint={entrypoint}
+        loadedYear={loadedYear}
+        loadedEntrypoint={loadedEntrypoint}
+        loadedEntrypointName={loadedEntrypointName}
         entrypoints={entrypoints}
         onYearChange={handleYearChange}
         onEntrypointChange={handleEntrypointChange}
