@@ -44,6 +44,14 @@ const getReferenceRoleDisplayName = (ref: ConceptReference): string => {
   return "—";
 };
 
+const REFERENCE_METADATA_KEYS = new Set([
+  "reference_role",
+  "reference_role_uri",
+]);
+
+const isReferenceMetadataKey = (key: string): boolean =>
+  REFERENCE_METADATA_KEYS.has(key.toLowerCase());
+
 interface Props {
   concept: ConceptDetailsResponse;
   selectedNode: TreeNode;
@@ -304,8 +312,8 @@ const DetailsTab: React.FC<Props> = ({
                   {[...(concept.references || [])]
                     .sort((a, b) => {
                       const priority = (role: string | null) => {
-                        if (role === "Full / FRS 101") return 0;
-                        if (role === "FRS 102") return 1;
+                        if (role === "FRS 102") return 0;
+                        if (role === "Full / FRS 101") return 1;
                         if (role === "Companies Act") return 2;
                         return 3;
                       };
@@ -347,6 +355,7 @@ const DetailsTab: React.FC<Props> = ({
                       const dynamicEntries = Object.entries((reference_key_values || {}) as Record<string, unknown>)
                         .filter(([k, v]) => v !== null && v !== undefined && String(v).trim() !== "")
                         .filter(([k]) => !preferredLower.has(k.toLowerCase()))
+                        .filter(([k]) => !isReferenceMetadataKey(k))
                         .map(([k, v]) => ({ label: k, value: v }));
 
                       const displayEntries = [...preferredEntries, ...dynamicEntries];
