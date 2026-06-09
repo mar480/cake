@@ -5,6 +5,8 @@ export type TourRuntimeContext = {
   explorer: {
     actions: ExplorerDemoActions | null;
     state: ExplorerDemoState | null;
+    getActions?: () => ExplorerDemoActions | null;
+    getState?: () => ExplorerDemoState | null;
   };
 };
 
@@ -50,6 +52,25 @@ async function waitForAvailableEntrypoint(
   return null;
 }
 
+async function waitForExplorerCondition(
+  context: TourRuntimeContext,
+  predicate: (state: ExplorerDemoState | null) => boolean,
+  timeoutMs = 4000
+): Promise<boolean> {
+  const startedAt = Date.now();
+
+  while (Date.now() - startedAt < timeoutMs) {
+    const state = context.explorer.getState?.() ?? context.explorer.state ?? null;
+    if (predicate(state)) {
+      return true;
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, 120));
+  }
+
+  return false;
+}
+
 export function pickBeginnerDemoEntrypoint(
   entrypoints: Array<{ name: string; href: string }>
 ): string | null {
@@ -69,13 +90,13 @@ export const tours: Record<string, TourDefinition> = {
       {
         id: "choose-year",
         targetAnchor: "year-selector",
-        title: "Choose a taxonomy year",
-        body: "The guided demo starts by selecting a real taxonomy year so the rest of the tour can use live entrypoints and trees.",
+        title: "Choose a taxonomy version",
+        body: "The FRC releases a new taxonomy suite every year to reflect changes to reporting requirements, UK GAAP and UK-endorsed IFRS. \n\n Preparers should confirm which versions are valid for their needs by consulting HMRC and/or Companies House documentation.",
         placement: "bottom",
         spotlightPadding: 4,
         spotlightRadius: 12,
         helpId: "app.yearSelector",
-        beforeStep: ({ explorer }) => {
+        beforeStep: async ({ explorer }) => {
           explorer.actions?.selectYear("2026");
         },
         waitFor: ({ explorer }) =>
@@ -87,9 +108,9 @@ export const tours: Record<string, TourDefinition> = {
       {
         id: "choose-entrypoint",
         targetAnchor: "entrypoint-selector",
-        title: "Choose an entrypoint",
-        body: "Now the tour loads a real entrypoint from the current year so the tree and details panel have live taxonomy data to work with.",
-        loadingMessage: "The tour will continue when the entrypoint has loaded.",
+        title: "Choose an entry point",
+        body: "Each year's taxonomy suite contains a list of entry points - a specific starting file in a taxonomy. It loads the parts of the taxonomy needed for a particular reporting purpose. \n\n In the UK taxonomies, there are different entry points available for each accounting standard (e.g. FRS 101, FRS 102) and for some Companies House-specific forms (e.g. CIC-34, DSEP-AA06).",
+        loadingMessage: "The tour will continue when the entry point has loaded.",
         placement: "bottom",
         spotlightPadding: 4,
         spotlightRadius: 12,
@@ -116,9 +137,9 @@ export const tours: Record<string, TourDefinition> = {
         id: "browse-tree",
         targetAnchor: "taxonomy-tree-panel",
         title: "Browse the taxonomy tree",
-        body: "The tree shows how concepts are organised. Select a concept here to inspect labels, references, and technical metadata.",
+        body: "The presentation tree view shows how concepts are organised. Click the arrows next to concepts to expand them and reveal their hierarchical structure. \n\n  Colours and icons are used in the tree view to indicate different concept types (e.g. monetary, string, percentage etc.). \n\n Clicking a concept displays information about it in the Details, Hypercube Relationships, and Tree Nodes tabs.",
         placement: "right",
-        beforeStep: ({ explorer }) => {
+        beforeStep: async ({ explorer }) => {
           if (explorer.state?.entrypointLoaded) {
             explorer.actions?.selectNetwork("presentation");
             explorer.actions?.setTreeFilter("");
@@ -134,21 +155,33 @@ export const tours: Record<string, TourDefinition> = {
         spotlightAnchors: ["taxonomy-tree-search", "highlighted-tree-node"],
         spotlightStrategy: "separate",
         title: "Filter the current tree",
-        body: "Use tree search to narrow the visible concepts without changing the loaded taxonomy. The tour falls back gracefully if the tree controls are not visible yet.",
+        body: "The presentation tree can be searched using a concept's label or QName. \n\n Click the blue download arrow in the search bar to export the results as csv, json, html and png files.",
         placement: "right",
         helpId: "tree.search",
-        beforeStep: ({ explorer }) => {
+        beforeStep: async ({ explorer }) => {
           if (explorer.state?.entrypointLoaded) {
-            explorer.actions?.setTreeFilter("current assets");
-            explorer.actions?.navigateToConcept("core:CurrentAssets", {
+            explorer.actions?.setTreeFilter("property, plant and equipment");
+            const filterReady = await waitForExplorerCondition(
+              { explorer },
+              (state) => state?.treeFilter === "property, plant and equipment",
+              2500
+            );
+            if (!filterReady) {
+              return;
+            }
+            explorer.actions?.navigateToConcept("core:PropertyPlantEquipment", {
               preserveDetails: true,
               persistentHighlight: true,
+              allowWhileFiltered: true,
+
             });
           }
         },
         waitFor: ({ explorer }) =>
-          !explorer.state?.entrypointLoaded || explorer.state.treeFilter === "current assets",
-        timeoutMs: 3000,
+          !explorer.state?.entrypointLoaded ||
+          (explorer.state.treeFilter === "property, plant and equipment" &&
+            explorer.state.selectedTreeConceptQname === "core:PropertyPlantEquipment"),
+        timeoutMs: 5000,
       },
       {
         id: "inspect-details",
@@ -156,19 +189,22 @@ export const tours: Record<string, TourDefinition> = {
         spotlightAnchors: ["details-panel", "highlighted-tree-node"],
         spotlightStrategy: "separate",
         title: "Inspect concept details",
-        body: "When a concept is selected, this panel explains its properties and gives you richer context for beginner-unfriendly terms.",
+        body: "When a concept is selected, this panel explains its properties. \n\n Pay particular attention to the balance, period and data type properties to undertand how the concept is intended to be used and the labels for any supporting information. \n\n References provide useful context, linking concepts with legislation, regulation and accounting standards ",
         placement: "left",
         helpId: "details.tabs",
         beforeStep: ({ explorer }) => {
-          if (explorer.state?.entrypointLoaded) {
-            explorer.actions?.navigateToConcept("core:CurrentAssets", {
-              persistentHighlight: true,
-            });
+          if (explorer.state?.entrypointLoaded) {          
+            if (explorer.state.selectedConceptQname !== "core:PropertyPlantEquipment") {
+              explorer.actions?.navigateToConcept("core:PropertyPlantEquipment", {
+                persistentHighlight: true,
+                allowWhileFiltered: true,
+              });
+            }            
             explorer.actions?.openDetailsTab("Details");
           }
         },
         waitFor: ({ explorer }) =>
-          explorer.state?.selectedConceptQname === "core:CurrentAssets" &&
+          explorer.state?.selectedConceptQname === "core:PropertyPlantEquipment" &&
           explorer.state.activeDetailsTab === "Details",
         timeoutMs: 5000,
       },
@@ -181,7 +217,7 @@ export const tours: Record<string, TourDefinition> = {
         ],
         cardAnchor: "details-panel",
         title: "Show hypercube relationships",
-        body: "This tab is often the most useful next step after properties because it shows how the selected concept participates in tables, dimensions, domains, and members.",
+        body: "This tab shows how aspects of a concept can be further broken down using the dimensions available. Applying dimensions is common when tagging the Notes to the Accounts. \n\n Concepts belong to hypercubes (tables). A hypercube (table) is a data structure made up of reportable concepts (rows) and available dimensions (columns). The UK taxonomies use closed hypercubes. This means that every line item concept belongs to at least one hypercube, and users cannot create their own taxonomy concepts.\n\n\ This tab shows the available dimensions (columns) as dropdown selectors. In this example, we can see that Property, Plant, and Equipment can be broken down by dimensions 6053 PPE Ownership and 6052 PPE Classes. \n\n The contents of those dropdowns are the dimension's domain members. All of the other reportable concepts (rows) available in this hypercube are listed under \"Primary Items\". \n\n Hypercube tabs can be popped out to make it easier to compare the dimensional structure of different concepts.",
         placement: "left",
         helpId: "details.tab.hypercubeRelationships",
         beforeStep: ({ explorer }) => {
@@ -203,7 +239,7 @@ export const tours: Record<string, TourDefinition> = {
         ],
         cardAnchor: "details-panel",
         title: "Open a non-default details tab",
-        body: "With a concept selected, the demo intentionally switches to Tree Locations so you can see the guided tour control a tab that depends on concept context.",
+        body: "This tab shows the tree locations for the selected concept. \n\n Concepts will appear in the presentation and definition trees according to the relationships defined in the taxonomy. This view can be used to  trace the relationships between concepts, hypercubes, dimensions and their domain members.\n\n Tree Node tabs can be popped out to make it easier to compare the locations of different concepts.",
         placement: "left",
         helpId: "details.tab.treeLocations",
         beforeStep: ({ explorer }) => {
@@ -225,7 +261,7 @@ export const tours: Record<string, TourDefinition> = {
         spotlightStrategy: "separate",
         cardAnchor: "details-panel",
         title: "Switch to advanced search",
-        body: "The demo finishes by opening Advanced Search. This shows that the guided runtime can move between different explorer surfaces after it has loaded and explored live taxonomy data.",
+        body: "The taxonomy viewer offers a robust search engine that can filter concepts based on all relevant XBRL taxonomy criteria (the properties in the details tab). \n\n Users can also search by reference, if looking to understand how the taxonomy maps to specific legislation, regulation or accounting standards.",
         placement: "left",
         helpId: "details.tab.advancedSearch",
         beforeStep: ({ explorer }) => {
@@ -244,7 +280,7 @@ export const tours: Record<string, TourDefinition> = {
         targetAnchor: "details-view-search-results",
         cardAnchor: "details-panel",
         title: "Explore filtered search",
-        body: "The tour now runs a real keyword search for Turnover and shows the matching results so you can move from search back into tree-based inspection.",
+        body: "Search results can be filtered by relevant taxonomy criteria. All filters applied can be toggled on and off. \n\n Click \"Go to node\" to navigate to the selected concept in any tree it appears, even in different entry points.\n\n Click \"Export results\" to export the results as csv and json.",
         placement: "left",
         helpId: "details.tab.advancedSearch",
         beforeStep: ({ explorer }) => {

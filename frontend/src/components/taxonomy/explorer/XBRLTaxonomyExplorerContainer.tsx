@@ -306,6 +306,7 @@ const XBRLTaxonomyExplorerContainer: React.FC = () => {
       entrypointLoaded,
       network,
       treeFilter,
+      selectedTreeConceptQname: selectedNode?.data?.qname ?? null,
       selectedConceptQname: detailNode?.data?.qname ?? null,
       activeDetailsTab,
       advancedSearchQuery: advancedSearchState.query,
@@ -321,6 +322,7 @@ const XBRLTaxonomyExplorerContainer: React.FC = () => {
       advancedSearchState.results.length,
       entrypoints,
       entrypointsYear,
+      selectedNode?.data?.qname,
       detailNode?.data?.qname,
       entrypoint,
       entrypointLoaded,
@@ -350,7 +352,7 @@ const XBRLTaxonomyExplorerContainer: React.FC = () => {
         }
       },
       navigateToConcept: (qname, options) => {
-        runAfterTreeFilterClears(() => {
+        const performNavigation = () => {
           if (options?.network || options?.entrypoint || options?.elr || options?.uuid) {
             navigateFromSearch(
               qname,
@@ -366,7 +368,14 @@ const XBRLTaxonomyExplorerContainer: React.FC = () => {
             preserveDetails: options?.preserveDetails,
             persistentHighlight: options?.persistentHighlight,
           });
-        });
+        };
+
+        if (options?.allowWhileFiltered) {
+          performNavigation();
+          return;
+        }
+
+        runAfterTreeFilterClears(performNavigation);
       },
       selectFirstVisibleConcept: () => {
         const firstVisibleQname = findFirstVisibleConceptQname(currentTreeNodes, treeFilter, language);

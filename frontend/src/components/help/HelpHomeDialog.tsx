@@ -6,7 +6,7 @@ import {
   ExternalLink,
   Search,
   Sparkles,
-  ToggleRight,
+  LifeBuoy,
 } from "lucide-react";
 import React from "react";
 import { Button } from "@/components/ui/button";
@@ -130,7 +130,7 @@ const HelpHomeDialog: React.FC = () => {
               </DialogTitle>
               <DialogDescription className="max-w-2xl text-sm text-blue-100">
                 {view === "home"
-                  ? "This viewer helps you explore how reporting concepts are organised. Choose a year and entrypoint, browse the taxonomy tree, then inspect labels, references, dimensions, and search results."
+                  ? "This viewer helps you to explore the modelling used in the UK Taxonomy Suite. Beginners are supported with these help resources. Advanced users will appreciate the hypercube relationships tab, search features, and export options."
                   : "Browse and search the help glossary. All definitions come from the shared help-content registry used across hints, tours, and onboarding."}
               </DialogDescription>
             </DialogHeader>
@@ -145,7 +145,7 @@ const HelpHomeDialog: React.FC = () => {
                     <h3 className="font-semibold">About this app</h3>
                   </div>
                   <p className="text-sm text-slate-700">
-                    Unlock the full potential of the UK digital reporting taxonomies. Learn how to navigate the trees, understand concept details, view the full dimensional model, and use advanced search techniques.
+                    Unlock the full potential of the UK taxonomies. Navigate the trees, understand concept details, view the full dimensional model, and use advanced search techniques.
                   </p>
                   <Button
                     type="button"
@@ -161,11 +161,11 @@ const HelpHomeDialog: React.FC = () => {
 
                 <section className="flex h-full flex-col rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
                   <div className="mb-3 flex items-center gap-2 text-slate-900">
-                    <ToggleRight className="h-5 w-5 text-rose-600" />
+                    <LifeBuoy className="h-5 w-5 text-rose-600" />
                     <h3 className="font-semibold">Turn app info on</h3>
                   </div>
                   <p className="mb-3 text-sm text-slate-700">
-                    Turns on UI hints which display help and glossary terms in use across the app. App info mode can also be toggled using the button in the top navigation bar.
+                    Display glossary terms as UI hints explaining each aspect of the taxonomy viewer. App info mode can also be toggled at any time using the button in the top navigation bar.
                   </p>
                   <Button
                     type="button"
@@ -218,7 +218,7 @@ const HelpHomeDialog: React.FC = () => {
                   <div className="flex items-center">
                     <Button asChild type="button" className={helpActionButtonClass}>
                       <a href="https://www.frc.org.uk/library/standards-codes-policy/accounting-and-reporting/frc-taxonomies/frc-taxonomies-documentation-and-guidance/" target="_blank" rel="noreferrer">
-                        Open guidance
+                        Open FRC documentation
                         <ExternalLink className="ml-2 h-4 w-4" />
                       </a>
                     </Button>

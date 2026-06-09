@@ -102,6 +102,13 @@ function resolveCardPosition(
   };
 }
 
+function renderBodyParagraphs(body: string): string[] {
+  return body
+    .split(/\n\s*\n/)
+    .map((paragraph) => paragraph.trim())
+    .filter((paragraph) => paragraph.length > 0);
+}
+
 const GuidedTourOverlay: React.FC = () => {
   const {
     helpHomeOpen,
@@ -240,6 +247,8 @@ const GuidedTourOverlay: React.FC = () => {
       explorer: {
         actions: runtimeRef.current.explorerDemoActions,
         state: runtimeRef.current.explorerDemoState,
+        getActions: () => runtimeRef.current.explorerDemoActions,
+        getState: () => runtimeRef.current.explorerDemoState,
       },
     });
 
@@ -332,6 +341,10 @@ const GuidedTourOverlay: React.FC = () => {
     cardAnchorRect ? placement : "center"
   );
   const overlayMaskId = `guided-tour-mask-${step.id}-${activeStepIndex}`;
+  const bodyText = targetRect
+    ? step.body
+    : `${step.body}\n\nThis part of the interface is not visible yet, so the tour is continuing with a centered explanation.`;
+  const bodyParagraphs = renderBodyParagraphs(bodyText);
 
   return (
     <div className="pointer-events-none fixed inset-0 z-[70]">
@@ -395,11 +408,11 @@ const GuidedTourOverlay: React.FC = () => {
           {step.helpId ? <HelpHint helpId={step.helpId} side="left" mode="prominent" /> : null}
         </div>
 
-        <p id={descriptionId} className="text-sm leading-6 text-slate-700">
-          {targetRect
-            ? step.body
-            : `${step.body} This part of the interface is not visible yet, so the tour is continuing with a centered explanation.`}
-        </p>
+        <div id={descriptionId} className="space-y-3 text-sm leading-6 text-slate-700">
+          {bodyParagraphs.map((paragraph, index) => (
+            <p key={index}>{paragraph}</p>
+          ))}
+        </div>
 
         {!stepReady ? (
           <div className="mt-3 rounded-md border border-sky-200 bg-sky-50 px-3 py-2 text-xs text-sky-800">

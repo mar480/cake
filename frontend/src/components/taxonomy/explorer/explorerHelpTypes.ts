@@ -15,6 +15,7 @@ export type ExplorerDemoState = {
   entrypointLoaded: boolean;
   network: string;
   treeFilter: string;
+  selectedTreeConceptQname: string | null;
   selectedConceptQname: string | null;
   activeDetailsTab: DetailsTabName;
   advancedSearchQuery: string;
@@ -30,6 +31,7 @@ export type ExplorerDemoNavigateOptions = {
   uuid?: string;
   preserveDetails?: boolean;
   persistentHighlight?: boolean;
+  allowWhileFiltered?: boolean;
 };
 
 export type ExplorerDemoActions = {
