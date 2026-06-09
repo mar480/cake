@@ -137,37 +137,37 @@ var helpContent = {
   "app.overview": {
     id: "app.overview",
     title: "About this viewer",
-    shortText: "This viewer lets you choose a taxonomy year and entrypoint, browse the tree, and inspect concept details.",
-    longText: "Start by choosing a year and an entrypoint. The tree shows how concepts are organised. When you select a concept, the details panel explains its labels, references, properties, and related structures."
+    shortText: "This viewer helps you to explore the modelling used in the UK Taxonomy Suite",
+    longText: "Start by choosing a year and an entrypoint. The tree shows how concepts are organised. When you select a concept, the details panels shows its properties, dimensional structures and tree locations"
   },
   "app.helpMode": {
     id: "app.helpMode",
-    title: "Help mode",
-    shortText: "Help mode makes inline hints more visible so beginners can explore the interface with less guesswork.",
-    longText: "When help mode is on, the app keeps the main help launcher visible and makes glossary hints more prominent around key fields and concept metadata."
+    title: "App info mode",
+    shortText: "App info mode displays glossary terms as UI hints explaining each aspect of the taxonomy viewer so beginners can explore the interface with less guesswork.",
+    longText: "App info mode can also be toggled at any time using the button in the top navigation bar."
   },
   "app.entrypoint": {
     id: "app.entrypoint",
-    title: "Entrypoint",
-    shortText: "An entrypoint loads a particular slice of the taxonomy for you to explore.",
-    longText: "A taxonomy can expose multiple entrypoints. Each one gathers a specific reporting view, such as a main filing entrypoint or a more focused reporting subset."
+    title: "Entry point",
+    shortText: "An entry point is a specific starting file in a taxonomy. It loads the parts of the taxonomy needed for a particular reporting purpose.",
+    longText: "In the UK taxonomies, there are different entry points available for each accounting standard (e.g. FRS 101, FRS 102) and for some Companies House-specific forms (e.g. CIC-34, DSEP-AA06)."
   },
   "app.yearSelector": {
     id: "app.yearSelector",
     title: "Year selector",
     shortText: "Choose which taxonomy release year you want to explore before loading an entrypoint.",
-    longText: "Different years can have different concepts, labels, and structures. Start here when you want to compare or inspect a particular release."
+    longText: "The FRC releases a new taxonomy suite every year to reflect changes to reporting requirements, UK GAAP and UK-endorsed IFRS. \n\n Different years can have different concepts, labels, and structures.Preparers should confirm which year versions are valid for their needs by consulting HMRC and/or Companies House documentation."
   },
   "app.networkSelector": {
     id: "app.networkSelector",
     title: "Network selector",
     shortText: "Switches between presentation and different definition relationship views.",
-    longText: "Presentation shows reporting structure. Definition networks show dimensional and structural relationships such as hypercubes, domains, members, and cross references."
+    longText: "Presentation shows the presentation tree reporting hierarchy. Definition networks show dimensional and structural relationships such as hypercubes, domains, members, and cross references. Click the arrows next to concepts to expand them and reveal their hierarchical structure. \n\n  Colours and icons are used in the tree view to indicate different concept types (e.g. monetary, string, percentage etc.)."
   },
   "app.languageSelector": {
     id: "app.languageSelector",
     title: "Language selector",
-    shortText: "Changes which labels are shown when the taxonomy provides multiple languages.",
+    shortText: "Changes whether labels are shown in English (default) or Welsh.",
     longText: "The technical concept stays the same. This only changes which human-readable labels you see in the explorer when translations exist."
   },
   "tree.search": {
@@ -185,60 +185,44 @@ var helpContent = {
   "details.tabs": {
     id: "details.tabs",
     title: "Details tabs",
-    shortText: "These tabs switch between concept details, tree locations, hypercube relationships, advanced search, and search results.",
-    longText: "Some tabs only become available when the right context exists, such as a selected concept or a loaded entrypoint with search results."
+    shortText: "These tabs explain the full meaning of a concept including its details, hypercube relationships, and tree locations, as well as the advanced search, and search results.",
+    longText: "Pay particular attention to the balance, period and data type properties to undertand how the concept is intended to be used and the labels for any supporting information. \n\n References provide useful context, linking concepts with legislation, regulation and accounting standards. Some tabs only become available when the right context exists, such as a selected concept or a loaded entrypoint with search results."
   },
   "details.tab.advancedSearch": {
     id: "details.tab.advancedSearch",
     title: "Advanced Search tab",
     shortText: "Lets you search concepts using keywords and XBRL-focused filters.",
-    longText: "Use this when you know the kind of concept you want but not where it sits in the tree."
+    longText: "Users can also search by reference, if looking to understand how the taxonomy maps to specific legislation, regulation or accounting standards."
   },
   "details.tab.hypercubeRelationships": {
     id: "details.tab.hypercubeRelationships",
     title: "Hypercube Relationships tab",
-    shortText: "Shows dimensional structures related to the selected concept.",
-    longText: "This helps explain how the concept participates in dimensional reporting, including tables, axes, domains, and members."
+    shortText: "This tab shows how aspects of a concept can be further broken down using the dimensions available. Applying dimensions is common when tagging the Notes to the Accounts.",
+    longText: `Concepts belong to hypercubes (tables). A hypercube (table) is a data structure made up of reportable concepts (rows) and available dimensions (columns). The UK taxonomies use closed hypercubes. This means that every line item concept belongs to at least one hypercube, and users cannot create their own taxonomy concepts.
+
+ This tab shows the available dimensions (columns) as dropdown selectors. 
+
+ The contents of those dropdowns are the dimension's domain members. All of the other reportable concepts (rows) available in this hypercube are listed under "Primary Items". 
+
+ Hypercube tabs can be popped out to make it easier to compare the dimensional structure of different concepts.`
   },
   "details.tab.treeLocations": {
     id: "details.tab.treeLocations",
     title: "Tree Locations tab",
     shortText: "Shows where the selected concept appears across tree structures.",
-    longText: "This is useful when the same concept is reused in multiple locations or extended relationship sets."
+    longText: "Concepts will appear in the presentation and definition trees according to the relationships defined in the taxonomy. This view can be used to  trace the relationships between concepts, hypercubes, dimensions and their domain members.\n\n Tree Node tabs can be popped out to make it easier to compare the locations of different concepts."
   },
   "details.tab.searchResults": {
     id: "details.tab.searchResults",
     title: "Search Results tab",
     shortText: "Lists the concepts returned by the most recent advanced search.",
-    longText: "Use it to move from a filtered concept list back into the tree and details views."
+    longText: 'Search results can be filtered by relevant taxonomy criteria. All filters applied can be toggled on and off. \n\n Click "Go to node" to navigate to the selected concept in any tree it appears, even in different entry points.\n\n Click "Export results" to export the results as csv and json.'
   },
   "advancedSearch.keyword": {
     id: "advancedSearch.keyword",
     title: "Keyword",
     shortText: "Use free text to search for concept names, labels, or qnames.",
-    longText: "A keyword search is the quickest way to start. You can then narrow results with filters such as balance, period type, reference source, or data type."
-  },
-  "advancedSearch.balance": {
-    id: "advancedSearch.balance",
-    title: "Balance",
-    shortText: "Indicates whether an accounting concept normally increases on the debit side or credit side.",
-    longText: "A credit balance is common for income, liabilities, and equity. A debit balance is common for expenses and assets. Some taxonomies do not use this field for every concept.",
-    beginnerExample: "Revenue is often credit. Expenses are often debit.",
-    relatedHelpIds: ["concept.balance"]
-  },
-  "advancedSearch.periodType": {
-    id: "advancedSearch.periodType",
-    title: "Period type",
-    shortText: "Tells you whether the fact is measured at one date or across a span of time.",
-    longText: "Instant means point-in-time, such as cash at year end. Duration means over a period, such as revenue for the year.",
-    relatedHelpIds: ["concept.periodType"]
-  },
-  "advancedSearch.xbrlType": {
-    id: "advancedSearch.xbrlType",
-    title: "XBRL type",
-    shortText: "The base XBRL data type used to validate values for this concept.",
-    longText: "This helps distinguish broad value families such as strings, monetary values, percentages, dates, and other structured XBRL types.",
-    relatedHelpIds: ["concept.xbrlType"]
+    longText: "A keyword search is the quickest way to start - both normal text and concept QNames can be used. You can then narrow results with filters such as balance, period type, reference source, or data type."
   },
   "advancedSearch.conceptType": {
     id: "advancedSearch.conceptType",
@@ -264,40 +248,12 @@ var helpContent = {
     shortText: "Filters by specific paragraphs within the selected reference source.",
     longText: "Choose a source first, then narrow the search to one or more cited paragraphs from that source."
   },
-  "advancedSearch.namespace": {
-    id: "advancedSearch.namespace",
-    title: "Namespace",
-    shortText: "A namespace tells you which taxonomy vocabulary a concept belongs to.",
-    longText: "Namespaces help keep concept names unique across vocabularies. They are especially useful when a taxonomy combines multiple imported standards.",
-    relatedHelpIds: ["concept.namespace"]
-  },
   "advancedSearch.fullType": {
     id: "advancedSearch.fullType",
     title: "Full type",
     shortText: "The fully qualified type name used by the concept, including its namespace prefix.",
     longText: "This is a more specific technical type than the broad XBRL type. It can help when you need to find concepts using a particular schema type.",
     relatedHelpIds: ["concept.dataType"]
-  },
-  "advancedSearch.substitutionGroup": {
-    id: "advancedSearch.substitutionGroup",
-    title: "Substitution group",
-    shortText: "Indicates the kind of XML element role the concept belongs to.",
-    longText: "In practice this helps distinguish items, tuples, dimensions, hypercubes, and similar structural roles in an XBRL taxonomy.",
-    relatedHelpIds: ["concept.substitutionGroup"]
-  },
-  "advancedSearch.abstract": {
-    id: "advancedSearch.abstract",
-    title: "Abstract",
-    shortText: "Abstract concepts organise the taxonomy but are usually not reportable facts.",
-    longText: "They are often used as headings, containers, or grouping nodes in a presentation tree rather than values you would report directly.",
-    relatedHelpIds: ["concept.abstract"]
-  },
-  "advancedSearch.nillable": {
-    id: "advancedSearch.nillable",
-    title: "Nillable",
-    shortText: "Indicates whether a reported fact may explicitly be empty or nil.",
-    longText: "A nillable concept can be reported with an explicit nil value when the taxonomy and filing rules allow it.",
-    relatedHelpIds: ["concept.nillable"]
   },
   "concept.name": {
     id: "concept.name",
@@ -452,6 +408,17 @@ async function waitForAvailableEntrypoint(context, timeoutMs = 5e3) {
   }
   return null;
 }
+async function waitForExplorerCondition(context, predicate, timeoutMs = 4e3) {
+  const startedAt = Date.now();
+  while (Date.now() - startedAt < timeoutMs) {
+    const state = context.explorer.getState?.() ?? context.explorer.state ?? null;
+    if (predicate(state)) {
+      return true;
+    }
+    await new Promise((resolve) => setTimeout(resolve, 120));
+  }
+  return false;
+}
 function pickBeginnerDemoEntrypoint(entrypoints) {
   const frs102 = entrypoints.find(
     (entrypoint) => /frs[\s-]*102/i.test(entrypoint.name) || /frs[\s-]*102/i.test(entrypoint.href)
@@ -466,11 +433,13 @@ var tours = {
       {
         id: "choose-year",
         targetAnchor: "year-selector",
-        title: "Choose a taxonomy year",
-        body: "The guided demo starts by selecting a real taxonomy year so the rest of the tour can use live entrypoints and trees.",
+        title: "Choose a taxonomy version",
+        body: "The FRC releases a new taxonomy suite every year to reflect changes to reporting requirements, UK GAAP and UK-endorsed IFRS. \n\n ifferent years can have different concepts, labels, and structures.Preparers should confirm which year versions are valid for their needs by consulting HMRC and/or Companies House documentation.",
         placement: "bottom",
+        spotlightPadding: 4,
+        spotlightRadius: 12,
         helpId: "app.yearSelector",
-        beforeStep: ({ explorer }) => {
+        beforeStep: async ({ explorer }) => {
           explorer.actions?.selectYear("2026");
         },
         waitFor: ({ explorer }) => explorer.state?.year === "2026" && explorer.state.entrypointsYear === "2026" && explorer.state.availableEntrypoints.length > 0,
@@ -479,10 +448,12 @@ var tours = {
       {
         id: "choose-entrypoint",
         targetAnchor: "entrypoint-selector",
-        title: "Choose an entrypoint",
-        body: "Now the tour loads a real entrypoint from the current year so the tree and details panel have live taxonomy data to work with.",
-        loadingMessage: "The tour will continue when the entrypoint has loaded.",
+        title: "Choose an entry point",
+        body: "Each year's taxonomy suite contains a list of entry points - a specific starting file in a taxonomy. It loads the parts of the taxonomy needed for a particular reporting purpose. \n\n In the UK taxonomies, there are different entry points available for each accounting standard (e.g. FRS 101, FRS 102) and for some Companies House-specific forms (e.g. CIC-34, DSEP-AA06).",
+        loadingMessage: "The tour will continue when the entry point has loaded.",
         placement: "bottom",
+        spotlightPadding: 4,
+        spotlightRadius: 12,
         helpId: "app.entrypoint",
         beforeStep: async ({ explorer }) => {
           const candidateHref = pickBeginnerDemoEntrypoint(explorer.state?.availableEntrypoints ?? []) ?? await waitForAvailableEntrypoint({ explorer });
@@ -502,9 +473,9 @@ var tours = {
         id: "browse-tree",
         targetAnchor: "taxonomy-tree-panel",
         title: "Browse the taxonomy tree",
-        body: "The tree shows how concepts are organised. Select a concept here to inspect labels, references, and technical metadata.",
+        body: "The presentation tree view shows how concepts are organised. Click the arrows next to concepts to expand them and reveal their hierarchical structure. \n\n  Colours and icons are used in the tree view to indicate different concept types (e.g. monetary, string, percentage etc.). \n\n Clicking a concept displays information about it in the Details, Hypercube Relationships, and Tree Nodes tabs.",
         placement: "right",
-        beforeStep: ({ explorer }) => {
+        beforeStep: async ({ explorer }) => {
           if (explorer.state?.entrypointLoaded) {
             explorer.actions?.selectNetwork("presentation");
             explorer.actions?.setTreeFilter("");
@@ -516,43 +487,79 @@ var tours = {
       {
         id: "filter-tree",
         targetAnchor: "taxonomy-tree-search",
+        spotlightAnchors: ["taxonomy-tree-search", "highlighted-tree-node"],
+        spotlightStrategy: "separate",
         title: "Filter the current tree",
-        body: "Use tree search to narrow the visible concepts without changing the loaded taxonomy. The tour falls back gracefully if the tree controls are not visible yet.",
+        body: "The presentation tree can be searched using a concept's label or QName. \n\n Click the blue download arrow in the search bar to export the results as csv, json, html and png files.",
         placement: "right",
         helpId: "tree.search",
-        beforeStep: ({ explorer }) => {
+        beforeStep: async ({ explorer }) => {
           if (explorer.state?.entrypointLoaded) {
-            explorer.actions?.setTreeFilter("current assets");
+            explorer.actions?.setTreeFilter("property, plant and equipment");
+            const filterReady = await waitForExplorerCondition(
+              { explorer },
+              (state) => state?.treeFilter === "property, plant and equipment",
+              2500
+            );
+            if (!filterReady) {
+              return;
+            }
+            explorer.actions?.navigateToConcept("core:PropertyPlantEquipment", {
+              preserveDetails: true,
+              persistentHighlight: true,
+              allowWhileFiltered: true
+            });
           }
         },
-        waitFor: ({ explorer }) => !explorer.state?.entrypointLoaded || explorer.state.treeFilter === "current assets",
-        timeoutMs: 3e3
+        waitFor: ({ explorer }) => !explorer.state?.entrypointLoaded || explorer.state.treeFilter === "property, plant and equipment" && explorer.state.selectedTreeConceptQname === "core:PropertyPlantEquipment",
+        timeoutMs: 5e3
       },
       {
         id: "inspect-details",
         targetAnchor: "details-panel",
+        spotlightAnchors: ["details-panel", "highlighted-tree-node"],
+        spotlightStrategy: "separate",
         title: "Inspect concept details",
-        body: "When a concept is selected, this panel explains its properties and gives you richer context for beginner-unfriendly terms.",
+        body: "When a concept is selected, this panel explains its properties. \n\n Pay particular attention to the balance, period and data type properties to undertand how the concept is intended to be used and the labels for any supporting information. \n\n References provide useful context, linking concepts with legislation, regulation and accounting standards ",
         placement: "left",
         helpId: "details.tabs",
         beforeStep: ({ explorer }) => {
           if (explorer.state?.entrypointLoaded) {
-            explorer.actions?.navigateToConcept("core:CurrentAssets");
+            if (explorer.state.selectedConceptQname !== "core:PropertyPlantEquipment") {
+              explorer.actions?.navigateToConcept("core:PropertyPlantEquipment", {
+                persistentHighlight: true,
+                allowWhileFiltered: true
+              });
+            }
             explorer.actions?.openDetailsTab("Details");
           }
         },
-        waitFor: ({ explorer }) => explorer.state?.selectedConceptQname === "core:CurrentAssets" && explorer.state.activeDetailsTab === "Details",
+        waitFor: ({ explorer }) => explorer.state?.selectedConceptQname === "core:PropertyPlantEquipment" && explorer.state.activeDetailsTab === "Details",
         timeoutMs: 5e3
       },
       {
         id: "hypercube-relationships-tab",
         targetAnchor: "details-tab-hypercube-relationships",
+        spotlightAnchors: [
+          "details-tab-hypercube-relationships",
+          "details-view-hypercube-relationships"
+        ],
+        cardAnchor: "details-panel",
         title: "Show hypercube relationships",
-        body: "This tab is often the most useful next step after properties because it shows how the selected concept participates in tables, dimensions, domains, and members.",
+        body: `This tab shows how aspects of a concept can be further broken down using the dimensions available. Applying dimensions is common when tagging the Notes to the Accounts. 
+
+ Concepts belong to hypercubes (tables). A hypercube (table) is a data structure made up of reportable concepts (rows) and available dimensions (columns). The UK taxonomies use closed hypercubes. This means that every line item concept belongs to at least one hypercube, and users cannot create their own taxonomy concepts.
+
+ This tab shows the available dimensions (columns) as dropdown selectors. In this example, we can see that Property, Plant, and Equipment can be broken down by dimensions 6053 PPE Ownership and 6052 PPE Classes. 
+
+ The contents of those dropdowns are the dimension's domain members. All of the other reportable concepts (rows) available in this hypercube are listed under "Primary Items". 
+
+ Hypercube tabs can be popped out to make it easier to compare the dimensional structure of different concepts.`,
         placement: "left",
         helpId: "details.tab.hypercubeRelationships",
         beforeStep: ({ explorer }) => {
           if (explorer.state?.selectedConceptQname) {
+            explorer.actions?.clearTreeHighlight();
             explorer.actions?.openDetailsTab("Hypercube Relationships");
           }
         },
@@ -562,8 +569,13 @@ var tours = {
       {
         id: "tree-locations-tab",
         targetAnchor: "details-tab-tree-locations",
+        spotlightAnchors: [
+          "details-tab-tree-locations",
+          "details-view-tree-locations"
+        ],
+        cardAnchor: "details-panel",
         title: "Open a non-default details tab",
-        body: "With a concept selected, the demo intentionally switches to Tree Locations so you can see the guided tour control a tab that depends on concept context.",
+        body: "This tab shows the tree locations for the selected concept. \n\n Concepts will appear in the presentation and definition trees according to the relationships defined in the taxonomy. This view can be used to  trace the relationships between concepts, hypercubes, dimensions and their domain members.\n\n Tree Node tabs can be popped out to make it easier to compare the locations of different concepts.",
         placement: "left",
         helpId: "details.tab.treeLocations",
         beforeStep: ({ explorer }) => {
@@ -577,8 +589,14 @@ var tours = {
       {
         id: "advanced-search-tab",
         targetAnchor: "details-tab-advanced-search",
+        spotlightAnchors: [
+          "details-tab-advanced-search",
+          "details-view-advanced-search"
+        ],
+        spotlightStrategy: "separate",
+        cardAnchor: "details-panel",
         title: "Switch to advanced search",
-        body: "The demo finishes by opening Advanced Search. This shows that the guided runtime can move between different explorer surfaces after it has loaded and explored live taxonomy data.",
+        body: "The taxonomy viewer offers a robust search engine that can filter concepts based on all relevant XBRL taxonomy criteria (the properties in the details tab). \n\n Users can also search by reference, if looking to understand how the taxonomy maps to specific legislation, regulation or accounting standards.",
         placement: "left",
         helpId: "details.tab.advancedSearch",
         beforeStep: ({ explorer }) => {
@@ -593,8 +611,9 @@ var tours = {
       {
         id: "advanced-search-view",
         targetAnchor: "details-view-search-results",
+        cardAnchor: "details-panel",
         title: "Explore filtered search",
-        body: "The tour now runs a real keyword search for Turnover and shows the matching results so you can move from search back into tree-based inspection.",
+        body: 'Search results can be filtered by relevant taxonomy criteria. All filters applied can be toggled on and off. \n\n Click "Go to node" to navigate to the selected concept in any tree it appears, even in different entry points.\n\n Click "Export results" to export the results as csv and json.',
         placement: "left",
         helpId: "details.tab.advancedSearch",
         beforeStep: ({ explorer }) => {
@@ -695,10 +714,9 @@ describe2("helpContent", () => {
     assert2.equal(filterHelpContent("credit").some((entry) => entry.id === "concept.balance"), true);
     assert2.equal(filterHelpContent("hypercube").some((entry) => entry.id === "details.tab.hypercubeRelationships"), true);
   });
-  it2("deduplicates glossary entries by title while preferring concept terms", () => {
+  it2("uses concept glossary entries for duplicated concept terms", () => {
     const entries = getGlossaryEntries("balance");
     assert2.equal(entries.some((entry) => entry.id === "concept.balance"), true);
-    assert2.equal(entries.some((entry) => entry.id === "advancedSearch.balance"), false);
   });
   it2("groups glossary entries under the expected headings", () => {
     const grouped = groupGlossaryEntries(getGlossaryEntries(""));

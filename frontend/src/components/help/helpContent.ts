@@ -13,30 +13,37 @@ export type HelpContentCategory =
   | "Concept"
   | "Advanced Search";
 
+export function splitHelpTextParagraphs(text: string): string[] {
+  return text
+    .split(/\n\s*\n/)
+    .map((paragraph) => paragraph.trim())
+    .filter((paragraph) => paragraph.length > 0);
+}
+
 export const helpContent = {
   "app.overview": {
     id: "app.overview",
     title: "About this viewer",
     shortText:
-      "This viewer lets you choose a taxonomy year and entrypoint, browse the tree, and inspect concept details.",
+      "This viewer helps you to explore the modelling used in the UK Taxonomy Suite",
     longText:
-      "Start by choosing a year and an entrypoint. The tree shows how concepts are organised. When you select a concept, the details panel explains its labels, references, properties, and related structures.",
+      "Start by choosing a year and an entrypoint. The tree shows how concepts are organised. When you select a concept, the details panels shows its properties, dimensional structures and tree locations",
   },
   "app.helpMode": {
     id: "app.helpMode",
-    title: "Help mode",
+    title: "App info mode",
     shortText:
-      "Help mode makes inline hints more visible so beginners can explore the interface with less guesswork.",
+      "App info mode displays glossary terms as UI hints explaining each aspect of the taxonomy viewer so beginners can explore the interface with less guesswork.",
     longText:
-      "When help mode is on, the app keeps the main help launcher visible and makes glossary hints more prominent around key fields and concept metadata.",
+      "App info mode can also be toggled at any time using the button in the top navigation bar.",
   },
   "app.entrypoint": {
     id: "app.entrypoint",
-    title: "Entrypoint",
+    title: "Entry point",
     shortText:
-      "An entrypoint loads a particular slice of the taxonomy for you to explore.",
+      "An entry point is a specific starting file in a taxonomy. It loads the parts of the taxonomy needed for a particular reporting purpose.",
     longText:
-      "A taxonomy can expose multiple entrypoints. Each one gathers a specific reporting view, such as a main filing entrypoint or a more focused reporting subset.",
+      "In the UK taxonomies, there are different entry points available for each accounting standard (e.g. FRS 101, FRS 102) and for some Companies House-specific forms (e.g. CIC-34, DSEP-AA06).",
   },
   "app.yearSelector": {
     id: "app.yearSelector",
@@ -44,7 +51,7 @@ export const helpContent = {
     shortText:
       "Choose which taxonomy release year you want to explore before loading an entrypoint.",
     longText:
-      "Different years can have different concepts, labels, and structures. Start here when you want to compare or inspect a particular release.",
+      "The FRC releases a new taxonomy suite every year to reflect changes to reporting requirements, UK GAAP and UK-endorsed IFRS. \n\n Different years can have different concepts, labels, and structures.Preparers should confirm which year versions are valid for their needs by consulting HMRC and/or Companies House documentation.",
   },
   "app.networkSelector": {
     id: "app.networkSelector",
@@ -52,13 +59,13 @@ export const helpContent = {
     shortText:
       "Switches between presentation and different definition relationship views.",
     longText:
-      "Presentation shows reporting structure. Definition networks show dimensional and structural relationships such as hypercubes, domains, members, and cross references.",
+      "Presentation shows the presentation tree reporting hierarchy. Definition networks show dimensional and structural relationships such as hypercubes, domains, members, and cross references. Click the arrows next to concepts to expand them and reveal their hierarchical structure. \n\n  Colours and icons are used in the tree view to indicate different concept types (e.g. monetary, string, percentage etc.).",
   },
   "app.languageSelector": {
     id: "app.languageSelector",
     title: "Language selector",
     shortText:
-      "Changes which labels are shown when the taxonomy provides multiple languages.",
+      "Changes whether labels are shown in English (default) or Welsh.",
     longText:
       "The technical concept stays the same. This only changes which human-readable labels you see in the explorer when translations exist.",
   },
@@ -82,9 +89,9 @@ export const helpContent = {
     id: "details.tabs",
     title: "Details tabs",
     shortText:
-      "These tabs switch between concept details, tree locations, hypercube relationships, advanced search, and search results.",
+      "These tabs explain the full meaning of a concept including its details, hypercube relationships, and tree locations, as well as the advanced search, and search results.",
     longText:
-      "Some tabs only become available when the right context exists, such as a selected concept or a loaded entrypoint with search results.",
+      "Pay particular attention to the balance, period and data type properties to undertand how the concept is intended to be used and the labels for any supporting information. \n\n References provide useful context, linking concepts with legislation, regulation and accounting standards. Some tabs only become available when the right context exists, such as a selected concept or a loaded entrypoint with search results.",
   },
   "details.tab.advancedSearch": {
     id: "details.tab.advancedSearch",
@@ -92,15 +99,15 @@ export const helpContent = {
     shortText:
       "Lets you search concepts using keywords and XBRL-focused filters.",
     longText:
-      "Use this when you know the kind of concept you want but not where it sits in the tree.",
+      "Users can also search by reference, if looking to understand how the taxonomy maps to specific legislation, regulation or accounting standards.",
   },
   "details.tab.hypercubeRelationships": {
     id: "details.tab.hypercubeRelationships",
     title: "Hypercube Relationships tab",
     shortText:
-      "Shows dimensional structures related to the selected concept.",
+      "This tab shows how aspects of a concept can be further broken down using the dimensions available. Applying dimensions is common when tagging the Notes to the Accounts.",
     longText:
-      "This helps explain how the concept participates in dimensional reporting, including tables, axes, domains, and members.",
+      "Concepts belong to hypercubes (tables). A hypercube (table) is a data structure made up of reportable concepts (rows) and available dimensions (columns). The UK taxonomies use closed hypercubes. This means that every line item concept belongs to at least one hypercube, and users cannot create their own taxonomy concepts.\n\n\ This tab shows the available dimensions (columns) as dropdown selectors. \n\n The contents of those dropdowns are the dimension's domain members. All of the other reportable concepts (rows) available in this hypercube are listed under \"Primary Items\". \n\n Hypercube tabs can be popped out to make it easier to compare the dimensional structure of different concepts.",
   },
   "details.tab.treeLocations": {
     id: "details.tab.treeLocations",
@@ -108,7 +115,7 @@ export const helpContent = {
     shortText:
       "Shows where the selected concept appears across tree structures.",
     longText:
-      "This is useful when the same concept is reused in multiple locations or extended relationship sets.",
+      "Concepts will appear in the presentation and definition trees according to the relationships defined in the taxonomy. This view can be used to  trace the relationships between concepts, hypercubes, dimensions and their domain members.\n\n Tree Node tabs can be popped out to make it easier to compare the locations of different concepts.",
   },
   "details.tab.searchResults": {
     id: "details.tab.searchResults",
@@ -116,43 +123,14 @@ export const helpContent = {
     shortText:
       "Lists the concepts returned by the most recent advanced search.",
     longText:
-      "Use it to move from a filtered concept list back into the tree and details views.",
+      "Search results can be filtered by relevant taxonomy criteria. All filters applied can be toggled on and off. \n\n Click \"Go to node\" to navigate to the selected concept in any tree it appears, even in different entry points.\n\n Click \"Export results\" to export the results as csv and json.",
   },
   "advancedSearch.keyword": {
     id: "advancedSearch.keyword",
     title: "Keyword",
     shortText: "Use free text to search for concept names, labels, or qnames.",
     longText:
-      "A keyword search is the quickest way to start. You can then narrow results with filters such as balance, period type, reference source, or data type.",
-  },
-  "advancedSearch.balance": {
-    id: "advancedSearch.balance",
-    title: "Balance",
-    shortText:
-      "Indicates whether an accounting concept normally increases on the debit side or credit side.",
-    longText:
-      "A credit balance is common for income, liabilities, and equity. A debit balance is common for expenses and assets. Some taxonomies do not use this field for every concept.",
-    beginnerExample:
-      "Revenue is often credit. Expenses are often debit.",
-    relatedHelpIds: ["concept.balance"],
-  },
-  "advancedSearch.periodType": {
-    id: "advancedSearch.periodType",
-    title: "Period type",
-    shortText:
-      "Tells you whether the fact is measured at one date or across a span of time.",
-    longText:
-      "Instant means point-in-time, such as cash at year end. Duration means over a period, such as revenue for the year.",
-    relatedHelpIds: ["concept.periodType"],
-  },
-  "advancedSearch.xbrlType": {
-    id: "advancedSearch.xbrlType",
-    title: "XBRL type",
-    shortText:
-      "The base XBRL data type used to validate values for this concept.",
-    longText:
-      "This helps distinguish broad value families such as strings, monetary values, percentages, dates, and other structured XBRL types.",
-    relatedHelpIds: ["concept.xbrlType"],
+      "A keyword search is the quickest way to start - both normal text and concept QNames can be used. You can then narrow results with filters such as balance, period type, reference source, or data type.",
   },
   "advancedSearch.conceptType": {
     id: "advancedSearch.conceptType",
@@ -176,7 +154,7 @@ export const helpContent = {
     shortText:
       "Filters search results by the source of attached references, such as a standard or regulation.",
     longText:
-      "References connect concepts to reporting guidance. This filter is useful when you want to find concepts linked to a particular accounting standard or legal source.",
+      "References connect concepts to legislation and accounting standards. This filter is useful when you want to find concepts linked to a particular accounting standard or legal source.",
   },
   "advancedSearch.referenceParagraph": {
     id: "advancedSearch.referenceParagraph",
@@ -186,15 +164,6 @@ export const helpContent = {
     longText:
       "Choose a source first, then narrow the search to one or more cited paragraphs from that source.",
   },
-  "advancedSearch.namespace": {
-    id: "advancedSearch.namespace",
-    title: "Namespace",
-    shortText:
-      "A namespace tells you which taxonomy vocabulary a concept belongs to.",
-    longText:
-      "Namespaces help keep concept names unique across vocabularies. They are especially useful when a taxonomy combines multiple imported standards.",
-    relatedHelpIds: ["concept.namespace"],
-  },
   "advancedSearch.fullType": {
     id: "advancedSearch.fullType",
     title: "Full type",
@@ -203,33 +172,6 @@ export const helpContent = {
     longText:
       "This is a more specific technical type than the broad XBRL type. It can help when you need to find concepts using a particular schema type.",
     relatedHelpIds: ["concept.dataType"],
-  },
-  "advancedSearch.substitutionGroup": {
-    id: "advancedSearch.substitutionGroup",
-    title: "Substitution group",
-    shortText:
-      "Indicates the kind of XML element role the concept belongs to.",
-    longText:
-      "In practice this helps distinguish items, tuples, dimensions, hypercubes, and similar structural roles in an XBRL taxonomy.",
-    relatedHelpIds: ["concept.substitutionGroup"],
-  },
-  "advancedSearch.abstract": {
-    id: "advancedSearch.abstract",
-    title: "Abstract",
-    shortText:
-      "Abstract concepts organise the taxonomy but are usually not reportable facts.",
-    longText:
-      "They are often used as headings, containers, or grouping nodes in a presentation tree rather than values you would report directly.",
-    relatedHelpIds: ["concept.abstract"],
-  },
-  "advancedSearch.nillable": {
-    id: "advancedSearch.nillable",
-    title: "Nillable",
-    shortText:
-      "Indicates whether a reported fact may explicitly be empty or nil.",
-    longText:
-      "A nillable concept can be reported with an explicit nil value when the taxonomy and filing rules allow it.",
-    relatedHelpIds: ["concept.nillable"],
   },
   "concept.name": {
     id: "concept.name",
@@ -245,13 +187,13 @@ export const helpContent = {
     shortText:
       "The namespace identifies which vocabulary or taxonomy module this concept comes from.",
     longText:
-      "A namespace helps keep concept names unique and signals which standard or extension layer owns the concept.",
+      "A namespace helps keep concept names unique and signals which standard or extension layer owns the concept. In the UK taxonomies, namespaces include: core, common, bus, countries and direp. Namespaces are used in concept qnames (i.e. core:CurrentAssets, countries:UnitedKingdom, bus:UKCompaniesHouseRegisteredNumber)",
   },
   "concept.balance": {
     id: "concept.balance",
     title: "Balance",
     shortText:
-      "Shows whether the concept normally increases as debit or credit.",
+      "An attribute that indicates whether a monetary concept normally has a debit or credit balance. .",
     longText:
       "This is an accounting hint rather than a full validation rule. Assets and expenses are commonly debit. Liabilities, equity, and income are commonly credit.",
   },
@@ -259,9 +201,9 @@ export const helpContent = {
     id: "concept.cashFlowClassification",
     title: "Cash flow classification",
     shortText:
-      "Shows which part of a cash flow statement the concept is usually associated with.",
+      "Shows whether a cash flow concept should be considered as an inflow or outflow of cash.",
     longText:
-      "This can help place a concept within operating, investing, financing, or other cash flow reporting groupings when that metadata is present.",
+      "This is a UK-specific relationship using custom inflow and outflow arcroles. They are optional for developers to implement but are included by the FRC to better understand the meaning of concepts in the cash flow statement.",
   },
   "concept.periodType": {
     id: "concept.periodType",
@@ -269,7 +211,7 @@ export const helpContent = {
     shortText:
       "Tells you whether a fact is measured at a point in time or across a period.",
     longText:
-      "An instant concept is reported at one date, such as cash at year end. A duration concept covers a span of time, such as revenue for the year.",
+      "An instant concept is reported at one date, such as Current Assets (Balance Sheet). A duration concept covers a span of time, such as Revenue (Income Statement).",
   },
   "concept.dataType": {
     id: "concept.dataType",
@@ -277,7 +219,7 @@ export const helpContent = {
     shortText:
       "The schema data type that controls what kind of value this concept can hold.",
     longText:
-      "This tells you whether the concept expects a monetary amount, string, date, boolean, decimal, or another structured value shape.",
+      "This tells you whether the concept expects a monetary amount, string, date, boolean, decimal, or another structured value shape. Data types may assist the user in selecting the correct concept for their reporting requirements",
   },
   "concept.xbrlType": {
     id: "concept.xbrlType",
@@ -299,7 +241,7 @@ export const helpContent = {
     id: "concept.abstract",
     title: "Abstract",
     shortText:
-      "Abstract concepts structure the taxonomy but are usually not reported as facts.",
+      "Abstract concepts structure the taxonomy but cannot be reported as facts.",
     longText:
       "They often behave like headings or containers in the tree rather than values that appear in a filing.",
   },
@@ -317,7 +259,7 @@ export const helpContent = {
     shortText:
       "Points to another concept that this concept redirects to or references.",
     longText:
-      "Cross references help connect related concepts when one concept should be understood through another target concept in the taxonomy.",
+      "This is a UK-specific relationship using the custom cross-ref arcrole. Cross references help connect related concepts when one concept should be understood through another target concept in the taxonomy. They are optional for developers to implement but are included by the FRC to help users navigate the taxonomy more efficiently.",
   },
 } as const satisfies Record<string, HelpContentEntry>;
 

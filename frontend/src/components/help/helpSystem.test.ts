@@ -49,10 +49,9 @@ describe("helpContent", () => {
     assert.equal(filterHelpContent("hypercube").some((entry) => entry.id === "details.tab.hypercubeRelationships"), true);
   });
 
-  it("deduplicates glossary entries by title while preferring concept terms", () => {
+  it("uses concept glossary entries for duplicated concept terms", () => {
     const entries = getGlossaryEntries("balance");
     assert.equal(entries.some((entry) => entry.id === "concept.balance"), true);
-    assert.equal(entries.some((entry) => entry.id === "advancedSearch.balance"), false);
   });
 
   it("groups glossary entries under the expected headings", () => {

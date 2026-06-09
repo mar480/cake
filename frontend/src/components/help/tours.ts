@@ -91,7 +91,7 @@ export const tours: Record<string, TourDefinition> = {
         id: "choose-year",
         targetAnchor: "year-selector",
         title: "Choose a taxonomy version",
-        body: "The FRC releases a new taxonomy suite every year to reflect changes to reporting requirements, UK GAAP and UK-endorsed IFRS. \n\n Preparers should confirm which versions are valid for their needs by consulting HMRC and/or Companies House documentation.",
+        body: "The FRC releases a new taxonomy suite every year to reflect changes to reporting requirements, UK GAAP and UK-endorsed IFRS. \n\n ifferent years can have different concepts, labels, and structures.Preparers should confirm which year versions are valid for their needs by consulting HMRC and/or Companies House documentation.",
         placement: "bottom",
         spotlightPadding: 4,
         spotlightRadius: 12,

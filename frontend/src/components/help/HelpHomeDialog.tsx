@@ -24,6 +24,7 @@ import {
   getHelpContentCategory,
   glossaryCategoryOrder,
   groupGlossaryEntries,
+  splitHelpTextParagraphs,
   type HelpContentCategory,
   type HelpContentId,
 } from "./helpContent";
@@ -130,7 +131,7 @@ const HelpHomeDialog: React.FC = () => {
               </DialogTitle>
               <DialogDescription className="max-w-2xl text-sm text-blue-100">
                 {view === "home"
-                  ? "This viewer helps you to explore the modelling used in the UK Taxonomy Suite. Beginners are supported with these help resources. Advanced users will appreciate the hypercube relationships tab, search features, and export options."
+                  ? "This viewer helps you to explore the modelling used in the UK Taxonomy Suite. Start by choosing a year and an entrypoint. The tree shows how concepts are organised. When you select a concept, the details panels shows its properties, dimensional structures and tree locations."
                   : "Browse and search the help glossary. All definitions come from the shared help-content registry used across hints, tours, and onboarding."}
               </DialogDescription>
             </DialogHeader>
@@ -325,7 +326,11 @@ const HelpHomeDialog: React.FC = () => {
                     </div>
                     <p className="text-sm leading-6 text-slate-800">{selectedEntry.shortText}</p>
                     {selectedEntry.longText ? (
-                      <p className="text-sm leading-6 text-slate-700">{selectedEntry.longText}</p>
+                      <div className="space-y-3 text-sm leading-6 text-slate-700">
+                        {splitHelpTextParagraphs(selectedEntry.longText).map((paragraph, index) => (
+                          <p key={index}>{paragraph}</p>
+                        ))}
+                      </div>
                     ) : null}
                     {selectedEntry.beginnerExample ? (
                       <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">

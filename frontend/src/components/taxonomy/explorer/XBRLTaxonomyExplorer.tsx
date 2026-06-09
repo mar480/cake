@@ -148,7 +148,7 @@ const XBRLTaxonomyExplorer: React.FC<Props> = ({
 
           <div className="flex flex-col" data-help-anchor="entrypoint-selector">
             <HelpLabel
-              label={<span className="font-semibold">Entrypoint</span>}
+              label={<span className="font-semibold">Entry point</span>}
               helpId="app.entrypoint"
               side="bottom"
               className="mb-0.5 flex items-center gap-1.5"

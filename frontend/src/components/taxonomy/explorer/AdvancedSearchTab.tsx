@@ -283,21 +283,21 @@ const AdvancedSearchTab: React.FC<AdvancedSearchTabProps> = ({
               <div className="grid gap-3 p-3 xl:grid-cols-2 xl:items-start">
                 <StringCheckboxGroup
                   label="Balance"
-                  helpId="advancedSearch.balance"
+                  helpId="concept.balance"
                   options={safeFilterOptions.balance}
                   selected={filters.balance}
                   onChange={(next) => onFiltersChange({ ...filters, balance: next })}
                 />
                 <StringCheckboxGroup
                   label="Period type"
-                  helpId="advancedSearch.periodType"
+                  helpId="concept.periodType"
                   options={safeFilterOptions.periodType}
                   selected={filters.periodType}
                   onChange={(next) => onFiltersChange({ ...filters, periodType: next })}
                 />
                 <StringCheckboxGroup
                   label="XBRL type"
-                  helpId="advancedSearch.xbrlType"
+                  helpId="concept.xbrlType"
                   options={safeFilterOptions.xbrlType}
                   selected={filters.xbrlType}
                   onChange={(next) => onFiltersChange({ ...filters, xbrlType: next })}
@@ -406,7 +406,7 @@ const AdvancedSearchTab: React.FC<AdvancedSearchTabProps> = ({
               <div className="grid gap-3 p-3 xl:grid-cols-3 xl:items-start">
                 <StringCheckboxGroup
                   label="Namespace"
-                  helpId="advancedSearch.namespace"
+                  helpId="concept.namespace"
                   options={safeFilterOptions.namespace}
                   selected={filters.namespace}
                   listClassName="h-40"
@@ -422,7 +422,7 @@ const AdvancedSearchTab: React.FC<AdvancedSearchTabProps> = ({
                 />
                 <StringCheckboxGroup
                   label="Substitution group"
-                  helpId="advancedSearch.substitutionGroup"
+                  helpId="concept.substitutionGroup"
                   options={safeFilterOptions.substitutionGroup}
                   selected={filters.substitutionGroup}
                   listClassName="h-40"
@@ -431,13 +431,13 @@ const AdvancedSearchTab: React.FC<AdvancedSearchTabProps> = ({
                 <div className="grid gap-3 xl:col-span-3 xl:grid-cols-2">
                   <BooleanCheckboxGroup
                     label="Abstract"
-                    helpId="advancedSearch.abstract"
+                    helpId="concept.abstract"
                     selected={filters.abstract}
                     onChange={(next) => onFiltersChange({ ...filters, abstract: next })}
                   />
                   <BooleanCheckboxGroup
                     label="Nillable"
-                    helpId="advancedSearch.nillable"
+                    helpId="concept.nillable"
                     selected={filters.nillable}
                     onChange={(next) => onFiltersChange({ ...filters, nillable: next })}
                   />
