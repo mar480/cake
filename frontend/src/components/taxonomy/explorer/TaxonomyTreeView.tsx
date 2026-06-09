@@ -205,6 +205,7 @@ const TaxonomyTreeView = ({
               ref={(el) => {
                 if (el && node.key) nodeRefs.current[String(node.key)] = el;
               }}
+              data-help-anchor={isHighlighted ? "highlighted-tree-node" : undefined}
               title={node.data?.qname || node.label}
               className={`flex items-center gap-2 transition duration-500 ${isHighlighted ? "bg-yellow-200 animate-pulse rounded" : ""}`}
             >

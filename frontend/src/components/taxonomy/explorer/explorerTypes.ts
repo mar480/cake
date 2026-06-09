@@ -25,6 +25,7 @@ export type PendingNavigation = {
   qname: string;
   uuid?: string;
   updateDetails?: boolean;
+  persistentHighlight?: boolean;
 };
 
 export type SearchConceptApiResult = {

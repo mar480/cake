@@ -12,6 +12,14 @@ type RectState = {
   height: number;
 } | null;
 
+type SpotlightRect = {
+  top: number;
+  left: number;
+  width: number;
+  height: number;
+  radius: number;
+};
+
 type CardPosition = React.CSSProperties;
 
 function resolveTargetRect(anchor: string): RectState {
@@ -26,6 +34,25 @@ function resolveTargetRect(anchor: string): RectState {
     left: rect.left,
     width: rect.width,
     height: rect.height,
+  };
+}
+
+function mergeRects(rects: RectState[]): RectState {
+  const validRects = rects.filter((rect): rect is NonNullable<RectState> => rect !== null);
+  if (validRects.length === 0) {
+    return null;
+  }
+
+  const top = Math.min(...validRects.map((rect) => rect.top));
+  const left = Math.min(...validRects.map((rect) => rect.left));
+  const right = Math.max(...validRects.map((rect) => rect.left + rect.width));
+  const bottom = Math.max(...validRects.map((rect) => rect.top + rect.height));
+
+  return {
+    top,
+    left,
+    width: right - left,
+    height: bottom - top,
   };
 }
 
@@ -87,6 +114,7 @@ const GuidedTourOverlay: React.FC = () => {
     explorerDemoState,
   } = useHelp();
   const [targetRect, setTargetRect] = useState<RectState>(null);
+  const [spotlightRects, setSpotlightRects] = useState<SpotlightRect[]>([]);
   const [cardAnchorRect, setCardAnchorRect] = useState<RectState>(null);
   const [stepReady, setStepReady] = useState(true);
   const [stepTimedOut, setStepTimedOut] = useState(false);
@@ -111,12 +139,44 @@ const GuidedTourOverlay: React.FC = () => {
   useLayoutEffect(() => {
     if (!step || typeof window === "undefined" || helpHomeOpen) {
       setTargetRect(null);
+      setSpotlightRects([]);
       setCardAnchorRect(null);
       return;
     }
 
     const updatePosition = () => {
-      setTargetRect(resolveTargetRect(step.targetAnchor));
+      const target = resolveTargetRect(step.targetAnchor);
+      const rawSpotlightRects = (step.spotlightAnchors ?? [step.targetAnchor])
+        .map((anchor) => resolveTargetRect(anchor))
+        .filter((rect): rect is NonNullable<RectState> => rect !== null);
+      const spotlightPadding = step.spotlightPadding ?? 8;
+      const spotlightRadius = step.spotlightRadius ?? 18;
+      const normalizedSpotlightRects =
+        step.spotlightStrategy === "separate"
+          ? rawSpotlightRects.map((rect) => ({
+              top: Math.max(0, rect.top - spotlightPadding),
+              left: Math.max(0, rect.left - spotlightPadding),
+              width: rect.width + spotlightPadding * 2,
+              height: rect.height + spotlightPadding * 2,
+              radius: spotlightRadius,
+            }))
+          : (() => {
+              const mergedRect = mergeRects(rawSpotlightRects);
+              return mergedRect
+                ? [
+                    {
+                      top: Math.max(0, mergedRect.top - spotlightPadding),
+                      left: Math.max(0, mergedRect.left - spotlightPadding),
+                      width: mergedRect.width + spotlightPadding * 2,
+                      height: mergedRect.height + spotlightPadding * 2,
+                      radius: spotlightRadius,
+                    },
+                  ]
+                : [];
+            })();
+
+      setTargetRect(target);
+      setSpotlightRects(normalizedSpotlightRects);
       setCardAnchorRect(resolveTargetRect(step.cardAnchor ?? step.targetAnchor));
     };
 
@@ -124,7 +184,9 @@ const GuidedTourOverlay: React.FC = () => {
     window.addEventListener("resize", updatePosition);
     window.addEventListener("scroll", updatePosition, true);
     let resizeObserver: ResizeObserver | null = null;
-    const target = document.querySelector<HTMLElement>(`[data-help-anchor="${step.targetAnchor}"]`);
+    const spotlightTargets = (step.spotlightAnchors ?? [step.targetAnchor])
+      .map((anchor) => document.querySelector<HTMLElement>(`[data-help-anchor="${anchor}"]`))
+      .filter((target): target is HTMLElement => Boolean(target));
     const cardAnchorTarget = document.querySelector<HTMLElement>(
       `[data-help-anchor="${step.cardAnchor ?? step.targetAnchor}"]`
     );
@@ -133,10 +195,8 @@ const GuidedTourOverlay: React.FC = () => {
       resizeObserver = new ResizeObserver(() => {
         updatePosition();
       });
-      if (target) {
-        resizeObserver.observe(target);
-      }
-      if (cardAnchorTarget && cardAnchorTarget !== target) {
+      spotlightTargets.forEach((target) => resizeObserver.observe(target));
+      if (cardAnchorTarget && !spotlightTargets.includes(cardAnchorTarget)) {
         resizeObserver.observe(cardAnchorTarget);
       }
       if (document.body) {
@@ -271,34 +331,27 @@ const GuidedTourOverlay: React.FC = () => {
     cardHeight,
     cardAnchorRect ? placement : "center"
   );
-  const spotlightPadding = step.spotlightPadding ?? 8;
-  const spotlightRadius = step.spotlightRadius ?? 18;
-  const spotlightRect = targetRect
-    ? {
-        top: Math.max(0, targetRect.top - spotlightPadding),
-        left: Math.max(0, targetRect.left - spotlightPadding),
-        width: targetRect.width + spotlightPadding * 2,
-        height: targetRect.height + spotlightPadding * 2,
-      }
-    : null;
   const overlayMaskId = `guided-tour-mask-${step.id}-${activeStepIndex}`;
 
   return (
     <div className="pointer-events-none fixed inset-0 z-[70]">
-      {spotlightRect ? (
+      {spotlightRects.length > 0 ? (
         <svg className="absolute inset-0 h-full w-full" aria-hidden="true">
           <defs>
             <mask id={overlayMaskId}>
               <rect x="0" y="0" width="100%" height="100%" fill="white" />
-              <rect
-                x={spotlightRect.left}
-                y={spotlightRect.top}
-                width={spotlightRect.width}
-                height={spotlightRect.height}
-                rx={spotlightRadius}
-                ry={spotlightRadius}
-                fill="black"
-              />
+              {spotlightRects.map((rect, index) => (
+                <rect
+                  key={index}
+                  x={rect.left}
+                  y={rect.top}
+                  width={rect.width}
+                  height={rect.height}
+                  rx={rect.radius}
+                  ry={rect.radius}
+                  fill="black"
+                />
+              ))}
             </mask>
           </defs>
           <rect x="0" y="0" width="100%" height="100%" fill="rgba(15, 23, 42, 0.58)" mask={`url(#${overlayMaskId})`} />
@@ -307,18 +360,19 @@ const GuidedTourOverlay: React.FC = () => {
         <div className="absolute inset-0 bg-slate-950/58" />
       )}
 
-      {spotlightRect ? (
+      {spotlightRects.map((rect, index) => (
         <div
+          key={index}
           className="absolute border-2 border-amber-300 bg-transparent shadow-[0_0_0_1px_rgba(255,255,255,0.6),0_0_24px_rgba(253,224,71,0.24)] transition-all duration-150"
           style={{
-            top: spotlightRect.top,
-            left: spotlightRect.left,
-            width: spotlightRect.width,
-            height: spotlightRect.height,
-            borderRadius: `${spotlightRadius}px`,
+            top: rect.top,
+            left: rect.left,
+            width: rect.width,
+            height: rect.height,
+            borderRadius: `${rect.radius}px`,
           }}
         />
-      ) : null}
+      ))}
 
       <section
         ref={cardRef}

@@ -142,12 +142,10 @@ const HelpHomeDialog: React.FC = () => {
                 <section className="flex h-full flex-col rounded-xl border border-slate-200 bg-slate-50 p-4 shadow-sm">
                   <div className="mb-3 flex items-center gap-2 text-slate-900">
                     <BookOpenText className="h-5 w-5 text-sky-700" />
-                    <h3 className="font-semibold">Explain this app</h3>
+                    <h3 className="font-semibold">About this app</h3>
                   </div>
                   <p className="text-sm text-slate-700">
-                    Start with the year and entrypoint selectors. The tree on the left
-                    shows structure. The details panel on the right explains the selected
-                    concept.
+                    Unlock the full potential of the UK digital reporting taxonomies. Learn how to navigate the trees, understand concept details, view the full dimensional model, and use advanced search techniques.
                   </p>
                   <Button
                     type="button"
@@ -164,10 +162,10 @@ const HelpHomeDialog: React.FC = () => {
                 <section className="flex h-full flex-col rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
                   <div className="mb-3 flex items-center gap-2 text-slate-900">
                     <ToggleRight className="h-5 w-5 text-rose-600" />
-                    <h3 className="font-semibold">Turn help mode on</h3>
+                    <h3 className="font-semibold">Turn app info on</h3>
                   </div>
                   <p className="mb-3 text-sm text-slate-700">
-                    Turn on inline hints to see help and glossary terms across the app.
+                    Turns on UI hints which display help and glossary terms in use across the app. App info mode can also be toggled using the button in the top navigation bar.
                   </p>
                   <Button
                     type="button"
@@ -181,11 +179,10 @@ const HelpHomeDialog: React.FC = () => {
                 <section className="flex h-full flex-col rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
                   <div className="mb-3 flex items-center gap-2 text-slate-900">
                     <Sparkles className="h-5 w-5 text-amber-500" />
-                    <h3 className="font-semibold">Start a guided tour</h3>
+                    <h3 className="font-semibold">Take a guided tour</h3>
                   </div>
                   <p className="mb-3 text-sm text-slate-700">
-                    Run the beginner overview to load a sample taxonomy, filter the tree,
-                    select a concept, and open a non-default details tab.
+                    Welcome to the UK Taxonomy Suite. This short tour will guide you through the key features of the app to help you get started exploring the taxonomies with confidence.
                   </p>
                   <Button
                     type="button"
@@ -200,14 +197,30 @@ const HelpHomeDialog: React.FC = () => {
               <section className="space-y-3">
                 <article className={helpHomeInfoRowClass}>
                   <div>
-                    <h3 className="text-base font-semibold text-slate-900">Quick glossary</h3>
+                    <h3 className="text-base font-semibold text-slate-900">Glossary</h3>
                     <p className="text-sm text-slate-600">
-                      Browse grouped glossary terms for the app, details tabs, concepts, and advanced search.
+                      Browse glossary terms for the app, details tabs, concepts, and advanced search.
                     </p>
                   </div>
                   <div className="flex items-center">
                     <Button type="button" className={helpActionButtonClass} onClick={handleOpenGlossary}>
                       Open glossary
+                    </Button>
+                  </div>
+                </article>
+                <article className={helpHomeInfoRowClass}>
+                  <div>
+                    <h3 className="text-base font-semibold text-slate-900">Taxonomies Documentation and Guidance</h3>
+                    <p className="text-sm text-slate-600">
+                      Visit the Financial Reporting Council (FRC) website to download current documentation and guidance for the FRC Taxonomy Suite.
+                    </p>
+                  </div>
+                  <div className="flex items-center">
+                    <Button asChild type="button" className={helpActionButtonClass}>
+                      <a href="https://www.frc.org.uk/library/standards-codes-policy/accounting-and-reporting/frc-taxonomies/frc-taxonomies-documentation-and-guidance/" target="_blank" rel="noreferrer">
+                        Open guidance
+                        <ExternalLink className="ml-2 h-4 w-4" />
+                      </a>
                     </Button>
                   </div>
                 </article>
@@ -222,22 +235,6 @@ const HelpHomeDialog: React.FC = () => {
                     <Button asChild type="button" className={helpActionButtonClass}>
                       <a href="https://frc.org.uk/xbrl" target="_blank" rel="noreferrer">
                         Visit FRC hub
-                        <ExternalLink className="ml-2 h-4 w-4" />
-                      </a>
-                    </Button>
-                  </div>
-                </article>
-                <article className={helpHomeInfoRowClass}>
-                  <div>
-                    <h3 className="text-base font-semibold text-slate-900">Taxonomies Documentation and Guidance</h3>
-                    <p className="text-sm text-slate-600">
-                      Visit the Financial Reporting Council (FRC) website to download documentation and guidance for the FRC Taxonomy Suite.
-                    </p>
-                  </div>
-                  <div className="flex items-center">
-                    <Button asChild type="button" className={helpActionButtonClass}>
-                      <a href="https://www.frc.org.uk/library/standards-codes-policy/accounting-and-reporting/frc-taxonomies/frc-taxonomies-documentation-and-guidance/" target="_blank" rel="noreferrer">
-                        Open guidance
                         <ExternalLink className="ml-2 h-4 w-4" />
                       </a>
                     </Button>
@@ -345,8 +342,9 @@ const HelpHomeDialog: React.FC = () => {
             </div>
           )}
 
-          <DialogFooter className="border-t border-slate-200 px-6 py-4">
-            <Button className="border-red-700 bg-red-400" type="button" variant="outline" onClick={handleClose}>
+          <DialogFooter className="border-t bo
+          rder-slate-200 px-6 py-4">
+            <Button className="border-red-700 bg-red-300" type="button" variant="outline" onClick={handleClose}>
               Close
             </Button>
           </DialogFooter>

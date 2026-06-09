@@ -1,4 +1,4 @@
-import { Dispatch, SetStateAction, useCallback, useEffect, useMemo, useState } from "react";
+import { Dispatch, SetStateAction, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { TreeNode } from "@/components/taxonomy/explorer/tree_utils";
 
@@ -38,13 +38,42 @@ export function useTreeNavigation({
   onNavigationFailure,
 }: UseTreeNavigationArgs) {
   const [pendingNavigation, setPendingNavigation] = useState<PendingNavigation | null>(null);
+  const highlightTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const treeLocations = useMemo<TreeLocationTarget[]>(
     () => collectTreeLocations(rawTreeData, detailNode?.data?.qname),
     [rawTreeData, detailNode?.data?.qname]
   );
 
+  const clearHighlightTimeout = useCallback(() => {
+    if (highlightTimeoutRef.current !== null) {
+      clearTimeout(highlightTimeoutRef.current);
+      highlightTimeoutRef.current = null;
+    }
+  }, []);
+
+  const applyHighlight = useCallback(
+    (key: string, persistent = false) => {
+      clearHighlightTimeout();
+      setHighlightedKey(key);
+
+      if (!persistent) {
+        highlightTimeoutRef.current = setTimeout(() => {
+          setHighlightedKey(null);
+          highlightTimeoutRef.current = null;
+        }, 5000);
+      }
+    },
+    [clearHighlightTimeout, setHighlightedKey]
+  );
+
+  useEffect(() => {
+    return () => {
+      clearHighlightTimeout();
+    };
+  }, [clearHighlightTimeout]);
+
   const expandPathToQName = useCallback(
-    (targetQName: string, options?: { preserveDetails?: boolean }) => {
+    (targetQName: string, options?: { preserveDetails?: boolean; persistentHighlight?: boolean }) => {
       const path = findPathInTreeNodes(
         currentTreeNodes,
         (node) => node.data?.qname === targetQName
@@ -56,14 +85,13 @@ export function useTreeNavigation({
       setExpandedKeys((prev) => ({ ...prev, ...expanded }));
 
       const target = path[path.length - 1];
-      setHighlightedKey(target.key);
-      setTimeout(() => setHighlightedKey(null), 5000);
+      applyHighlight(target.key, options?.persistentHighlight);
       setSelectedNode(target);
       if (!options?.preserveDetails) {
         setDetailNode(target);
       }
     },
-    [currentTreeNodes, setDetailNode, setExpandedKeys, setHighlightedKey, setSelectedNode]
+    [applyHighlight, currentTreeNodes, setDetailNode, setExpandedKeys, setSelectedNode]
   );
 
   const navigateToLocation = useCallback(
@@ -113,6 +141,7 @@ export function useTreeNavigation({
         qname: targetQName,
         uuid: options?.uuid,
         updateDetails: options?.preserveDetails ? false : true,
+        persistentHighlight: options?.persistentHighlight,
       });
 
       if (network !== targetNetwork) {
@@ -161,8 +190,7 @@ export function useTreeNavigation({
     if (pendingNavigation.updateDetails !== false) {
       setDetailNode(targetNode);
     }
-    setHighlightedKey(targetNode.key);
-    setTimeout(() => setHighlightedKey(null), 5000);
+    applyHighlight(targetNode.key, pendingNavigation.persistentHighlight);
 
     console.debug(`${NAV_LOG_PREFIX} resolved`, {
       using: matchStrategy,
@@ -180,15 +208,19 @@ export function useTreeNavigation({
     pendingNavigation,
     setDetailNode,
     setExpandedKeys,
-    setHighlightedKey,
     setSelectedNode,
     onNavigationFailure,
+    applyHighlight,
   ]);
 
   return {
     treeLocations,
     expandPathToQName,
     clearPendingNavigation: useCallback(() => setPendingNavigation(null), []),
+    clearHighlight: useCallback(() => {
+      clearHighlightTimeout();
+      setHighlightedKey(null);
+    }, [clearHighlightTimeout, setHighlightedKey]),
     navigateToLocation,
     navigateToQNameInNetwork,
   };

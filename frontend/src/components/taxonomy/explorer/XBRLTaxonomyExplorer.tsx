@@ -222,7 +222,7 @@ const XBRLTaxonomyExplorer: React.FC<Props> = ({
                 : "border-cyan-300/60 bg-blue-700 text-cyan-100 hover:bg-blue-600"
             }`}
           >
-            {helpModeEnabled ? "Help mode on" : "Help mode off"}
+            {helpModeEnabled ? "App info on" : "App info off"}
           </button>
           <div className="hidden whitespace-nowrap text-sm text-blue-100 xl:block">
             {viewingLabel}

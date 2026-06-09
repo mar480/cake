@@ -43,7 +43,7 @@ const NETWORK_LABELS: Record<string, string> = {
 };
 
 const XBRLTaxonomyExplorerContainer: React.FC = () => {
-  const { setExplorerDemoRuntime, clearExplorerDemoRuntime } = useHelp();
+  const { activeTourId, setExplorerDemoRuntime, clearExplorerDemoRuntime } = useHelp();
   // UI state
   const [selectedNode, setSelectedNode] = useState<TreeNode | null>(null);
   const [detailNode, setDetailNode] = useState<TreeNode | null>(null);
@@ -158,7 +158,7 @@ const XBRLTaxonomyExplorerContainer: React.FC = () => {
     return mapElrGroupedTreeToTreeNodes(raw);
   }, [rawTreeData, network]);
 
-  const { treeLocations, expandPathToQName, clearPendingNavigation, navigateToLocation, navigateToQNameInNetwork } = useTreeNavigation({
+  const { treeLocations, expandPathToQName, clearPendingNavigation, clearHighlight, navigateToLocation, navigateToQNameInNetwork } = useTreeNavigation({
     currentTreeNodes,
     rawTreeData,
     detailNode,
@@ -362,7 +362,10 @@ const XBRLTaxonomyExplorerContainer: React.FC = () => {
             return;
           }
 
-          expandPathToQName(qname, { preserveDetails: options?.preserveDetails });
+          expandPathToQName(qname, {
+            preserveDetails: options?.preserveDetails,
+            persistentHighlight: options?.persistentHighlight,
+          });
         });
       },
       selectFirstVisibleConcept: () => {
@@ -373,6 +376,9 @@ const XBRLTaxonomyExplorerContainer: React.FC = () => {
       },
       setTreeFilter: (value) => {
         setTreeFilter(value);
+      },
+      clearTreeHighlight: () => {
+        clearHighlight();
       },
       openDetailsTab: (tab) => {
         setActiveDetailsTab(tab);
@@ -391,6 +397,7 @@ const XBRLTaxonomyExplorerContainer: React.FC = () => {
       handleEntrypointChange,
       handleYearChange,
       currentTreeNodes,
+      clearHighlight,
       navigateFromSearch,
       rawTreeData,
       runAfterTreeFilterClears,
@@ -410,7 +417,13 @@ const XBRLTaxonomyExplorerContainer: React.FC = () => {
   return (
     <>
       {loadingEntrypoint && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-white bg-opacity-90 transition-opacity duration-300">
+        <div
+          className={`fixed inset-0 z-50 flex items-center justify-center transition-opacity duration-300 ${
+            activeTourId
+              ? "pointer-events-none bg-transparent"
+              : "bg-white bg-opacity-90"
+          }`}
+        >
           <Loader />
         </div>
       )}

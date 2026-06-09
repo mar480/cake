@@ -11,6 +11,8 @@ export type TourRuntimeContext = {
 export type TourStep = {
   id: string;
   targetAnchor: string;
+  spotlightAnchors?: string[];
+  spotlightStrategy?: "merge" | "separate";
   cardAnchor?: string;
   spotlightPadding?: number;
   spotlightRadius?: number;
@@ -129,6 +131,8 @@ export const tours: Record<string, TourDefinition> = {
       {
         id: "filter-tree",
         targetAnchor: "taxonomy-tree-search",
+        spotlightAnchors: ["taxonomy-tree-search", "highlighted-tree-node"],
+        spotlightStrategy: "separate",
         title: "Filter the current tree",
         body: "Use tree search to narrow the visible concepts without changing the loaded taxonomy. The tour falls back gracefully if the tree controls are not visible yet.",
         placement: "right",
@@ -136,6 +140,10 @@ export const tours: Record<string, TourDefinition> = {
         beforeStep: ({ explorer }) => {
           if (explorer.state?.entrypointLoaded) {
             explorer.actions?.setTreeFilter("current assets");
+            explorer.actions?.navigateToConcept("core:CurrentAssets", {
+              preserveDetails: true,
+              persistentHighlight: true,
+            });
           }
         },
         waitFor: ({ explorer }) =>
@@ -145,13 +153,17 @@ export const tours: Record<string, TourDefinition> = {
       {
         id: "inspect-details",
         targetAnchor: "details-panel",
+        spotlightAnchors: ["details-panel", "highlighted-tree-node"],
+        spotlightStrategy: "separate",
         title: "Inspect concept details",
         body: "When a concept is selected, this panel explains its properties and gives you richer context for beginner-unfriendly terms.",
         placement: "left",
         helpId: "details.tabs",
         beforeStep: ({ explorer }) => {
           if (explorer.state?.entrypointLoaded) {
-            explorer.actions?.navigateToConcept("core:CurrentAssets");
+            explorer.actions?.navigateToConcept("core:CurrentAssets", {
+              persistentHighlight: true,
+            });
             explorer.actions?.openDetailsTab("Details");
           }
         },
@@ -163,6 +175,10 @@ export const tours: Record<string, TourDefinition> = {
       {
         id: "hypercube-relationships-tab",
         targetAnchor: "details-tab-hypercube-relationships",
+        spotlightAnchors: [
+          "details-tab-hypercube-relationships",
+          "details-view-hypercube-relationships",
+        ],
         cardAnchor: "details-panel",
         title: "Show hypercube relationships",
         body: "This tab is often the most useful next step after properties because it shows how the selected concept participates in tables, dimensions, domains, and members.",
@@ -170,6 +186,7 @@ export const tours: Record<string, TourDefinition> = {
         helpId: "details.tab.hypercubeRelationships",
         beforeStep: ({ explorer }) => {
           if (explorer.state?.selectedConceptQname) {
+            explorer.actions?.clearTreeHighlight();
             explorer.actions?.openDetailsTab("Hypercube Relationships");
           }
         },
@@ -180,6 +197,10 @@ export const tours: Record<string, TourDefinition> = {
       {
         id: "tree-locations-tab",
         targetAnchor: "details-tab-tree-locations",
+        spotlightAnchors: [
+          "details-tab-tree-locations",
+          "details-view-tree-locations",
+        ],
         cardAnchor: "details-panel",
         title: "Open a non-default details tab",
         body: "With a concept selected, the demo intentionally switches to Tree Locations so you can see the guided tour control a tab that depends on concept context.",
@@ -197,6 +218,11 @@ export const tours: Record<string, TourDefinition> = {
       {
         id: "advanced-search-tab",
         targetAnchor: "details-tab-advanced-search",
+        spotlightAnchors: [
+          "details-tab-advanced-search",
+          "details-view-advanced-search",
+        ],
+        spotlightStrategy: "separate",
         cardAnchor: "details-panel",
         title: "Switch to advanced search",
         body: "The demo finishes by opening Advanced Search. This shows that the guided runtime can move between different explorer surfaces after it has loaded and explored live taxonomy data.",

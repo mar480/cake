@@ -214,3 +214,178 @@
 .relationship-primary-tree .p-treenode-content:hover {
   background: #f3f4f6;
 }
+
+@layer utilities {
+  @keyframes help-attention {
+    0% {
+      transform: scale(1);
+      box-shadow: 0 10px 15px -3px rgb(244 63 94 / 0.3);
+    }
+
+    3% {
+      transform: scale(1.08);
+      box-shadow:
+        0 0 0 0 rgb(251 146 60 / 0.45),
+        0 10px 22px -3px rgb(244 63 94 / 0.45);
+    }
+
+    7% {
+      transform: scale(1);
+      box-shadow:
+        0 0 0 8px rgb(251 146 60 / 0),
+        0 10px 15px -3px rgb(244 63 94 / 0.3);
+    }
+
+    13% {
+      transform: scale(1.05);
+    }
+
+    17% {
+      transform: scale(1);
+    }
+
+    28% {
+      transform: scale(1.06);
+      box-shadow:
+        0 0 0 0 rgb(251 146 60 / 0.35),
+        0 10px 22px -3px rgb(244 63 94 / 0.4);
+    }
+
+    33% {
+      transform: scale(1);
+      box-shadow:
+        0 0 0 8px rgb(251 146 60 / 0),
+        0 10px 15px -3px rgb(244 63 94 / 0.3);
+    }
+
+    50% {
+      transform: scale(1.05);
+    }
+
+    55% {
+      transform: scale(1);
+    }
+
+    100% {
+      transform: scale(1);
+      box-shadow: 0 10px 15px -3px rgb(244 63 94 / 0.3);
+    }
+  }
+
+  @keyframes help-shine-loop {
+    0% {
+      transform: translateX(-120%);
+    }
+
+    6% {
+      transform: translateX(120%);
+    }
+
+    12% {
+      transform: translateX(-120%);
+    }
+
+    18% {
+      transform: translateX(120%);
+    }
+
+    24% {
+      transform: translateX(-120%);
+    }
+
+    30% {
+      transform: translateX(120%);
+    }
+
+    36% {
+      transform: translateX(-120%);
+    }
+
+    42% {
+      transform: translateX(120%);
+    }
+
+    48% {
+      transform: translateX(-120%);
+    }
+
+    54% {
+      transform: translateX(120%);
+    }
+
+    60% {
+      transform: translateX(-120%);
+    }
+
+    66% {
+      transform: translateX(120%);
+    }
+
+    100% {
+      transform: translateX(120%);
+    }
+  }
+
+  @keyframes help-icon {
+    0%,
+    100% {
+      transform: rotate(0deg);
+    }
+
+    4% {
+      transform: rotate(-12deg);
+    }
+
+    7% {
+      transform: rotate(12deg);
+    }
+
+    10% {
+      transform: rotate(-8deg);
+    }
+
+    13% {
+      transform: rotate(8deg);
+    }
+
+    16% {
+      transform: rotate(0deg);
+    }
+
+    32% {
+      transform: rotate(-10deg);
+    }
+
+    35% {
+      transform: rotate(10deg);
+    }
+
+    38% {
+      transform: rotate(0deg);
+    }
+
+    56% {
+      transform: rotate(-8deg);
+    }
+
+    59% {
+      transform: rotate(8deg);
+    }
+
+    62% {
+      transform: rotate(0deg);
+    }
+  }
+
+  .animate-help-attention {
+    animation: help-attention 30s ease-out 1 both;
+  }
+
+  .animate-help-shine {
+    animation: help-shine-loop 30s ease-in-out 1 both;
+  }
+
+  .animate-help-icon {
+    animation: help-icon 30s ease-out 1 both;
+  }
+}

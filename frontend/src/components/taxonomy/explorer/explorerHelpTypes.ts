@@ -29,6 +29,7 @@ export type ExplorerDemoNavigateOptions = {
   entrypoint?: string;
   uuid?: string;
   preserveDetails?: boolean;
+  persistentHighlight?: boolean;
 };
 
 export type ExplorerDemoActions = {
@@ -38,6 +39,7 @@ export type ExplorerDemoActions = {
   navigateToConcept: (qname: string, options?: ExplorerDemoNavigateOptions) => void;
   selectFirstVisibleConcept: () => void;
   setTreeFilter: (value: string) => void;
+  clearTreeHighlight: () => void;
   openDetailsTab: (tab: DetailsTabName) => void;
   setAdvancedSearchQuery: (query: string) => void;
   runAdvancedSearch: () => void;
