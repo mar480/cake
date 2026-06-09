@@ -2,6 +2,9 @@ import React from "react";
 import Split from "react-split";
 import TaxonomyTreeView from "./TaxonomyTreeView";
 import DetailsPanelContainer from "./DetailsPanelContainer";
+import HelpLauncherButton from "@/components/help/HelpLauncherButton";
+import HelpLabel from "@/components/help/HelpLabel";
+import { useHelp } from "@/components/help/helpContext";
 import { TreeNode } from "@/components/taxonomy/explorer/tree_utils";
 import { TreeLocationTarget } from "./TreeLocationsTab";
 import {
@@ -11,6 +14,7 @@ import {
 } from "@/types/advancedSearch";
 import { EntrypointOption } from "./services/explorerApi";
 import type { RawElrGroup } from "./explorerTypes";
+import type { DetailsTabName } from "./explorerHelpTypes";
 
 interface Props {
   selectedNode: TreeNode | null;
@@ -45,6 +49,8 @@ interface Props {
   currentTreeNodes: TreeNode[];
   entrypointLoaded: boolean;
   treeLocations: TreeLocationTarget[];
+  activeDetailsTab: DetailsTabName;
+  onActiveDetailsTabChange: (tab: DetailsTabName) => void;
   advancedSearchState: AdvancedSearchState;
   advancedSearchFilterOptions: AdvancedSearchFilterOptions;
   referenceParagraphsBySource: Record<string, string[]>;
@@ -90,6 +96,8 @@ const XBRLTaxonomyExplorer: React.FC<Props> = ({
   currentTreeNodes,
   entrypointLoaded,
   treeLocations,
+  activeDetailsTab,
+  onActiveDetailsTabChange,
   advancedSearchState,
   advancedSearchFilterOptions,
   referenceParagraphsBySource,
@@ -103,6 +111,7 @@ const XBRLTaxonomyExplorer: React.FC<Props> = ({
   resultPresentationElrs,
   rawTreeData,
 }) => {
+  const { helpModeEnabled, setHelpModeEnabled } = useHelp();
   const viewingLabel = loadedYear
     ? `Viewing: ${loadedYear} / ${loadedEntrypointName || loadedEntrypoint || "Unknown entrypoint"}`
     : "";
@@ -111,12 +120,20 @@ const XBRLTaxonomyExplorer: React.FC<Props> = ({
 
   return (
     <div className="flex flex-col h-screen bg-white">
-      <header className="bg-blue-800 text-white p-2 flex justify-between items-center">
-        <div className="grid grid-cols-4 gap-4 items-center">
-          <div className="flex flex-col">
-            <span className="font-semibold">Year</span>
+      <header
+        className="flex flex-wrap items-center justify-between gap-3 bg-blue-800 p-2 text-white"
+        data-help-anchor="app-header"
+      >
+        <div className="grid grid-cols-2 items-center gap-3 md:grid-cols-4">
+          <div className="flex flex-col" data-help-anchor="year-selector">
+            <HelpLabel
+              label={<span className="font-semibold">Year</span>}
+              helpId="app.yearSelector"
+              side="bottom"
+              className="mb-0.5 flex items-center gap-1.5"
+            />
             <select
-              className="bg-blue-700 text-white text-sm px-1 py-0.5 rounded border border-blue-600"
+              className="w-[210px] max-w-full bg-blue-700 text-white text-sm px-1 py-0.5 rounded border border-blue-600"
               value={year || ""}
               onChange={(e) => onYearChange(e.target.value)}
             >
@@ -129,10 +146,15 @@ const XBRLTaxonomyExplorer: React.FC<Props> = ({
             </select>
           </div>
 
-          <div className="flex flex-col">
-            <span className="font-semibold">Entrypoint</span>
+          <div className="flex flex-col" data-help-anchor="entrypoint-selector">
+            <HelpLabel
+              label={<span className="font-semibold">Entrypoint</span>}
+              helpId="app.entrypoint"
+              side="bottom"
+              className="mb-0.5 flex items-center gap-1.5"
+            />
             <select
-              className="bg-blue-700 text-white text-sm px-1 py-0.5 rounded border border-blue-600"
+              className="w-[210px] max-w-full bg-blue-700 text-white text-sm px-1 py-0.5 rounded border border-blue-600"
               value={entrypoint || ""}
               onChange={(e) => onEntrypointChange(e.target.value)}
               disabled={!year}
@@ -146,10 +168,15 @@ const XBRLTaxonomyExplorer: React.FC<Props> = ({
             </select>
           </div>
 
-          <div className="flex flex-col">
-            <span className="font-semibold">Network</span>
+          <div className="flex flex-col" data-help-anchor="network-selector">
+            <HelpLabel
+              label={<span className="font-semibold">Network</span>}
+              helpId="app.networkSelector"
+              side="bottom"
+              className="mb-0.5 flex items-center gap-1.5"
+            />
             <select
-              className="bg-blue-700 text-white text-sm px-1 py-0.5 rounded border border-blue-600"
+              className="w-[210px] max-w-full bg-blue-700 text-white text-sm px-1 py-0.5 rounded border border-blue-600"
               value={network}
               onChange={(e) => onNetworkChange(e.target.value)}
               disabled={!entrypointLoaded}
@@ -166,10 +193,15 @@ const XBRLTaxonomyExplorer: React.FC<Props> = ({
             </select>
           </div>
 
-          <div className="flex flex-col">
-            <span className="font-semibold">Language</span>
+          <div className="flex flex-col" data-help-anchor="language-selector">
+            <HelpLabel
+              label={<span className="font-semibold">Language</span>}
+              helpId="app.languageSelector"
+              side="bottom"
+              className="mb-0.5 flex items-center gap-1.5"
+            />
             <select
-              className="bg-blue-700 text-white text-sm px-1 py-0.5 rounded border border-blue-600"
+              className="w-[210px] max-w-full bg-blue-700 text-white text-sm px-1 py-0.5 rounded border border-blue-600"
               value={language}
               onChange={(e) => onLanguageChange(e.target.value as "en" | "cy")}
               disabled={!network}
@@ -180,8 +212,22 @@ const XBRLTaxonomyExplorer: React.FC<Props> = ({
           </div>
         </div>
 
-        <div className="text-sm text-blue-100 whitespace-nowrap pl-4">
-          {viewingLabel}
+        <div className="flex flex-wrap items-center justify-end gap-2 md:pl-4">
+          <button
+            type="button"
+            onClick={() => setHelpModeEnabled(!helpModeEnabled)}
+            className={`rounded-full border px-3 py-2 text-xs font-semibold uppercase tracking-wide transition-colors sm:text-sm ${
+              helpModeEnabled
+                ? "border-amber-300 bg-amber-400 text-slate-950 hover:bg-amber-300"
+                : "border-cyan-300/60 bg-blue-700 text-cyan-100 hover:bg-blue-600"
+            }`}
+          >
+            {helpModeEnabled ? "Help mode on" : "Help mode off"}
+          </button>
+          <div className="hidden whitespace-nowrap text-sm text-blue-100 xl:block">
+            {viewingLabel}
+          </div>
+          <HelpLauncherButton />
         </div>
       </header>
 
@@ -191,7 +237,10 @@ const XBRLTaxonomyExplorer: React.FC<Props> = ({
         minSize={[30, 40]}
         gutterSize={15}
       >
-        <div className="min-w-[30%] max-w-full overflow-auto h-full p-4">
+        <div
+          className="min-w-[30%] max-w-full overflow-auto h-full p-4"
+          data-help-anchor="details-panel"
+        >
           <DetailsPanelContainer
             selectedNode={detailNode}
             onNavigateToNode={onNavigateToNode}
@@ -205,6 +254,8 @@ const XBRLTaxonomyExplorer: React.FC<Props> = ({
             network={network}
             advancedSearchState={advancedSearchState}
             entrypointLoaded={entrypointLoaded}
+            activeTab={activeDetailsTab}
+            onActiveTabChange={onActiveDetailsTabChange}
             advancedSearchFilterOptions={advancedSearchFilterOptions}
             referenceParagraphsBySource={referenceParagraphsBySource}
             onAdvancedSearchQueryChange={onAdvancedSearchQueryChange}
@@ -219,7 +270,10 @@ const XBRLTaxonomyExplorer: React.FC<Props> = ({
           />
         </div>
 
-        <div className="min-w-[40%] max-w-full overflow-auto border-r h-full">
+        <div
+          className="min-w-[40%] max-w-full overflow-auto border-r h-full"
+          data-help-anchor="taxonomy-tree-panel"
+        >
           <TaxonomyTreeView
             treeNodes={currentTreeNodes}
             key={network}

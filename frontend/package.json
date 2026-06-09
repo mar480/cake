@@ -9,7 +9,7 @@
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
     "preview": "vite preview",
-    "test:search-results": "esbuild src/components/taxonomy/explorer/searchResultDisplayUtils.test.ts --bundle --platform=node --format=esm --outfile=/tmp/searchResultDisplayUtils.test.mjs && node --test /tmp/searchResultDisplayUtils.test.mjs",
+    "test:search-results": "esbuild src/all-tests.ts --bundle --platform=node --format=esm --outfile=tmp/frontend-tests.mjs && node --test tmp/frontend-tests.mjs",
     "test": "npm run test:search-results"
   },
   "dependencies": {

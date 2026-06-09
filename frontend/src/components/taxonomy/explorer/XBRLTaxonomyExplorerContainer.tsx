@@ -3,6 +3,7 @@ import XBRLTaxonomyExplorer from "./XBRLTaxonomyExplorer";
 import Loader from "@/components/loader/Loader";
 import "@/components/loader/loader.scss";
 import { toast } from "@/components/ui/use-toast";
+import { useHelp } from "@/components/help/helpContext";
 import {
   TreeNode,
   mapElrGroupedTreeToTreeNodes,
@@ -11,8 +12,10 @@ import {
   buildConceptElrMapForNetwork,
   buildConceptNetworksMap,
 } from "./explorerDataUtils";
+import type { DetailsTabName, ExplorerDemoActions, ExplorerDemoState } from "./explorerHelpTypes";
 import { useAdvancedSearch } from "./hooks/useAdvancedSearch";
 import { useEntrypointData } from "./hooks/useEntrypointData";
+import { findFirstVisibleConceptQname } from "./treeSearchUtils";
 import { useTreeNavigation } from "./hooks/useTreeNavigation";
 
 const NETWORK_TAB_ORDER = [
@@ -40,6 +43,7 @@ const NETWORK_LABELS: Record<string, string> = {
 };
 
 const XBRLTaxonomyExplorerContainer: React.FC = () => {
+  const { setExplorerDemoRuntime, clearExplorerDemoRuntime } = useHelp();
   // UI state
   const [selectedNode, setSelectedNode] = useState<TreeNode | null>(null);
   const [detailNode, setDetailNode] = useState<TreeNode | null>(null);
@@ -48,6 +52,7 @@ const XBRLTaxonomyExplorerContainer: React.FC = () => {
   const [language, setLanguage] = useState<"en" | "cy">("en");
   const [network, setNetwork] = useState<string>("");
   const [treeFilter, setTreeFilter] = useState("");
+  const [activeDetailsTab, setActiveDetailsTab] = useState<DetailsTabName>("Details");
 
   // Taxonomy selection state
   const [year, setYear] = useState<string | null>(null);
@@ -85,6 +90,7 @@ const XBRLTaxonomyExplorerContainer: React.FC = () => {
     setDetailNode(null);
     setExpandedKeys({});
     setHighlightedKey(null);
+    setActiveDetailsTab("Details");
   }, []);
 
   const handleEntrypointLoadSuccess = useCallback((
@@ -289,6 +295,118 @@ const XBRLTaxonomyExplorerContainer: React.FC = () => {
     }
   }, [rawTreeData, entrypointLoaded, network]);
 
+  const demoState = useMemo<ExplorerDemoState>(
+    () => ({
+      year,
+      entrypoint,
+      entrypointsYear,
+      availableEntrypoints: entrypoints,
+      loadedYear,
+      loadedEntrypoint,
+      entrypointLoaded,
+      network,
+      treeFilter,
+      selectedConceptQname: detailNode?.data?.qname ?? null,
+      activeDetailsTab,
+      advancedSearchQuery: advancedSearchState.query,
+      advancedSearchHasRun: advancedSearchState.hasRun,
+      advancedSearchLoading: advancedSearchState.loading,
+      advancedSearchResultCount: advancedSearchState.results.length,
+    }),
+    [
+      activeDetailsTab,
+      advancedSearchState.hasRun,
+      advancedSearchState.loading,
+      advancedSearchState.query,
+      advancedSearchState.results.length,
+      entrypoints,
+      entrypointsYear,
+      detailNode?.data?.qname,
+      entrypoint,
+      entrypointLoaded,
+      loadedEntrypoint,
+      loadedYear,
+      network,
+      treeFilter,
+      year,
+    ]
+  );
+
+  const demoActions = useMemo<ExplorerDemoActions>(
+    () => ({
+      selectYear: (nextYear) => {
+        handleYearChange(nextYear);
+      },
+      loadEntrypoint: (entrypointHref) => {
+        handleEntrypointChange(entrypointHref);
+      },
+      selectNetwork: (nextNetwork) => {
+        if (entrypointLoaded && rawTreeData[nextNetwork]) {
+          pendingTreeFilterNavigationRef.current = null;
+          setNetwork(nextNetwork);
+          setTreeFilter("");
+          setExpandedKeys({});
+          setHighlightedKey(null);
+        }
+      },
+      navigateToConcept: (qname, options) => {
+        runAfterTreeFilterClears(() => {
+          if (options?.network || options?.entrypoint || options?.elr || options?.uuid) {
+            navigateFromSearch(
+              qname,
+              options?.network,
+              options?.elr,
+              options?.entrypoint,
+              options?.uuid
+            );
+            return;
+          }
+
+          expandPathToQName(qname, { preserveDetails: options?.preserveDetails });
+        });
+      },
+      selectFirstVisibleConcept: () => {
+        const firstVisibleQname = findFirstVisibleConceptQname(currentTreeNodes, treeFilter, language);
+        if (firstVisibleQname) {
+          expandPathToQName(firstVisibleQname);
+        }
+      },
+      setTreeFilter: (value) => {
+        setTreeFilter(value);
+      },
+      openDetailsTab: (tab) => {
+        setActiveDetailsTab(tab);
+      },
+      setAdvancedSearchQuery: (query) => {
+        updateAdvancedSearchQuery(query);
+      },
+      runAdvancedSearch: () => {
+        runAdvancedSearch(0);
+        setActiveDetailsTab("Search Results");
+      },
+    }),
+    [
+      entrypointLoaded,
+      expandPathToQName,
+      handleEntrypointChange,
+      handleYearChange,
+      currentTreeNodes,
+      navigateFromSearch,
+      rawTreeData,
+      runAfterTreeFilterClears,
+      runAdvancedSearch,
+      treeFilter,
+      updateAdvancedSearchQuery,
+      language,
+    ]
+  );
+
+  useEffect(() => {
+    setExplorerDemoRuntime(demoState, demoActions);
+  }, [demoActions, demoState, setExplorerDemoRuntime]);
+
+  useEffect(() => clearExplorerDemoRuntime, [clearExplorerDemoRuntime]);
+
   return (
     <>
       {loadingEntrypoint && (
@@ -352,6 +470,8 @@ const XBRLTaxonomyExplorerContainer: React.FC = () => {
         currentTreeNodes={currentTreeNodes}
         entrypointLoaded={entrypointLoaded}
         treeLocations={treeLocations}
+        activeDetailsTab={activeDetailsTab}
+        onActiveDetailsTabChange={setActiveDetailsTab}
         advancedSearchState={advancedSearchState}
         advancedSearchFilterOptions={advancedSearchFilterOptions}
         referenceParagraphsBySource={referenceParagraphsBySource}

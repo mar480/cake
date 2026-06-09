@@ -9,6 +9,8 @@ import {
 
 import { ConceptDetailsResponse, ConceptReference } from "./apiTypes";
 import { TreeNode } from "./tree_utils";
+import HelpLabel from "@/components/help/HelpLabel";
+import { HelpContentId } from "@/components/help/helpContent";
 
 
 const LABEL_ROLE_DISPLAY_NAMES: Record<string, string> = {
@@ -62,6 +64,7 @@ interface Props {
 type PropertyRow = {
   label: string;
   value: string | string[];
+  helpId?: HelpContentId;
 };
 
 const DetailsTab: React.FC<Props> = ({
@@ -96,49 +99,66 @@ const DetailsTab: React.FC<Props> = ({
                 </thead>
                 <tbody>
                   {([
-                    { label: "Name", value: concept.concept.local_name },
+                    {
+                      label: "Name",
+                      value: concept.concept.local_name,
+                      helpId: "concept.name",
+                    },
                     concept.cross_ref_destination
                       ? {
                           label: "Cross Reference Target",
                           value: concept.cross_ref_destination,
+                          helpId: "concept.crossReferenceTarget",
                         }
                       : null,
                     {
                       label: "Namespace",
                       value: concept.concept.namespace,
+                      helpId: "concept.namespace",
                     },
                     concept.concept.balance != null
-                      ? { label: "Balance", value: concept.concept.balance }
+                      ? {
+                          label: "Balance",
+                          value: concept.concept.balance,
+                          helpId: "concept.balance",
+                        }
                       : null,
                     concept.cash_flow_classification
                       ? {
                           label: "Cash Flow Classification",
                           value: concept.cash_flow_classification,
+                          helpId: "concept.cashFlowClassification",
                         }
                       : null,
                     {
                       label: "Period Type",
                       value: concept.concept.period_type,
+                      helpId: "concept.periodType",
                     },
                     {
                       label: "Data Type",
                       value: concept.concept.full_type,
+                      helpId: "concept.dataType",
                     },
                     {
                       label: "XBRL Type",
                       value: concept.concept.xbrl_type,
+                      helpId: "concept.xbrlType",
                     },
                     {
                       label: "Substitution Group",
                       value: concept.concept.substitution_group,
+                      helpId: "concept.substitutionGroup",
                     },
                     {
                       label: "Abstract",
                       value: concept.concept.abstract ? "true" : "false",
+                      helpId: "concept.abstract",
                     },
                     {
                       label: "Nillable",
                       value: concept.concept.nillable ? "true" : "false",
+                      helpId: "concept.nillable",
                     },
                   ] as Array<PropertyRow | null>)
                     .filter(
@@ -152,7 +172,17 @@ const DetailsTab: React.FC<Props> = ({
                         className={idx % 2 === 0 ? "bg-white" : "bg-gray-50"}
                       >
                         <td className="py-1 px-2 border text-sm w-1/4 font-medium">
-                          {row.label}
+                          {row.helpId ? (
+                            <HelpLabel
+                              label={<span>{row.label}</span>}
+                              helpId={row.helpId}
+                              side="right"
+                              mode="subtle"
+                              className="flex items-center gap-1.5"
+                            />
+                          ) : (
+                            row.label
+                          )}
                         </td>
                         <td className="py-1 px-2 border text-sm">
                           {row.label === "Cross Reference Target" ? (

@@ -4,6 +4,8 @@ import HypercubeRelationshipsTab from "./HypercubeRelationshipsTab";
 import TreeLocationsTab, { TreeLocationTarget } from "./TreeLocationsTab";
 import AdvancedSearchTab from "./AdvancedSearchTab";
 import SearchResultsTab from "./SearchResultsTab";
+import HelpHint from "@/components/help/HelpHint";
+import { getHelpContent } from "@/components/help/helpContent";
 import {
   AdvancedSearchState,
   AdvancedSearchFilterOptions,
@@ -16,13 +18,8 @@ import {
 } from "./apiTypes";
 import { TreeNode } from "./tree_utils";
 import type { RawElrGroup } from "./explorerTypes";
-
-type DetailsTabName =
-  | "Details"
-  | "Hypercube Relationships"
-  | "Tree Locations"
-  | "Advanced Search"
-  | "Search Results";
+import type { DetailsTabName } from "./explorerHelpTypes";
+import type { HelpContentId } from "@/components/help/helpContent";
 
 interface DetailPanelProps {
   selectedNode: TreeNode | null;
@@ -46,6 +43,8 @@ interface DetailPanelProps {
   year: string | null;
   entrypoint?: string | null;
   entrypointLoaded: boolean;
+  activeTab?: DetailsTabName;
+  onActiveTabChange?: (tab: DetailsTabName) => void;
   advancedSearchState: AdvancedSearchState;
   advancedSearchFilterOptions: AdvancedSearchFilterOptions;
   referenceParagraphsBySource: Record<string, string[]>;
@@ -76,6 +75,8 @@ const DetailPanelContainer: React.FC<DetailPanelProps> = ({
   year,
   entrypoint,
   entrypointLoaded,
+  activeTab: controlledActiveTab,
+  onActiveTabChange,
   advancedSearchState,
   advancedSearchFilterOptions,
   referenceParagraphsBySource,
@@ -86,7 +87,8 @@ const DetailPanelContainer: React.FC<DetailPanelProps> = ({
   onResetAdvancedSearch,
 }) => {
   const conceptCacheRef = useRef(new Map<string, ConceptDetailsResponse>());
-  const [activeTab, setActiveTab] = useState<DetailsTabName>("Details");
+  const previousSelectedNodeKeyRef = useRef<string | null>(null);
+  const [internalActiveTab, setInternalActiveTab] = useState<DetailsTabName>("Details");
   const [concept, setConcept] = useState<ConceptDetailsResponse | null>(null);
   const [isConceptLoading, setIsConceptLoading] = useState(false);
   const [conceptError, setConceptError] = useState<string | null>(null);
@@ -95,6 +97,17 @@ const DetailPanelContainer: React.FC<DetailPanelProps> = ({
   const hasNodeSelection = Boolean(selectedNode?.data?.qname);
   const hasSearchRun = Boolean(advancedSearchState?.hasRun);
   const hasSearchContext = entrypointLoaded && Boolean(year && entrypoint);
+  const activeTab = controlledActiveTab ?? internalActiveTab;
+
+  const setActiveTab = useCallback(
+    (tab: DetailsTabName) => {
+      if (controlledActiveTab === undefined) {
+        setInternalActiveTab(tab);
+      }
+      onActiveTabChange?.(tab);
+    },
+    [controlledActiveTab, onActiveTabChange]
+  );
 
   const tabs = useMemo(
     () =>
@@ -107,22 +120,39 @@ const DetailPanelContainer: React.FC<DetailPanelProps> = ({
       ] as const,
     []
   );
+  const tabHelpIds = useMemo<Record<DetailsTabName, HelpContentId | null>>(
+    () => ({
+      Details: "details.tabs",
+      "Hypercube Relationships": "details.tab.hypercubeRelationships",
+      "Tree Locations": "details.tab.treeLocations",
+      "Advanced Search": "details.tab.advancedSearch",
+      "Search Results": "details.tab.searchResults",
+    }),
+    []
+  );
+
+  useEffect(() => {
+    if ((activeTab === "Advanced Search" || activeTab === "Search Results") && !hasSearchContext) {
+      setActiveTab("Details");
+    }
+  }, [activeTab, hasSearchContext, setActiveTab]);
 
   useEffect(() => {
     const requiresSelection =
       activeTab === "Details" ||
       activeTab === "Hypercube Relationships" ||
       activeTab === "Tree Locations";
-    const tabUnavailable =
-      !tabs.includes(activeTab) ||
-      ((activeTab === "Advanced Search" || activeTab === "Search Results") && !hasSearchContext) ||
-      (requiresSelection && !hasNodeSelection) ||
-      (activeTab === "Search Results" && !hasSearchRun);
 
-    if (tabUnavailable) {
+    if (requiresSelection && !hasNodeSelection) {
       setActiveTab(hasSearchContext ? "Advanced Search" : "Details");
     }
-  }, [tabs, activeTab, hasNodeSelection, hasSearchContext, hasSearchRun]);
+  }, [activeTab, hasNodeSelection, hasSearchContext, setActiveTab]);
+
+  useEffect(() => {
+    if (activeTab === "Search Results" && !hasSearchRun) {
+      setActiveTab("Advanced Search");
+    }
+  }, [activeTab, hasSearchRun, setActiveTab]);
 
   const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -262,14 +292,12 @@ const DetailPanelContainer: React.FC<DetailPanelProps> = ({
   }, [entrypoint, fetchConceptDetailsWithRetry, getConceptCacheKey, selectedNode, year]);
 
   useEffect(() => {
-    if (hasNodeSelection) {
+    const selectedNodeKey = selectedNode?.key ? String(selectedNode.key) : null;
+    if (selectedNodeKey && previousSelectedNodeKeyRef.current !== selectedNodeKey) {
       setActiveTab("Details");
     }
-  }, [hasNodeSelection, selectedNode?.key]);
-
-  useEffect(() => {
-    setActiveTab(hasSearchContext ? "Advanced Search" : "Details");
-  }, [hasSearchContext]);
+    previousSelectedNodeKeyRef.current = selectedNodeKey;
+  }, [selectedNode?.key, setActiveTab]);
 
   useEffect(() => {
     if (!selectedNode?.data?.qname || !year || !entrypoint) {
@@ -329,7 +357,7 @@ const DetailPanelContainer: React.FC<DetailPanelProps> = ({
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
-      <div className="flex border-b px-1 pt-1 shadow-sm">
+      <div className="flex border-b px-1 pt-1 shadow-sm" data-help-anchor="details-tab-bar">
         {tabs.map((tab) => {
           const requiresSelection =
             tab === "Details" || tab === "Hypercube Relationships" || tab === "Tree Locations";
@@ -337,24 +365,35 @@ const DetailPanelContainer: React.FC<DetailPanelProps> = ({
             ((tab === "Advanced Search" || tab === "Search Results") && !hasSearchContext) ||
             (requiresSelection && !hasNodeSelection) || (tab === "Search Results" && !hasSearchRun);
 
+          const helpId = tabHelpIds[tab];
+          const helpEntry = helpId ? getHelpContent(helpId) : null;
+
           return (
-            <button
+            <div
               key={tab}
-              className={`px-4 py-1.5 text-sm font-medium border border-b-0 rounded-t-md shadow-sm transition-colors mr-1 ${
-                activeTab === tab
-                  ? "bg-blue-100 border-blue-300 text-blue-900"
-                  : "bg-gray-200 border-gray-300 text-gray-800 hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
-              }`}
-              onClick={() => setActiveTab(tab)}
-              disabled={disabled}
+              className="mr-1 flex items-center gap-1"
+              data-help-anchor={`details-tab-${tab.toLowerCase().replace(/\s+/g, "-")}`}
             >
-              {tab}
-            </button>
+              <button
+                type="button"
+                className={`px-4 py-1.5 text-sm font-medium border border-b-0 rounded-t-md shadow-sm transition-colors ${
+                  activeTab === tab
+                    ? "bg-blue-100 border-blue-300 text-blue-900"
+                    : "bg-gray-200 border-gray-300 text-gray-800 hover:bg-gray-300 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:border-slate-200 disabled:text-slate-400"
+                }`}
+                onClick={() => setActiveTab(tab)}
+                disabled={disabled}
+                title={helpEntry?.shortText}
+              >
+                {tab}
+              </button>
+              {helpId ? <HelpHint helpId={helpId} side="bottom" mode="subtle" /> : null}
+            </div>
           );
         })}
       </div>
 
-      <div className="flex-1 overflow-auto">
+      <div className="flex-1 overflow-auto" data-help-anchor="details-tab-content">
         {conceptError && (
           <div className="mx-3 mt-3 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900">
             {conceptError}
@@ -362,57 +401,66 @@ const DetailPanelContainer: React.FC<DetailPanelProps> = ({
         )}
 
         {isConceptLoading && (
-          <div className="px-4 pt-3 text-sm text-gray-500">Loading concept details…</div>
+          <div className="px-4 pt-3 text-sm text-gray-500">Loading concept details...</div>
         )}
 
         {activeTab === "Advanced Search" && (
-          <AdvancedSearchTab
-            state={advancedSearchState}
-            filterOptions={advancedSearchFilterOptions}
-            referenceParagraphsBySource={referenceParagraphsBySource}
-            onQueryChange={onAdvancedSearchQueryChange}
-            onFiltersChange={onAdvancedSearchFiltersChange}
-            onRunSearch={onRunAdvancedSearch}
-            onOpenResultsTab={() => setActiveTab("Search Results")}
-            onResetSearch={onResetAdvancedSearch}
-            year={year}
-          />
+          <div data-help-anchor="details-view-advanced-search">
+            <AdvancedSearchTab
+              state={advancedSearchState}
+              filterOptions={advancedSearchFilterOptions}
+              referenceParagraphsBySource={referenceParagraphsBySource}
+              onQueryChange={onAdvancedSearchQueryChange}
+              onFiltersChange={onAdvancedSearchFiltersChange}
+              onRunSearch={onRunAdvancedSearch}
+              onOpenResultsTab={() => setActiveTab("Search Results")}
+              onResetSearch={onResetAdvancedSearch}
+              year={year}
+            />
+          </div>
         )}
 
         {activeTab === "Search Results" && (
-          <SearchResultsTab
-            state={advancedSearchState}
-            onFiltersChange={onAdvancedSearchFiltersChange}
-            onRunSearch={onRunAdvancedSearch}
-            onRunExport={onRunAdvancedSearchExport}
-            onResetSearch={onResetAdvancedSearch}
-            onNavigateToSearchNode={onNavigateToSearchNode}
-            onReturnToSearch={() => setActiveTab("Advanced Search")}
-            networkLabels={networkLabels}
-            resultNetworks={resultNetworks}
-            resultPresentationElrs={resultPresentationElrs}
-            rawTreeData={rawTreeData}
-            year={year}
-            currentEntrypoint={entrypoint}
-          />
+          <div data-help-anchor="details-view-search-results">
+            <SearchResultsTab
+              state={advancedSearchState}
+              onFiltersChange={onAdvancedSearchFiltersChange}
+              onRunSearch={onRunAdvancedSearch}
+              onRunExport={onRunAdvancedSearchExport}
+              onResetSearch={onResetAdvancedSearch}
+              onNavigateToSearchNode={onNavigateToSearchNode}
+              onReturnToSearch={() => setActiveTab("Advanced Search")}
+              networkLabels={networkLabels}
+              resultNetworks={resultNetworks}
+              resultPresentationElrs={resultPresentationElrs}
+              rawTreeData={rawTreeData}
+              year={year}
+              currentEntrypoint={entrypoint}
+            />
+          </div>
         )}
 
         {activeTab === "Details" &&
           (!selectedNode || !concept ? (
             renderNoSelection()
           ) : (
-            <DetailsTab
-              concept={concept}
-              selectedNode={selectedNode}
-              onNavigateToNode={onNavigateToNode}
-              onNavigateToCrossReference={onNavigateToCrossReference}
-            />
+            <div data-help-anchor="details-view-details">
+              <DetailsTab
+                concept={concept}
+                selectedNode={selectedNode}
+                onNavigateToNode={onNavigateToNode}
+                onNavigateToCrossReference={onNavigateToCrossReference}
+              />
+            </div>
           ))}
 
         {!selectedNode || !concept ? (
           activeTab === "Hypercube Relationships" ? renderNoSelection() : null
         ) : (
-          <div className={activeTab === "Hypercube Relationships" ? "block" : "hidden"}>
+          <div
+            className={activeTab === "Hypercube Relationships" ? "block" : "hidden"}
+            data-help-anchor="details-view-hypercube-relationships"
+          >
             <HypercubeRelationshipsTab
               qname={concept.concept.qname}
               language={language}
@@ -430,11 +478,13 @@ const DetailPanelContainer: React.FC<DetailPanelProps> = ({
           (!selectedNode || !concept ? (
             renderNoSelection()
           ) : (
-            <TreeLocationsTab
-              qname={concept.concept.qname}
-              locations={treeLocations}
-              onNavigateToLocation={(target) => onNavigateToLocation?.(target)}
-            />
+            <div data-help-anchor="details-view-tree-locations">
+              <TreeLocationsTab
+                qname={concept.concept.qname}
+                locations={treeLocations}
+                onNavigateToLocation={(target) => onNavigateToLocation?.(target)}
+              />
+            </div>
           ))}
       </div>
     </div>

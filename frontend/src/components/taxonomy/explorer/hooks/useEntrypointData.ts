@@ -90,6 +90,7 @@ export function useEntrypointData(
     const { year: loadYear, entrypoint: loadEntrypointHref } = activeLoadRequest;
     let cancelled = false;
 
+    setEntrypointLoaded(false);
     setLoadingEntrypoint(true);
 
     loadEntrypoint(loadYear, loadEntrypointHref)

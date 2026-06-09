@@ -3,6 +3,8 @@ import { Search, X } from "lucide-react";
 import { Tree } from "primereact/tree";
 import { toast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
+import { getHelpContent } from "@/components/help/helpContent";
+import { useHelp } from "@/components/help/helpContext";
 import {
   Dialog,
   DialogContent,
@@ -11,6 +13,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { TreeNode, getTreeNodeVisualSpec } from "./tree_utils";
 import {
   buildTreeExportSnapshot,
@@ -21,6 +29,10 @@ import {
   downloadBlob,
   downloadTextFile,
 } from "./treeExportUtils";
+import {
+  filterTreeNodes,
+  normalizeTreeSearchValue,
+} from "./treeSearchUtils";
 
 interface TaxonomyTreeViewProps {
   onSelectNode: (node: TreeNode) => void;
@@ -36,61 +48,6 @@ interface TaxonomyTreeViewProps {
   entrypoint: string | null;
   treeFilter: string;
   onTreeFilterChange: (value: string) => void;
-}
-
-function normalizeTreeSearchValue(value: string): string {
-  return value.trim().toLocaleLowerCase();
-}
-
-function tokenizeTreeSearchValue(value: string): string[] {
-  return normalizeTreeSearchValue(value)
-    .replace(/(?<=[a-z0-9])(?=[A-Z])/g, " ")
-    .split(/[\s:._-]+/)
-    .map((token) => token.trim())
-    .filter(Boolean);
-}
-
-function matchesTreeNodeSearch(node: TreeNode, treeFilter: string, language: "en" | "cy"): boolean {
-  const rawFilter = normalizeTreeSearchValue(treeFilter);
-  if (!rawFilter) return true;
-
-  const haystack = normalizeTreeSearchValue(
-    [
-      language === "cy" && node.data?.label_cy ? node.data.label_cy : node.label,
-      node.data?.qname ?? "",
-      node.data?.definition ?? "",
-      node.data?.elr ?? "",
-    ].join(" ")
-  );
-
-  const filterTokens = tokenizeTreeSearchValue(treeFilter);
-  if (filterTokens.length === 0) {
-    return haystack.includes(rawFilter);
-  }
-
-  return filterTokens.every((token) => haystack.includes(token));
-}
-
-function filterTreeNodes(nodes: TreeNode[], treeFilter: string, language: "en" | "cy"): TreeNode[] {
-  if (!normalizeTreeSearchValue(treeFilter)) {
-    return nodes;
-  }
-
-  return nodes.flatMap((node) => {
-    const filteredChildren = filterTreeNodes(node.children ?? [], treeFilter, language);
-    const isMatch = matchesTreeNodeSearch(node, treeFilter, language);
-
-    if (!isMatch && filteredChildren.length === 0) {
-      return [];
-    }
-
-    return [
-      {
-        ...node,
-        children: filteredChildren,
-      },
-    ];
-  });
 }
 
 function buildFullyExpandedKeys(nodes: TreeNode[]): { [key: string]: boolean } {
@@ -124,6 +81,7 @@ const TaxonomyTreeView = ({
   onTreeFilterChange,
 }: TaxonomyTreeViewProps) => {
   const nodeRefs = useRef<{ [key: string]: HTMLSpanElement | null }>({});
+  const { helpModeEnabled } = useHelp();
   const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
   const [treeExportLoading, setTreeExportLoading] = useState<"json" | "csv" | "html" | "png" | null>(null);
   const deferredTreeFilter = useDeferredValue(treeFilter);
@@ -177,6 +135,7 @@ const TaxonomyTreeView = ({
       }),
     [appliedTreeFilter, effectiveExpandedKeys, entrypoint, language, network, networkLabel, treeNodes, year]
   );
+  const treeSearchHelp = getHelpContent("tree.search");
 
   const handleTreeExport = async (format: "json" | "csv" | "html" | "png") => {
     const filterSlug = appliedTreeFilter.trim().replace(/[^a-z0-9]+/gi, "-").replace(/^-+|-+$/g, "").toLowerCase() || "tree-filter";
@@ -215,7 +174,7 @@ const TaxonomyTreeView = ({
   };
 
   return (
-    <div className="p-2">
+    <div className="p-2" data-help-anchor="taxonomy-tree">
       <Tree
         key={network} // stable per dataset; don't remount on highlight
         value={visibleTreeNodes}
@@ -264,22 +223,39 @@ const TaxonomyTreeView = ({
         }}
         filter
         filterTemplate={() => (
-          <div className="taxonomy-tree-filter-shell">
-            <input
-              type="text"
-              value={treeFilter}
-              onChange={(e) => {
-                onTreeFilterChange(e.target.value);
-              }}
-              onKeyDown={(e) => {
-                if (e.key === "Escape") {
-                  e.preventDefault();
-                  onTreeFilterChange("");
-                }
-              }}
-              placeholder="Search..."
-              className="taxonomy-tree-filter-input"
-            />
+          <div className="taxonomy-tree-filter-shell flex items-center gap-2">
+            <TooltipProvider delayDuration={helpModeEnabled ? 0 : 3000}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="relative flex-1" data-help-anchor="taxonomy-tree-search">
+                    <input
+                      type="text"
+                      value={treeFilter}
+                      onChange={(e) => {
+                        onTreeFilterChange(e.target.value);
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Escape") {
+                          e.preventDefault();
+                          onTreeFilterChange("");
+                        }
+                      }}
+                      placeholder="Search..."
+                      className="taxonomy-tree-filter-input"
+                    />
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent
+                  side="bottom"
+                  className="max-w-xs border-slate-200 bg-white text-left text-slate-900 opacity-100"
+                >
+                  <div className="space-y-1">
+                    <div className="text-sm font-semibold">{treeSearchHelp.title}</div>
+                    <div className="text-xs leading-5 text-slate-700">{treeSearchHelp.shortText}</div>
+                  </div>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
             {treeFilter ? (
               <button
                 type="button"
@@ -294,15 +270,33 @@ const TaxonomyTreeView = ({
               </button>
             ) : null}
             {hasActiveTreeFilter ? (
-              <button
-                type="button"
-                className="taxonomy-tree-filter-download"
-                onClick={() => setIsExportDialogOpen(true)}
-                aria-label="Export filtered tree"
-                title="Export filtered tree"
-              >
-                <i className="pi pi-download" aria-hidden="true" />
-              </button>
+              <TooltipProvider delayDuration={helpModeEnabled ? 0 : 3000}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      type="button"
+                      data-help-anchor="tree-export-filtered"
+                      className="taxonomy-tree-filter-download"
+                      onClick={() => setIsExportDialogOpen(true)}
+                      aria-label="Export filtered tree"
+                      title="Export filtered tree"
+                    >
+                      <i className="pi pi-download" aria-hidden="true" />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent
+                    side="bottom"
+                    className="max-w-xs border-slate-200 bg-white text-left text-slate-900 opacity-100"
+                  >
+                    <div className="space-y-1">
+                      <div className="text-sm font-semibold">Export filtered tree</div>
+                      <div className="text-xs leading-5 text-slate-700">
+                        {getHelpContent("tree.exportFiltered").shortText}
+                      </div>
+                    </div>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             ) : null}
             <span className="taxonomy-tree-filter-icon" aria-hidden="true">
               <Search size={16} />
