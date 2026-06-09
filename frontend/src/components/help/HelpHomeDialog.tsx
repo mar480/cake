@@ -32,16 +32,16 @@ import { useHelp } from "./helpContext";
 
 const explanationPages = [
   {
-    title: "Start with year and entrypoint",
-    body: "Choose a taxonomy year, then load an entrypoint. The entrypoint determines which reporting view and concepts are available in the tree and details panel.",
+    title: "Why did you make this app?",
+    body: "This app was created to help users navigate and understand the complexities of the UK Taxonomy Suite in an efficient, effective and intuitive way. \n\n I struggled for a long time trying to understand the taxonomy model and wanted to improve on pre-existing tools by providing a modern and user-friendly interface, better surfacing the dimensional modelling, offering a more comprehensive search experience, and adding in-line contextual help and guidance to support users.",
   },
   {
-    title: "Use the tree to navigate",
-    body: "The tree shows how concepts are organised. You can search the current tree, expand branches, and select a concept to inspect its properties, labels, references, and dimensional relationships.",
+    title: "Who is this app for?",
+    body: "The app is for anyone who needs to interact with the UK Taxonomy Suite. Preparers can use it to explore the taxonomy and understand how to report their data. Developers can use it to understand the modelling decisions in the taxonomy and how to implement them in their tools. Data users can use it to better inform how they process and interact with digitally reported data. \n\n Beginners are supported with a guided tour, UI hints and glossary definitions, while more advanced users can use the app to quickly understand the the dimensional modelling available for specific concepts and export search results to support their work.",
   },
   {
-    title: "Use tabs to inspect context",
-    body: "The details tabs help you move between concept properties, hypercube relationships, tree locations, and advanced search. Help mode surfaces glossary hints across these areas when you need them.",
+    title: "What do I do if I have questions or comments about the app?",
+    body: "This app is maintained by an individual developer (me!) and is not an official product of the Financial Reporting Council. \n\n If you have any questions, comments, or suggestions, please feel free to reach out to me directly at robjmarks@gmail.com. I welcome any feedback that can help make the app more useful for the community.",
   },
 ] as const;
 
@@ -56,6 +56,34 @@ const helpActionButtonClass =
   "w-full border border-amber-300 bg-amber-100 text-amber-950 hover:bg-amber-200";
 const helpHomeInfoRowClass =
   "grid gap-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm md:grid-cols-[minmax(0,1fr)_240px] md:items-center";
+const emailPattern = /([A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,})/gi;
+
+function renderExplanationParagraph(paragraph: string) {
+  const segments = paragraph.split(emailPattern);
+
+  return segments.map((segment, index) => {
+    if (!segment) {
+      return null;
+    }
+
+    const isEmail = emailPattern.test(segment);
+    emailPattern.lastIndex = 0;
+
+    if (isEmail) {
+      return (
+        <a
+          key={`${segment}-${index}`}
+          href={`mailto:${segment}`}
+          className="font-medium text-sky-700 underline underline-offset-2 hover:text-sky-800"
+        >
+          {segment}
+        </a>
+      );
+    }
+
+    return <React.Fragment key={`${segment}-${index}`}>{segment}</React.Fragment>;
+  });
+}
 
 const HelpHomeDialog: React.FC = () => {
   const {
@@ -365,11 +393,9 @@ const HelpHomeDialog: React.FC = () => {
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 text-sm leading-7 text-slate-700">
-            <p>{explanation.body}</p>
-            <p>
-              Dummy content placeholder: this modal is ready for a longer guided explanation of the app,
-              including what taxonomies are, how entrypoints differ, and how to interpret concept metadata.
-            </p>
+            {splitHelpTextParagraphs(explanation.body).map((paragraph, index) => (
+              <p key={index}>{renderExplanationParagraph(paragraph)}</p>
+            ))}
           </div>
           <DialogFooter className="flex-col gap-2 sm:flex-row sm:justify-between">
             <Button type="button" variant="outline" onClick={() => setExplanationOpen(false)}>
