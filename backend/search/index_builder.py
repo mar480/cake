@@ -1,6 +1,8 @@
 import re
 from collections import defaultdict
 
+from reference_utils import build_reference_display, derive_reference_source
+
 from .types import IndexedConcept, SearchIndex
 
 # TOKEN_PATTERN = re.compile(r"[a-z0-9]+")
@@ -72,20 +74,6 @@ def _extract_label_texts(entry: dict) -> tuple[str, list[str]]:
         return preferred_fallback, all_labels
     return (all_labels[0] if all_labels else ""), all_labels
 
-
-def _build_reference_display(ref: dict) -> str | None:
-    source_name = (ref.get("name") or "").strip()
-    source_number = (ref.get("number") or "").strip()
-    source = f"{source_name} {source_number}".strip()
-    paragraph = (ref.get("paragraph") or "").strip()
-
-    if source and paragraph:
-        return f"{source}, {paragraph}"
-    if source:
-        return source
-    return None
-
-
 def build_search_index(concepts: dict) -> SearchIndex:
     # The caller must pass only the requested entrypoint's concepts.json payload.
     # The built index is cached under entrypoint_cache_key(year, href) by the route layer.
@@ -106,9 +94,7 @@ def build_search_index(concepts: dict) -> SearchIndex:
         for ref in entry.get("references") or []:
             if not isinstance(ref, dict):
                 continue
-            source_name = (ref.get("name") or "").strip()
-            source_number = (ref.get("number") or "").strip()
-            source = f"{source_name} {source_number}".strip()
+            source = derive_reference_source(ref)
             paragraph = (ref.get("paragraph") or "").strip()
 
             if not source:
@@ -117,7 +103,7 @@ def build_search_index(concepts: dict) -> SearchIndex:
             reference_paragraphs_by_source.setdefault(source, set())
             if paragraph:
                 reference_paragraphs_by_source[source].add(paragraph)
-            display = _build_reference_display(ref)
+            display = build_reference_display(ref)
             if display and display not in reference_displays:
                 reference_displays.append(display)
 

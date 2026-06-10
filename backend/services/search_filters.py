@@ -3,6 +3,7 @@ import os
 import re
 from functools import lru_cache
 
+from reference_utils import derive_reference_source
 from services.taxonomy_service import get_entrypoints_for_year
 
 
@@ -251,15 +252,12 @@ def build_search_filter_options_from_concepts(concepts: dict) -> dict:
             nillable_values.add(nillable_bool)
 
         for ref in (entry or {}).get("references", []) or []:
-            name = (ref.get("name") or "").strip()
-            number = (ref.get("number") or "").strip()
+            source = derive_reference_source(ref)
             paragraph = (ref.get("paragraph") or "").strip()
 
-            # source display key: "FRS 102", "IFRS 15", etc.
-            if not name and not number:
+            if not source:
                 continue
 
-            source = f"{name} {number}".strip()
             reference_sources.add(source)
 
             if source not in paragraphs_by_source:
