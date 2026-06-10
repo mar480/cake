@@ -37,7 +37,7 @@ const explanationPages = [
   },
   {
     title: "Who is this app for?",
-    body: "The app is for anyone who needs to interact with the UK Taxonomy Suite. Preparers can use it to explore the taxonomy and understand how to report their data. Developers can use it to understand the modelling decisions in the taxonomy and how to implement them in their tools. Data users can use it to better inform how they process and interact with digitally reported data. \n\n Beginners are supported with a guided tour, UI hints and glossary definitions, while more advanced users can use the app to quickly understand the the dimensional modelling available for specific concepts and export search results to support their work.",
+    body: "The app is for anyone who needs to interact with the UK Taxonomy Suite. Preparers can use it to explore the taxonomy and understand how to report their data. Developers can use it to understand the modelling decisions in the taxonomy and how to implement them in their tools. Data users can use it to better inform how they process and interact with digitally reported data. \n\n Beginners are supported with a guided tour, UI hints and glossary definitions, while more advanced users can use the app to quickly understand the dimensional modelling available for specific concepts and export search results to support their work.",
   },
   {
     title: "What do I do if I have questions or comments about the app?",
