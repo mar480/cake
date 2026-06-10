@@ -178,12 +178,13 @@ const XBRLTaxonomyExplorer: React.FC<Props> = ({
               className="mb-0.5 flex items-center gap-1.5"
             />
             <Select
+              key={year ?? "no-year"}
               value={entrypoint ?? undefined}
               onValueChange={(value) => onEntrypointChange(value)}
               disabled={!year}
             >
               <SelectTrigger className="h-8 w-[210px] max-w-full rounded-md border border-blue-500/70 bg-gradient-to-b from-blue-700 to-blue-800 px-2 text-left text-sm text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] focus:ring-cyan-300/80">
-                <SelectValue placeholder="Select entrypoint" />
+                <SelectValue placeholder="Select entry point" />
               </SelectTrigger>
               <SelectContent
                 disableScrollButtons
