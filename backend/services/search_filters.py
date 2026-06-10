@@ -149,12 +149,17 @@ def resolve_tree_dir_for_entrypoint(taxonomy_base_dir: str, year: str, href: str
         (entrypoint.get("name", "") for entrypoint in entrypoints if entrypoint.get("href") == href),
         "",
     )
+    display_label = next(
+        (entrypoint.get("label", "") for entrypoint in entrypoints if entrypoint.get("href") == href),
+        "",
+    )
 
     raw_entrypoint_name = os.path.splitext(os.path.basename(href))[0]
     href_entrypoint_name = entrypoint_name_from_href(href)
 
     candidates = [
         display_name,
+        display_label,
         href_entrypoint_name,
         raw_entrypoint_name,
         raw_entrypoint_name.replace("-", "_"),
@@ -162,6 +167,8 @@ def resolve_tree_dir_for_entrypoint(taxonomy_base_dir: str, year: str, href: str
         href_entrypoint_name.removeprefix("frc-"),
         display_name.replace(" ", "_"),
         display_name.replace(" ", "-"),
+        display_label.replace(" ", "_"),
+        display_label.replace(" ", "-"),
     ]
 
     for candidate in candidates:

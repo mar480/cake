@@ -4,7 +4,10 @@ import { RawElrGroup, SearchConceptApiResult } from "../explorerTypes";
 
 export interface EntrypointOption {
   name: string;
+  label?: string;
   href: string;
+  group?: string | null;
+  package?: string;
 }
 
 export interface LoadEntrypointResponse {

@@ -5,6 +5,9 @@ from arelle.ModelDtsObject import ModelConcept
 
 FRC_REFERENCE_ROLE_LABELS = {
     "http://www.xbrl.org/2003/role/reference": "Reference",
+    "http://xbrl.frc.org.uk/char/ref/roles/CharitiesAct2011": "Charities Act 2011",
+    "http://xbrl.frc.org.uk/char/ref/roles/CharitiesSORP": "Charities SORP 2019",
+    "http://xbrl.frc.org.uk/char/ref/roles/CharitiesSORP2026": "Charities SORP 2026",
     "http://xbrl.frc.org.uk/general/ref/roles/FRS101": "FRS 101",
     "http://xbrl.frc.org.uk/general/ref/roles/FRS102": "FRS 102",
     "http://xbrl.frc.org.uk/general/ref/roles/Full": "Full",

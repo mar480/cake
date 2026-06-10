@@ -25,6 +25,9 @@ STANDARD_HINTS = ("frc", "xbrl.frc.org.uk")
 REFERENCE_ROLE_URI_TO_LABEL = {
     "http://xbrl.frc.org.uk/general/ref/roles/AuditRegs": "Audit Regulations",
     "http://xbrl.frc.org.uk/general/ref/roles/Cic34": "CIC 34",
+    "http://xbrl.frc.org.uk/char/ref/roles/CharitiesAct2011": "Charities Act 2011",
+    "http://xbrl.frc.org.uk/char/ref/roles/CharitiesSORP": "Charities SORP 2019",
+    "http://xbrl.frc.org.uk/char/ref/roles/CharitiesSORP2026": "Charities SORP 2026",
     "http://xbrl.frc.org.uk/general/ref/roles/CompaniesAct": "Companies Act",
     "http://xbrl.frc.org.uk/general/ref/roles/FRS101": "FRS 101",
     "http://xbrl.frc.org.uk/general/ref/roles/FRS102": "FRS 102",

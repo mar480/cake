@@ -5,6 +5,15 @@ import DetailsPanelContainer from "./DetailsPanelContainer";
 import HelpLauncherButton from "@/components/help/HelpLauncherButton";
 import HelpLabel from "@/components/help/HelpLabel";
 import { useHelp } from "@/components/help/helpContext";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { TreeNode } from "@/components/taxonomy/explorer/tree_utils";
 import { TreeLocationTarget } from "./TreeLocationsTab";
 import {
@@ -15,6 +24,16 @@ import {
 import { EntrypointOption } from "./services/explorerApi";
 import type { RawElrGroup } from "./explorerTypes";
 import type { DetailsTabName } from "./explorerHelpTypes";
+
+const ENTRYPOINT_GROUP_ORDER = [
+  "UK Accounting Standards",
+  "ROI Accounting Standards",
+  "HMRC only",
+  "Companies House forms",
+  "Charities SORP",
+  "UKSEF dual filing approach",
+  "Taxonomy views",
+] as const;
 
 interface Props {
   selectedNode: TreeNode | null;
@@ -117,6 +136,11 @@ const XBRLTaxonomyExplorer: React.FC<Props> = ({
     : "";
   const activeViewYear = loadedYear;
   const activeViewEntrypoint = loadedEntrypoint;
+  const groupedEntrypoints = ENTRYPOINT_GROUP_ORDER.map((group) => ({
+    group,
+    entrypoints: entrypoints.filter((entrypointOption) => entrypointOption.group === group),
+  })).filter((group) => group.entrypoints.length > 0);
+  const ungroupedEntrypoints = entrypoints.filter((entrypointOption) => !entrypointOption.group);
 
   return (
     <div className="flex flex-col h-screen bg-white">
@@ -153,19 +177,46 @@ const XBRLTaxonomyExplorer: React.FC<Props> = ({
               side="bottom"
               className="mb-0.5 flex items-center gap-1.5"
             />
-            <select
-              className="w-[210px] max-w-full bg-blue-700 text-white text-sm px-1 py-0.5 rounded border border-blue-600"
-              value={entrypoint || ""}
-              onChange={(e) => onEntrypointChange(e.target.value)}
+            <Select
+              value={entrypoint ?? undefined}
+              onValueChange={(value) => onEntrypointChange(value)}
               disabled={!year}
             >
-              <option value="">Select entrypoint</option>
-              {entrypoints.map((ep) => (
-                <option key={ep.href} value={ep.href}>
-                  {ep.name}
-                </option>
-              ))}
-            </select>
+              <SelectTrigger className="h-8 w-[210px] max-w-full rounded-md border border-blue-500/70 bg-gradient-to-b from-blue-700 to-blue-800 px-2 text-left text-sm text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] focus:ring-cyan-300/80">
+                <SelectValue placeholder="Select entrypoint" />
+              </SelectTrigger>
+              <SelectContent className="max-h-[28rem] overflow-hidden rounded-xl border border-blue-200 bg-slate-50 text-slate-900 shadow-2xl">
+                {groupedEntrypoints.map(({ group, entrypoints: groupedOptions }) => (
+                  <SelectGroup key={group}>
+                    <SelectLabel className="rounded-md bg-blue-800 px-3 py-2 text-xs font-bold tracking-[0.08em] text-blue-50">
+                      {group}
+                    </SelectLabel>
+                    {groupedOptions.map((ep) => (
+                      <SelectItem
+                        key={ep.href}
+                        value={ep.href}
+                        className="my-1 rounded-lg border border-transparent py-2 pl-8 pr-3 text-[13px] font-medium text-blue-950 focus:bg-blue-100 focus:text-blue-950 data-[state=checked]:border-blue-200 data-[state=checked]:bg-white data-[state=checked]:text-blue-900"
+                      >
+                        {ep.label ?? ep.name}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                ))}
+                {ungroupedEntrypoints.length > 0 ? (
+                  <SelectGroup>
+                    {ungroupedEntrypoints.map((ep) => (
+                      <SelectItem
+                        key={ep.href}
+                        value={ep.href}
+                        className="my-1 rounded-lg border border-transparent py-2 pl-8 pr-3 text-[13px] font-medium text-blue-950 focus:bg-blue-100 focus:text-blue-950 data-[state=checked]:border-blue-200 data-[state=checked]:bg-white data-[state=checked]:text-blue-900"
+                      >
+                        {ep.label ?? ep.name}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                ) : null}
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="flex flex-col" data-help-anchor="network-selector">

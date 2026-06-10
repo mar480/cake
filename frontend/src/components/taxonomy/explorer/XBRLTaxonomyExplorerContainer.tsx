@@ -148,7 +148,7 @@ const XBRLTaxonomyExplorerContainer: React.FC = () => {
     setActiveLoadRequest({
       year,
       entrypoint: nextEntrypoint,
-      entrypointName: matchingEntrypoint?.name ?? nextEntrypoint,
+      entrypointName: matchingEntrypoint?.label ?? matchingEntrypoint?.name ?? nextEntrypoint,
     });
   }, [entrypoints, year]);
 
