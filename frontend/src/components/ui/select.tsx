@@ -65,10 +65,15 @@ const SelectScrollDownButton = React.forwardRef<
 SelectScrollDownButton.displayName =
   SelectPrimitive.ScrollDownButton.displayName
 
+interface SelectContentProps
+  extends React.ComponentPropsWithoutRef<typeof SelectPrimitive.Content> {
+  disableScrollButtons?: boolean
+}
+
 const SelectContent = React.forwardRef<
   React.ElementRef<typeof SelectPrimitive.Content>,
-  React.ComponentPropsWithoutRef<typeof SelectPrimitive.Content>
->(({ className, children, position = "popper", ...props }, ref) => (
+  SelectContentProps
+>(({ className, children, position = "popper", disableScrollButtons = false, ...props }, ref) => (
   <SelectPrimitive.Portal>
     <SelectPrimitive.Content
       ref={ref}
@@ -81,17 +86,17 @@ const SelectContent = React.forwardRef<
       position={position}
       {...props}
     >
-      <SelectScrollUpButton />
+      {disableScrollButtons ? null : <SelectScrollUpButton />}
       <SelectPrimitive.Viewport
         className={cn(
-          "p-1",
+          "overscroll-contain p-1",
           position === "popper" &&
             "h-[var(--radix-select-trigger-height)] w-full min-w-[var(--radix-select-trigger-width)]"
         )}
       >
         {children}
       </SelectPrimitive.Viewport>
-      <SelectScrollDownButton />
+      {disableScrollButtons ? null : <SelectScrollDownButton />}
     </SelectPrimitive.Content>
   </SelectPrimitive.Portal>
 ))

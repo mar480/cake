@@ -185,7 +185,10 @@ const XBRLTaxonomyExplorer: React.FC<Props> = ({
               <SelectTrigger className="h-8 w-[210px] max-w-full rounded-md border border-blue-500/70 bg-gradient-to-b from-blue-700 to-blue-800 px-2 text-left text-sm text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] focus:ring-cyan-300/80">
                 <SelectValue placeholder="Select entrypoint" />
               </SelectTrigger>
-              <SelectContent className="max-h-[28rem] overflow-hidden rounded-xl border border-blue-200 bg-slate-50 text-slate-900 shadow-2xl">
+              <SelectContent
+                disableScrollButtons
+                className="max-h-[28rem] overflow-hidden rounded-xl border border-blue-200 bg-slate-50 text-slate-900 shadow-2xl"
+              >
                 {groupedEntrypoints.map(({ group, entrypoints: groupedOptions }) => (
                   <SelectGroup key={group}>
                     <SelectLabel className="rounded-md bg-blue-800 px-3 py-2 text-xs font-bold tracking-[0.08em] text-blue-50">
