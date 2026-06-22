@@ -94,7 +94,8 @@ const DetailPanelContainer: React.FC<DetailPanelProps> = ({
   const [conceptError, setConceptError] = useState<string | null>(null);
   const [prefetchedRelationships, setPrefetchedRelationships] =
     useState<PrefetchedDimensionalRelationshipsState | null>(null);
-  const hasNodeSelection = Boolean(selectedNode?.data?.qname);
+  const selectedQname = selectedNode?.data?.qname?.trim() ?? "";
+  const hasNodeSelection = Boolean(selectedQname);
   const hasSearchRun = Boolean(advancedSearchState?.hasRun);
   const hasSearchContext = entrypointLoaded && Boolean(year && entrypoint);
   const activeTab = controlledActiveTab ?? internalActiveTab;
@@ -300,14 +301,17 @@ const DetailPanelContainer: React.FC<DetailPanelProps> = ({
   }, [selectedNode?.key, setActiveTab]);
 
   useEffect(() => {
-    if (!selectedNode?.data?.qname || !year || !entrypoint) {
+    const relationshipYear = year?.trim();
+    const relationshipEntrypoint = entrypoint?.trim();
+
+    if (!selectedQname || !relationshipYear || !relationshipEntrypoint) {
       setPrefetchedRelationships(null);
       return;
     }
 
-    const qname = selectedNode.data.qname;
-    const requestKey = `${year}::${entrypoint}::${qname}`;
+    const requestKey = `${relationshipYear}::${relationshipEntrypoint}::${selectedQname}`;
     const controller = new AbortController();
+    let isActive = true;
 
     setPrefetchedRelationships({
       key: requestKey,
@@ -319,7 +323,11 @@ const DetailPanelContainer: React.FC<DetailPanelProps> = ({
     fetch("/api/dimensional-relationships", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ qname, year, href: entrypoint }),
+      body: JSON.stringify({
+        qname: selectedQname,
+        year: relationshipYear,
+        href: relationshipEntrypoint,
+      }),
       signal: controller.signal,
     })
       .then((response) => {
@@ -329,6 +337,7 @@ const DetailPanelContainer: React.FC<DetailPanelProps> = ({
         return response.json();
       })
       .then((payload: DimensionalRelationshipsResponse) => {
+        if (!isActive) return;
         setPrefetchedRelationships({
           key: requestKey,
           data: payload,
@@ -337,6 +346,7 @@ const DetailPanelContainer: React.FC<DetailPanelProps> = ({
         });
       })
       .catch((err) => {
+        if (!isActive) return;
         if (err instanceof DOMException && err.name === "AbortError") {
           return;
         }
@@ -348,8 +358,11 @@ const DetailPanelContainer: React.FC<DetailPanelProps> = ({
         });
       });
 
-    return () => controller.abort();
-  }, [entrypoint, selectedNode, year]);
+    return () => {
+      isActive = false;
+      controller.abort();
+    };
+  }, [entrypoint, selectedQname, year]);
 
   const renderNoSelection = () => (
     <div className="p-4 text-gray-500 text-center">Please select a concept.</div>
@@ -454,7 +467,7 @@ const DetailPanelContainer: React.FC<DetailPanelProps> = ({
             </div>
           ))}
 
-        {!selectedNode || !concept ? (
+        {!selectedQname ? (
           activeTab === "Hypercube Relationships" ? renderNoSelection() : null
         ) : (
           <div
@@ -462,7 +475,7 @@ const DetailPanelContainer: React.FC<DetailPanelProps> = ({
             data-help-anchor="details-view-hypercube-relationships"
           >
             <HypercubeRelationshipsTab
-              qname={concept.concept.qname}
+              qname={selectedQname}
               language={language}
               year={year ?? ""}
               href={entrypoint ?? ""}

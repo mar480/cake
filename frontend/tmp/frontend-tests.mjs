@@ -240,7 +240,7 @@ var helpContent = {
     id: "advancedSearch.referenceSource",
     title: "Reference source",
     shortText: "Filters search results by the source of attached references, such as a standard or regulation.",
-    longText: "References connect concepts to reporting guidance. This filter is useful when you want to find concepts linked to a particular accounting standard or legal source."
+    longText: "References connect concepts to legislation and accounting standards. This filter is useful when you want to find concepts linked to a particular accounting standard or legal source."
   },
   "advancedSearch.referenceParagraph": {
     id: "advancedSearch.referenceParagraph",
@@ -265,31 +265,31 @@ var helpContent = {
     id: "concept.namespace",
     title: "Namespace",
     shortText: "The namespace identifies which vocabulary or taxonomy module this concept comes from.",
-    longText: "A namespace helps keep concept names unique and signals which standard or extension layer owns the concept."
+    longText: "A namespace helps keep concept names unique and signals which standard or extension layer owns the concept. In the UK taxonomies, namespaces include: core, common, bus, countries and direp. Namespaces are used in concept qnames (i.e. core:CurrentAssets, countries:UnitedKingdom, bus:UKCompaniesHouseRegisteredNumber)"
   },
   "concept.balance": {
     id: "concept.balance",
     title: "Balance",
-    shortText: "Shows whether the concept normally increases as debit or credit.",
+    shortText: "An attribute that indicates whether a monetary concept normally has a debit or credit balance. .",
     longText: "This is an accounting hint rather than a full validation rule. Assets and expenses are commonly debit. Liabilities, equity, and income are commonly credit."
   },
   "concept.cashFlowClassification": {
     id: "concept.cashFlowClassification",
     title: "Cash flow classification",
-    shortText: "Shows which part of a cash flow statement the concept is usually associated with.",
-    longText: "This can help place a concept within operating, investing, financing, or other cash flow reporting groupings when that metadata is present."
+    shortText: "Shows whether a cash flow concept should be considered as an inflow or outflow of cash.",
+    longText: "This is a UK-specific relationship using custom inflow and outflow arcroles. They are optional for developers to implement but are included by the FRC to better understand the meaning of concepts in the cash flow statement."
   },
   "concept.periodType": {
     id: "concept.periodType",
     title: "Period type",
     shortText: "Tells you whether a fact is measured at a point in time or across a period.",
-    longText: "An instant concept is reported at one date, such as cash at year end. A duration concept covers a span of time, such as revenue for the year."
+    longText: "An instant concept is reported at one date, such as Current Assets (Balance Sheet). A duration concept covers a span of time, such as Revenue (Income Statement)."
   },
   "concept.dataType": {
     id: "concept.dataType",
     title: "Data type",
     shortText: "The schema data type that controls what kind of value this concept can hold.",
-    longText: "This tells you whether the concept expects a monetary amount, string, date, boolean, decimal, or another structured value shape."
+    longText: "This tells you whether the concept expects a monetary amount, string, date, boolean, decimal, or another structured value shape. Data types may assist the user in selecting the correct concept for their reporting requirements"
   },
   "concept.xbrlType": {
     id: "concept.xbrlType",
@@ -306,7 +306,7 @@ var helpContent = {
   "concept.abstract": {
     id: "concept.abstract",
     title: "Abstract",
-    shortText: "Abstract concepts structure the taxonomy but are usually not reported as facts.",
+    shortText: "Abstract concepts structure the taxonomy but cannot be reported as facts.",
     longText: "They often behave like headings or containers in the tree rather than values that appear in a filing."
   },
   "concept.nillable": {
@@ -319,7 +319,7 @@ var helpContent = {
     id: "concept.crossReferenceTarget",
     title: "Cross reference target",
     shortText: "Points to another concept that this concept redirects to or references.",
-    longText: "Cross references help connect related concepts when one concept should be understood through another target concept in the taxonomy."
+    longText: "This is a UK-specific relationship using the custom cross-ref arcrole. Cross references help connect related concepts when one concept should be understood through another target concept in the taxonomy. They are optional for developers to implement but are included by the FRC to help users navigate the taxonomy more efficiently."
   }
 };
 var helpContentList = Object.values(helpContent);

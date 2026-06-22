@@ -16,6 +16,13 @@ interface Props {
   onNavigateToNode?: (qname: string) => void;
 }
 
+const sortHypercubesByElrId = (hypercubes: DimensionalRelationshipHypercube[] = []) =>
+  [...hypercubes].sort((a, b) => {
+    const left = typeof a.elr_id === "number" ? a.elr_id : Number.POSITIVE_INFINITY;
+    const right = typeof b.elr_id === "number" ? b.elr_id : Number.POSITIVE_INFINITY;
+    return left - right;
+  });
+
 const HypercubeRelationshipsPanel: React.FC<Props> = ({
   qname,
   language,
@@ -31,79 +38,95 @@ const HypercubeRelationshipsPanel: React.FC<Props> = ({
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!year || !href) {
+    if (!year || !href || !qname) {
       setResponse([]);
       setSelectionType("");
       setMatchedDimensions([]);
-      setError("No active taxonomy context.");
+      setError(!qname ? null : "No active taxonomy context.");
       setLoading(false);
       return;
     }
 
     const requestKey = `${year}::${href}::${qname}`;
+    const controller = new AbortController();
+    let isActive = true;
+
+    const applyRelationshipData = (data: DimensionalRelationshipsResponse) => {
+      if (!isActive) return;
+
+      const sortedHypercubes = Array.isArray(data.hypercubes)
+        ? sortHypercubesByElrId(data.hypercubes)
+        : [];
+      setResponse(sortedHypercubes);
+      setSelectionType(data.selection?.concept_type ?? "");
+      setMatchedDimensions(data.selection?.matched_dimensions ?? []);
+      setError(null);
+      setLoading(false);
+    };
+
+    setResponse(null);
+    setSelectionType("");
+    setMatchedDimensions([]);
+    setError(null);
+    setLoading(true);
+
     if (prefetchedState?.key === requestKey) {
       if (prefetchedState.loading) {
-        setLoading(true);
-        setError(null);
-        return;
+        return () => {
+          isActive = false;
+          controller.abort();
+        };
       }
 
       if (prefetchedState.error) {
+        if (!isActive) return;
         setResponse([]);
         setSelectionType("");
         setMatchedDimensions([]);
         setError(prefetchedState.error);
         setLoading(false);
-        return;
+        return () => {
+          isActive = false;
+          controller.abort();
+        };
       }
 
       if (prefetchedState.data) {
-        const sortedHypercubes = Array.isArray(prefetchedState.data.hypercubes)
-          ? [...prefetchedState.data.hypercubes].sort((a, b) => {
-              const left = typeof a.elr_id === "number" ? a.elr_id : Number.POSITIVE_INFINITY;
-              const right = typeof b.elr_id === "number" ? b.elr_id : Number.POSITIVE_INFINITY;
-              return left - right;
-            })
-          : [];
-        setResponse(sortedHypercubes);
-        setSelectionType(prefetchedState.data.selection?.concept_type ?? "");
-        setMatchedDimensions(prefetchedState.data.selection?.matched_dimensions ?? []);
-        setError(null);
-        setLoading(false);
-        return;
+        applyRelationshipData(prefetchedState.data);
+        return () => {
+          isActive = false;
+          controller.abort();
+        };
       }
     }
-
-    setLoading(true);
-    setError(null);
 
     fetch("/api/dimensional-relationships", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ qname, year, href }),
+      signal: controller.signal,
     })
       .then((res) => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         return res.json();
       })
       .then((data: DimensionalRelationshipsResponse) => {
-        const sortedHypercubes = Array.isArray(data.hypercubes)
-          ? [...data.hypercubes].sort((a, b) => {
-              const left = typeof a.elr_id === "number" ? a.elr_id : Number.POSITIVE_INFINITY;
-              const right = typeof b.elr_id === "number" ? b.elr_id : Number.POSITIVE_INFINITY;
-              return left - right;
-            })
-          : [];
-        setResponse(sortedHypercubes);
-        setSelectionType(data.selection?.concept_type ?? "");
-        setMatchedDimensions(data.selection?.matched_dimensions ?? []);
-        setLoading(false);
+        applyRelationshipData(data);
       })
       .catch((err) => {
+        if (!isActive) return;
+        if (err instanceof DOMException && err.name === "AbortError") {
+          return;
+        }
         console.error("Error fetching dimensional relationships:", err);
         setError("Failed to fetch data from backend.");
         setLoading(false);
       });
+
+    return () => {
+      isActive = false;
+      controller.abort();
+    };
   }, [href, prefetchedState, qname, year]);
 
   const contextLabel =
