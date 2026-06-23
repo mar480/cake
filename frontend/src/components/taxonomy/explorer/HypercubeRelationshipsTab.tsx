@@ -72,7 +72,7 @@ const HypercubeRelationshipsPanel: React.FC<Props> = ({
         <div className="space-y-6">
           {response.map((hypercube) => (
             <HypercubeDisplay
-              key={hypercube.hypercubeName}
+              key={hypercube.hypercubeELR ?? hypercube.hypercubeName}
               hypercube={hypercube}
               language={language}
               sourceQName={qname}

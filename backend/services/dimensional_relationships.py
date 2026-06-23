@@ -70,12 +70,12 @@ def _enrich_primary_item_tree(node: dict, concepts: dict) -> dict:
     }
 
 
-def _walk_primary_items(nodes: list[dict], hypercube_qname: str, primary_item_to_hypercubes: dict):
+def _walk_primary_items(nodes: list[dict], hypercube_key: str, primary_item_to_hypercubes: dict):
     for node in nodes or []:
         qname = node.get("qname") or node.get("concept_id")
         if qname:
-            primary_item_to_hypercubes.setdefault(qname, set()).add(hypercube_qname)
-        _walk_primary_items(node.get("children") or [], hypercube_qname, primary_item_to_hypercubes)
+            primary_item_to_hypercubes.setdefault(qname, set()).add(hypercube_key)
+        _walk_primary_items(node.get("children") or [], hypercube_key, primary_item_to_hypercubes)
 
 
 def _walk_members(
@@ -91,15 +91,37 @@ def _walk_members(
         )
 
 
-def _sorted_hypercube_qnames(hypercube_qnames, hypercube_by_qname: dict) -> list[str]:
+def _occurrence_key(elr: str | None, hypercube_qname: str) -> str:
+    return f"{elr or ''}::{hypercube_qname}"
+
+
+def _sorted_hypercube_keys(hypercube_keys, hypercube_by_key: dict) -> list[str]:
     return sorted(
-        {qname for qname in (hypercube_qnames or []) if qname in hypercube_by_qname},
-        key=lambda qname: (
-            hypercube_by_qname.get(qname, {}).get("elr_id") is None,
-            hypercube_by_qname.get(qname, {}).get("elr_id"),
-            qname,
+        {key for key in (hypercube_keys or []) if key in hypercube_by_key},
+        key=lambda key: (
+            hypercube_by_key.get(key, {}).get("elr_id") is None,
+            hypercube_by_key.get(key, {}).get("elr_id"),
+            hypercube_by_key.get(key, {}).get("hypercubeELR") or "",
+            hypercube_by_key.get(key, {}).get("hypercubeName") or key,
         ),
     )
+
+
+def _dimension_info_from_tree_node(node: dict, dimension_by_qname: dict) -> dict:
+    dimension_qname = node.get("qname") or node.get("concept_id") or ""
+    existing = dimension_by_qname.get(dimension_qname)
+    if existing:
+        return existing
+
+    label = node.get("name") or node.get("label") or dimension_qname
+    return {
+        "dimensionName": dimension_qname,
+        "dimensionELR": None,
+        "definition": label,
+        "elr_id": None,
+        "defaultMember": None,
+        "domainMembers": [],
+    }
 
 
 @lru_cache(maxsize=32)
@@ -112,6 +134,7 @@ def load_dimensional_relationship_index(taxonomy_base_dir: str, year: str, href:
     hypercubes = _read_json(os.path.join(tree_dir, "hypercubes.json")) or []
     dimensions = _read_json(os.path.join(tree_dir, "dimensions.json")) or []
     primary_items = _read_json(os.path.join(tree_dir, "primary_items.json")) or []
+    definition_hydim_tree = _read_json(os.path.join(tree_dir, "definition_hydim_tree.json")) or []
 
     concept_meta = {}
     concept_to_hypercubes_from_concepts: dict[str, set[str]] = {}
@@ -179,9 +202,115 @@ def load_dimensional_relationship_index(taxonomy_base_dir: str, year: str, href:
             },
         )
 
-    hypercube_by_qname = {}
+    hypercube_metadata_by_elr = {
+        hypercube.get("elr"): hypercube
+        for hypercube in hypercubes
+        if isinstance(hypercube, dict) and hypercube.get("elr")
+    }
+    hypercube_by_key = {}
+    hypercube_keys_by_qname: dict[str, set[str]] = {}
     dimension_to_hypercubes: dict[str, set[str]] = {}
     primary_item_to_hypercubes: dict[str, set[str]] = {}
+
+    def add_hypercube_occurrence(
+        *,
+        hypercube_qname: str,
+        elr: str | None,
+        elr_id,
+        definition: str | None,
+        dimension_qnames: list[str],
+        primary_roots: list[str],
+        primary_tree: list[dict],
+    ):
+        if not hypercube_qname:
+            return
+
+        occurrence_key = _occurrence_key(elr, hypercube_qname)
+        if occurrence_key in hypercube_by_key:
+            return
+
+        enriched_dimensions = []
+        for dimension_qname in dimension_qnames or []:
+            if not dimension_qname:
+                continue
+            dimension_to_hypercubes.setdefault(dimension_qname, set()).add(occurrence_key)
+            dimension_info = dimension_by_qname.get(dimension_qname) or {
+                "dimensionName": dimension_qname,
+                "dimensionELR": None,
+                "definition": dimension_qname,
+                "elr_id": None,
+                "defaultMember": None,
+                "domainMembers": [],
+            }
+            enriched_dimensions.append(dimension_info)
+
+        _walk_primary_items(primary_tree, occurrence_key, primary_item_to_hypercubes)
+
+        hypercube_by_key[occurrence_key] = {
+            "hypercubeKey": occurrence_key,
+            "hypercubeName": hypercube_qname,
+            "hypercubeELR": elr,
+            "definition": definition or hypercube_qname,
+            "elr_id": elr_id,
+            "dimensions": enriched_dimensions,
+            "primaryItemsTree": primary_tree,
+            "primaryItemRoots": primary_roots,
+        }
+        hypercube_keys_by_qname.setdefault(hypercube_qname, set()).add(occurrence_key)
+        concept_meta.setdefault(
+            hypercube_qname,
+            {
+                "qname": hypercube_qname,
+                "concept_type": "hypercube",
+                "label": hypercube_by_key[occurrence_key]["definition"],
+                "label_cy": hypercube_by_key[occurrence_key]["definition"],
+            },
+        )
+
+    for group in definition_hydim_tree:
+        if not isinstance(group, dict):
+            continue
+        elr = group.get("elr")
+        metadata = hypercube_metadata_by_elr.get(elr) or {}
+        primary_item_entry = primary_items_by_elr.get(elr) or {}
+        primary_tree = [
+            _enrich_primary_item_tree(node, concepts)
+            for node in (primary_item_entry.get("primary_items_tree") or [])
+            if isinstance(node, dict)
+        ]
+        primary_roots = [
+            node.get("qname") or node.get("concept_id")
+            for node in primary_tree
+            if node.get("qname") or node.get("concept_id")
+        ]
+
+        for root in group.get("root_tree") or []:
+            if not isinstance(root, dict):
+                continue
+            hypercube_qname = root.get("qname") or root.get("concept_id")
+            if not hypercube_qname:
+                continue
+
+            dimension_qnames = []
+            for child in root.get("children") or []:
+                if not isinstance(child, dict):
+                    continue
+                dimension_info = _dimension_info_from_tree_node(child, dimension_by_qname)
+                dimension_qname = dimension_info.get("dimensionName")
+                if dimension_qname and dimension_qname not in dimension_by_qname:
+                    dimension_by_qname[dimension_qname] = dimension_info
+                if dimension_qname:
+                    dimension_qnames.append(dimension_qname)
+
+            add_hypercube_occurrence(
+                hypercube_qname=hypercube_qname,
+                elr=elr,
+                elr_id=group.get("numeric_part") or metadata.get("elr_id"),
+                definition=group.get("definition") or metadata.get("role_definition") or metadata.get("definition"),
+                dimension_qnames=dimension_qnames,
+                primary_roots=primary_roots or metadata.get("primary_items") or [],
+                primary_tree=primary_tree,
+            )
 
     for hypercube in hypercubes:
         if not isinstance(hypercube, dict):
@@ -196,41 +325,27 @@ def load_dimensional_relationship_index(taxonomy_base_dir: str, year: str, href:
             for node in raw_primary_tree
             if isinstance(node, dict)
         ]
-        _walk_primary_items(primary_tree, hypercube_qname, primary_item_to_hypercubes)
-
-        enriched_dimensions = []
-        for dimension_qname in hypercube.get("dimensions") or []:
-            if not dimension_qname:
-                continue
-            dimension_to_hypercubes.setdefault(dimension_qname, set()).add(hypercube_qname)
-            dimension_info = dimension_by_qname.get(dimension_qname) or {
-                "dimensionName": dimension_qname,
-                "dimensionELR": None,
-                "definition": dimension_qname,
-                "elr_id": None,
-                "defaultMember": None,
-                "domainMembers": [],
-            }
-            enriched_dimensions.append(dimension_info)
-
-        hypercube_by_qname[hypercube_qname] = {
-            "hypercubeName": hypercube_qname,
-            "hypercubeELR": hypercube.get("elr"),
-            "definition": hypercube.get("role_definition") or hypercube.get("definition") or hypercube_qname,
-            "elr_id": hypercube.get("elr_id"),
-            "dimensions": enriched_dimensions,
-            "primaryItemsTree": primary_tree,
-            "primaryItemRoots": hypercube.get("primary_items") or [],
-        }
-        concept_meta.setdefault(
-            hypercube_qname,
-            {
-                "qname": hypercube_qname,
-                "concept_type": "hypercube",
-                "label": hypercube_by_qname[hypercube_qname]["definition"],
-                "label_cy": hypercube_by_qname[hypercube_qname]["definition"],
-            },
+        add_hypercube_occurrence(
+            hypercube_qname=hypercube_qname,
+            elr=hypercube.get("elr"),
+            elr_id=hypercube.get("elr_id"),
+            definition=hypercube.get("role_definition") or hypercube.get("definition") or hypercube_qname,
+            dimension_qnames=hypercube.get("dimensions") or [],
+            primary_roots=hypercube.get("primary_items") or [],
+            primary_tree=primary_tree,
         )
+
+    concept_to_hypercubes_from_concepts_by_occurrence = {
+        key: _sorted_hypercube_keys(
+            {
+                occurrence_key
+                for hypercube_qname in value
+                for occurrence_key in hypercube_keys_by_qname.get(hypercube_qname, set())
+            },
+            hypercube_by_key,
+        )
+        for key, value in concept_to_hypercubes_from_concepts.items()
+    }
 
     concept_membership_edges_only = 0
     derived_membership_edges_only = 0
@@ -238,7 +353,11 @@ def load_dimensional_relationship_index(taxonomy_base_dir: str, year: str, href:
 
     for qname in set(concept_to_hypercubes_from_concepts) | set(primary_item_to_hypercubes):
         concept_memberships = concept_to_hypercubes_from_concepts.get(qname, set())
-        derived_memberships = primary_item_to_hypercubes.get(qname, set())
+        derived_memberships = {
+            hypercube_by_key.get(key, {}).get("hypercubeName")
+            for key in primary_item_to_hypercubes.get(qname, set())
+            if hypercube_by_key.get(key, {}).get("hypercubeName")
+        }
         if concept_memberships != derived_memberships:
             disagreement_qnames += 1
         concept_membership_edges_only += len(concept_memberships - derived_memberships)
@@ -254,16 +373,20 @@ def load_dimensional_relationship_index(taxonomy_base_dir: str, year: str, href:
 
     return {
         "concept_meta": concept_meta,
-        "hypercube_by_qname": hypercube_by_qname,
-        "dimension_by_qname": dimension_by_qname,
-        "dimension_to_hypercubes": {key: sorted(value) for key, value in dimension_to_hypercubes.items()},
-        "member_to_dimensions": {key: sorted(value) for key, value in member_to_dimensions.items()},
-        "concept_to_hypercubes_from_concepts": {
-            key: _sorted_hypercube_qnames(value, hypercube_by_qname)
-            for key, value in concept_to_hypercubes_from_concepts.items()
+        "hypercube_by_key": hypercube_by_key,
+        "hypercube_keys_by_qname": {
+            key: _sorted_hypercube_keys(value, hypercube_by_key)
+            for key, value in hypercube_keys_by_qname.items()
         },
+        "dimension_by_qname": dimension_by_qname,
+        "dimension_to_hypercubes": {
+            key: _sorted_hypercube_keys(value, hypercube_by_key)
+            for key, value in dimension_to_hypercubes.items()
+        },
+        "member_to_dimensions": {key: sorted(value) for key, value in member_to_dimensions.items()},
+        "concept_to_hypercubes_from_concepts": concept_to_hypercubes_from_concepts_by_occurrence,
         "primary_item_to_hypercubes": {
-            key: _sorted_hypercube_qnames(value, hypercube_by_qname)
+            key: _sorted_hypercube_keys(value, hypercube_by_key)
             for key, value in primary_item_to_hypercubes.items()
         },
         "member_to_dimension_paths": member_to_dimension_paths,
@@ -279,7 +402,7 @@ def resolve_dimensional_relationships(taxonomy_base_dir: str, year: str, href: s
     matched_hypercubes: list[str] = []
 
     if concept_type == "hypercube":
-        matched_hypercubes = [qname] if qname in index["hypercube_by_qname"] else []
+        matched_hypercubes = index["hypercube_keys_by_qname"].get(qname, [])
     elif concept_type == "dimension":
         matched_dimensions = [qname] if qname in index["dimension_by_qname"] else []
         matched_hypercubes = index["dimension_to_hypercubes"].get(qname, [])
@@ -288,17 +411,30 @@ def resolve_dimensional_relationships(taxonomy_base_dir: str, year: str, href: s
         cube_set = set()
         for dimension_qname in matched_dimensions:
             cube_set.update(index["dimension_to_hypercubes"].get(dimension_qname, []))
-        matched_hypercubes = _sorted_hypercube_qnames(cube_set, index["hypercube_by_qname"])
+        matched_hypercubes = _sorted_hypercube_keys(cube_set, index["hypercube_by_key"])
     else:
-        matched_hypercubes = _sorted_hypercube_qnames(
-            set(index["primary_item_to_hypercubes"].get(qname, []))
-            | set(index["concept_to_hypercubes_from_concepts"].get(qname, [])),
-            index["hypercube_by_qname"],
-        )
+        primary_item_matches = index["primary_item_to_hypercubes"].get(qname, [])
+        concept_matches = index["concept_to_hypercubes_from_concepts"].get(qname, [])
+        if primary_item_matches:
+            primary_hypercube_names = {
+                index["hypercube_by_key"].get(key, {}).get("hypercubeName")
+                for key in primary_item_matches
+            }
+            concept_only_matches = [
+                key
+                for key in concept_matches
+                if index["hypercube_by_key"].get(key, {}).get("hypercubeName") not in primary_hypercube_names
+            ]
+            matched_hypercubes = _sorted_hypercube_keys(
+                set(primary_item_matches) | set(concept_only_matches),
+                index["hypercube_by_key"],
+            )
+        else:
+            matched_hypercubes = concept_matches
 
     resolved_hypercubes = []
-    for hypercube_qname in matched_hypercubes:
-        hypercube = index["hypercube_by_qname"].get(hypercube_qname)
+    for hypercube_key in matched_hypercubes:
+        hypercube = index["hypercube_by_key"].get(hypercube_key)
         if not hypercube:
             continue
 
@@ -322,7 +458,7 @@ def resolve_dimensional_relationships(taxonomy_base_dir: str, year: str, href: s
         resolved_hypercubes.append(
             {
                 **hypercube,
-                "isSelectedHypercube": hypercube_qname == qname,
+                "isSelectedHypercube": hypercube.get("hypercubeName") == qname,
                 "containsSelectedDimension": any(
                     dimension.get("dimensionName") in matched_dimensions for dimension in dimensions
                 ),

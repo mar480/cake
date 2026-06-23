@@ -74,7 +74,15 @@ def _make_client(tmp_path):
                     "children": [],
                 }
             ],
-        }
+        },
+        {
+            "dimension_qname": "core:GroupingDimension",
+            "elr": "http://example.com/roles/Dimension-Grouping",
+            "elr_id": 7002,
+            "role_definition": "7002 - Dimension - Grouping",
+            "default_member": None,
+            "domain_members": [],
+        },
     ]
 
     _write_json(
@@ -117,6 +125,35 @@ def _make_client(tmp_path):
                 "hypercubes": [],
                 "labels": [{"type": "Standard Label", "lang": "en", "label_text": "Primary root A"}],
             },
+            "core:RepeatedPrimaryRoot": {
+                "concept": {
+                    "qname": "core:RepeatedPrimaryRoot",
+                    "full_type": "xbrli:stringItemType",
+                    "substitution_group": "xbrli:item",
+                    "abstract": True,
+                },
+                "hypercubes": [],
+                "labels": [{"type": "Standard Label", "lang": "en", "label_text": "Repeated primary root"}],
+            },
+            "core:RepeatedGroupingRoot": {
+                "concept": {
+                    "qname": "core:RepeatedGroupingRoot",
+                    "full_type": "xbrli:stringItemType",
+                    "substitution_group": "xbrli:item",
+                    "abstract": True,
+                },
+                "hypercubes": [],
+                "labels": [{"type": "Standard Label", "lang": "en", "label_text": "Repeated grouping root"}],
+            },
+            "core:GroupedLineItem": {
+                "concept": {
+                    "qname": "core:GroupedLineItem",
+                    "full_type": "xbrli:stringItemType",
+                    "substitution_group": "xbrli:item",
+                },
+                "hypercubes": ["core:RepeatedHypercube"],
+                "labels": [{"type": "Standard Label", "lang": "en", "label_text": "Grouped line item"}],
+            },
             "core:ScenarioDimension": {
                 "concept": {
                     "qname": "core:ScenarioDimension",
@@ -137,6 +174,16 @@ def _make_client(tmp_path):
                 "hypercubes": [],
                 "labels": [{"type": "Standard Label", "lang": "en", "label_text": "Scenario member"}],
             },
+            "core:GroupingDimension": {
+                "concept": {
+                    "qname": "core:GroupingDimension",
+                    "full_type": "xbrli:stringItemType",
+                    "substitution_group": "xbrldt:dimensionItem",
+                    "abstract": True,
+                },
+                "hypercubes": [],
+                "labels": [{"type": "Standard Label", "lang": "en", "label_text": "Grouping dimension"}],
+            },
             "core:HypercubeForA": {
                 "concept": {
                     "qname": "core:HypercubeForA",
@@ -146,6 +193,16 @@ def _make_client(tmp_path):
                 },
                 "hypercubes": [],
                 "labels": [{"type": "Standard Label", "lang": "en", "label_text": "Hypercube A"}],
+            },
+            "core:RepeatedHypercube": {
+                "concept": {
+                    "qname": "core:RepeatedHypercube",
+                    "full_type": "xbrli:stringItemType",
+                    "substitution_group": "xbrldt:hypercubeItem",
+                    "abstract": True,
+                },
+                "hypercubes": [],
+                "labels": [{"type": "Standard Label", "lang": "en", "label_text": "Repeated hypercube"}],
             },
         },
     )
@@ -159,6 +216,14 @@ def _make_client(tmp_path):
                 "role_definition": "9001 - Hypercube - A",
                 "dimensions": ["core:ScenarioDimension"],
                 "primary_items": ["core:PrimaryRootA"],
+            },
+            {
+                "hypercube_qname": "core:RepeatedHypercube",
+                "elr": "http://example.com/roles/Hypercube-Repeated",
+                "elr_id": 9000,
+                "role_definition": "9000 - Hypercube - Repeated",
+                "dimensions": ["core:ScenarioDimension"],
+                "primary_items": ["core:RepeatedPrimaryRoot"],
             }
         ],
     )
@@ -191,7 +256,80 @@ def _make_client(tmp_path):
                         ],
                     }
                 ],
+            },
+            {
+                "elr": "http://example.com/roles/Hypercube-Repeated",
+                "definition": "9000 - Hypercube - Repeated",
+                "elr_id": 9000,
+                "primary_items_tree": [
+                    {
+                        "qname": "core:RepeatedPrimaryRoot",
+                        "label": "Repeated primary root",
+                        "children": [],
+                    }
+                ],
+            },
+            {
+                "elr": "http://example.com/roles/Hypercube-Repeated-Grouping2",
+                "definition": "90002 - Hypercube - Repeated Grouping 2",
+                "elr_id": 90002,
+                "primary_items_tree": [
+                    {
+                        "qname": "core:RepeatedGroupingRoot",
+                        "label": "Repeated grouping root",
+                        "children": [
+                            {
+                                "qname": "core:GroupedLineItem",
+                                "label": "Grouped line item",
+                                "children": [],
+                            }
+                        ],
+                    }
+                ],
             }
+        ],
+    )
+    _write_json(
+        taxonomy_base_dir / "2099" / "trees" / "Entrypoint A" / "definition_hydim_tree.json",
+        [
+            {
+                "elr": "http://example.com/roles/Hypercube-Repeated",
+                "definition": "9000 - Hypercube - Repeated",
+                "numeric_part": 9000,
+                "root_tree": [
+                    {
+                        "qname": "core:RepeatedHypercube",
+                        "concept_id": "core:RepeatedHypercube",
+                        "children": [
+                            {
+                                "qname": "core:ScenarioDimension",
+                                "concept_id": "core:ScenarioDimension",
+                            }
+                        ],
+                    }
+                ],
+            },
+            {
+                "elr": "http://example.com/roles/Hypercube-Repeated-Grouping2",
+                "definition": "90002 - Hypercube - Repeated Grouping 2",
+                "numeric_part": 90002,
+                "root_tree": [
+                    {
+                        "qname": "core:RepeatedHypercube",
+                        "concept_id": "core:RepeatedHypercube",
+                        "children": [
+                            {
+                                "qname": "core:ScenarioDimension",
+                                "concept_id": "core:ScenarioDimension",
+                            },
+                            {
+                                "qname": "core:GroupingDimension",
+                                "concept_id": "core:GroupingDimension",
+                            },
+                        ],
+                    }
+                ],
+            },
         ],
     )
     _write_json(
@@ -377,6 +515,27 @@ def test_resolve_dimensional_relationships_keeps_primary_item_roots_without_conc
     assert [item["hypercubeName"] for item in payload["hypercubes"]] == ["core:HypercubeForA"]
 
 
+def test_resolve_dimensional_relationships_uses_primary_item_hypercube_occurrence(tmp_path):
+    _, taxonomy_base_dir = _make_client(tmp_path)
+
+    payload = resolve_dimensional_relationships(
+        taxonomy_base_dir=str(taxonomy_base_dir),
+        year="2099",
+        href="entry-a.xsd",
+        qname="core:GroupedLineItem",
+    )
+
+    assert [item["hypercubeName"] for item in payload["hypercubes"]] == ["core:RepeatedHypercube"]
+    assert payload["hypercubes"][0]["definition"] == "90002 - Hypercube - Repeated Grouping 2"
+    assert payload["hypercubes"][0]["elr_id"] == 90002
+    assert payload["hypercubes"][0]["hypercubeELR"] == "http://example.com/roles/Hypercube-Repeated-Grouping2"
+    assert [dimension["dimensionName"] for dimension in payload["hypercubes"][0]["dimensions"]] == [
+        "core:ScenarioDimension",
+        "core:GroupingDimension",
+    ]
+    assert payload["hypercubes"][0]["primaryItemsTree"][0]["qname"] == "core:RepeatedGroupingRoot"
+
+
 def test_resolve_dimensional_relationships_dimension_member_selection_does_not_use_concept_hypercubes(tmp_path):
     _, taxonomy_base_dir = _make_client(tmp_path)
 
@@ -390,3 +549,27 @@ def test_resolve_dimensional_relationships_dimension_member_selection_does_not_u
     assert payload["selection"]["concept_type"] == "dimension member"
     assert [item["hypercubeName"] for item in payload["hypercubes"]] == ["core:HypercubeForA"]
     assert payload["hypercubes"][0]["dimensions"][0]["containsSelectedMember"] is True
+
+
+def test_real_frs102_uksef_political_donation_items_use_basic_grouping_2_occurrence():
+    taxonomy_base_dir = BACKEND_DIR / "taxonomies"
+    year = "2026"
+    href = "https://xbrl.frc.org.uk/FRS-102/2026-01-01/FRS-102-2026-01-01.xsd"
+
+    for qname in [
+        "direp:NameOrDescriptionUKPoliticalOrganisation",
+        "direp:TotalDonationToUKPoliticalOrganisation",
+    ]:
+        payload = resolve_dimensional_relationships(
+            taxonomy_base_dir=str(taxonomy_base_dir),
+            year=year,
+            href=href,
+            qname=qname,
+        )
+
+        assert [(item["elr_id"], item["definition"]) for item in payload["hypercubes"]] == [
+            (90002, "90002 - Hypercube - Basic Grouping 2")
+        ]
+        assert "direp:X-SpecificUKPoliticalDonationGroupingDimension" in [
+            dimension["dimensionName"] for dimension in payload["hypercubes"][0]["dimensions"]
+        ]
