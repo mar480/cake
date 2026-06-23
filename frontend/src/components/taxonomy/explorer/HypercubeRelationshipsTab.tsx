@@ -1,18 +1,17 @@
-import React, { useEffect, useState } from "react";
+import React, { useMemo } from "react";
 
 import HypercubeDisplay from "./HypercubeDisplay";
 import {
   DimensionalRelationshipHypercube,
   DimensionalRelationshipsResponse,
-  PrefetchedDimensionalRelationshipsState,
 } from "./apiTypes";
 
 interface Props {
   qname: string;
   language: "en" | "cy";
-  year: string;
-  href: string;
-  prefetchedState?: PrefetchedDimensionalRelationshipsState | null;
+  data: DimensionalRelationshipsResponse | null;
+  loading: boolean;
+  error: string | null;
   onNavigateToNode?: (qname: string) => void;
 }
 
@@ -26,108 +25,17 @@ const sortHypercubesByElrId = (hypercubes: DimensionalRelationshipHypercube[] = 
 const HypercubeRelationshipsPanel: React.FC<Props> = ({
   qname,
   language,
-  year,
-  href,
-  prefetchedState,
+  data,
+  loading,
+  error,
   onNavigateToNode,
 }) => {
-  const [response, setResponse] = useState<DimensionalRelationshipHypercube[] | null>(null);
-  const [selectionType, setSelectionType] = useState("");
-  const [matchedDimensions, setMatchedDimensions] = useState<string[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!year || !href || !qname) {
-      setResponse([]);
-      setSelectionType("");
-      setMatchedDimensions([]);
-      setError(!qname ? null : "No active taxonomy context.");
-      setLoading(false);
-      return;
-    }
-
-    const requestKey = `${year}::${href}::${qname}`;
-    const controller = new AbortController();
-    let isActive = true;
-
-    const applyRelationshipData = (data: DimensionalRelationshipsResponse) => {
-      if (!isActive) return;
-
-      const sortedHypercubes = Array.isArray(data.hypercubes)
-        ? sortHypercubesByElrId(data.hypercubes)
-        : [];
-      setResponse(sortedHypercubes);
-      setSelectionType(data.selection?.concept_type ?? "");
-      setMatchedDimensions(data.selection?.matched_dimensions ?? []);
-      setError(null);
-      setLoading(false);
-    };
-
-    setResponse(null);
-    setSelectionType("");
-    setMatchedDimensions([]);
-    setError(null);
-    setLoading(true);
-
-    if (prefetchedState?.key === requestKey) {
-      if (prefetchedState.loading) {
-        return () => {
-          isActive = false;
-          controller.abort();
-        };
-      }
-
-      if (prefetchedState.error) {
-        if (!isActive) return;
-        setResponse([]);
-        setSelectionType("");
-        setMatchedDimensions([]);
-        setError(prefetchedState.error);
-        setLoading(false);
-        return () => {
-          isActive = false;
-          controller.abort();
-        };
-      }
-
-      if (prefetchedState.data) {
-        applyRelationshipData(prefetchedState.data);
-        return () => {
-          isActive = false;
-          controller.abort();
-        };
-      }
-    }
-
-    fetch("/api/dimensional-relationships", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ qname, year, href }),
-      signal: controller.signal,
-    })
-      .then((res) => {
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        return res.json();
-      })
-      .then((data: DimensionalRelationshipsResponse) => {
-        applyRelationshipData(data);
-      })
-      .catch((err) => {
-        if (!isActive) return;
-        if (err instanceof DOMException && err.name === "AbortError") {
-          return;
-        }
-        console.error("Error fetching dimensional relationships:", err);
-        setError("Failed to fetch data from backend.");
-        setLoading(false);
-      });
-
-    return () => {
-      isActive = false;
-      controller.abort();
-    };
-  }, [href, prefetchedState, qname, year]);
+  const response = useMemo<DimensionalRelationshipHypercube[]>(
+    () => (Array.isArray(data?.hypercubes) ? sortHypercubesByElrId(data.hypercubes) : []),
+    [data]
+  );
+  const selectionType = data?.selection?.concept_type ?? "";
+  const matchedDimensions = data?.selection?.matched_dimensions ?? [];
 
   const contextLabel =
     selectionType === "hypercube"

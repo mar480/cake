@@ -14,7 +14,6 @@ import {
 import {
   ConceptDetailsResponse,
   DimensionalRelationshipsResponse,
-  PrefetchedDimensionalRelationshipsState,
 } from "./apiTypes";
 import { TreeNode } from "./tree_utils";
 import type { RawElrGroup } from "./explorerTypes";
@@ -59,6 +58,13 @@ interface DetailPanelProps {
   onResetAdvancedSearch: () => void;
 }
 
+interface DimensionalRelationshipsState {
+  key: string;
+  data: DimensionalRelationshipsResponse | null;
+  loading: boolean;
+  error: string | null;
+}
+
 const DetailPanelContainer: React.FC<DetailPanelProps> = ({
   selectedNode,
   onNavigateToNode,
@@ -87,13 +93,15 @@ const DetailPanelContainer: React.FC<DetailPanelProps> = ({
   onResetAdvancedSearch,
 }) => {
   const conceptCacheRef = useRef(new Map<string, ConceptDetailsResponse>());
+  const relationshipsCacheRef = useRef(new Map<string, DimensionalRelationshipsResponse>());
+  const relationshipsInFlightRef = useRef(new Map<string, Promise<DimensionalRelationshipsResponse>>());
+  const activeRelationshipKeyRef = useRef<string | null>(null);
   const previousSelectedNodeKeyRef = useRef<string | null>(null);
   const [internalActiveTab, setInternalActiveTab] = useState<DetailsTabName>("Details");
   const [concept, setConcept] = useState<ConceptDetailsResponse | null>(null);
   const [isConceptLoading, setIsConceptLoading] = useState(false);
   const [conceptError, setConceptError] = useState<string | null>(null);
-  const [prefetchedRelationships, setPrefetchedRelationships] =
-    useState<PrefetchedDimensionalRelationshipsState | null>(null);
+  const [relationshipsState, setRelationshipsState] = useState<DimensionalRelationshipsState | null>(null);
   const selectedQname = selectedNode?.data?.qname?.trim() ?? "";
   const hasNodeSelection = Boolean(selectedQname);
   const hasSearchRun = Boolean(advancedSearchState?.hasRun);
@@ -160,6 +168,60 @@ const DetailPanelContainer: React.FC<DetailPanelProps> = ({
   const getConceptCacheKey = useCallback(
     (conceptYear: string, conceptEntrypoint: string, qname: string) =>
       `${conceptYear}::${conceptEntrypoint}::${qname}`,
+    []
+  );
+
+  const getRelationshipCacheKey = useCallback(
+    (relationshipYear: string, relationshipEntrypoint: string, qname: string) =>
+      `${relationshipYear}::${relationshipEntrypoint}::${qname}`,
+    []
+  );
+
+  const fetchDimensionalRelationships = useCallback(
+    (
+      qname: string,
+      relationshipYear: string,
+      relationshipEntrypoint: string,
+      requestKey: string
+    ) => {
+      const cached = relationshipsCacheRef.current.get(requestKey);
+      if (cached) {
+        return Promise.resolve(cached);
+      }
+
+      const inFlight = relationshipsInFlightRef.current.get(requestKey);
+      if (inFlight) {
+        return inFlight;
+      }
+
+      const request = fetch("/api/dimensional-relationships", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          qname,
+          year: relationshipYear,
+          href: relationshipEntrypoint,
+        }),
+      }).then((response) => {
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+        return response.json() as Promise<DimensionalRelationshipsResponse>;
+      });
+
+      relationshipsInFlightRef.current.set(requestKey, request);
+      request.then(
+        (payload) => {
+          relationshipsCacheRef.current.set(requestKey, payload);
+          relationshipsInFlightRef.current.delete(requestKey);
+        },
+        () => {
+          relationshipsInFlightRef.current.delete(requestKey);
+        }
+      );
+
+      return request;
+    },
     []
   );
 
@@ -305,64 +367,56 @@ const DetailPanelContainer: React.FC<DetailPanelProps> = ({
     const relationshipEntrypoint = entrypoint?.trim();
 
     if (!selectedQname || !relationshipYear || !relationshipEntrypoint) {
-      setPrefetchedRelationships(null);
+      activeRelationshipKeyRef.current = null;
+      setRelationshipsState(null);
       return;
     }
 
-    const requestKey = `${relationshipYear}::${relationshipEntrypoint}::${selectedQname}`;
-    const controller = new AbortController();
-    let isActive = true;
+    const requestKey = getRelationshipCacheKey(relationshipYear, relationshipEntrypoint, selectedQname);
+    activeRelationshipKeyRef.current = requestKey;
 
-    setPrefetchedRelationships({
+    const cached = relationshipsCacheRef.current.get(requestKey);
+    if (cached) {
+      setRelationshipsState({
+        key: requestKey,
+        data: cached,
+        loading: false,
+        error: null,
+      });
+      return;
+    }
+
+    setRelationshipsState({
       key: requestKey,
       data: null,
       loading: true,
       error: null,
     });
 
-    fetch("/api/dimensional-relationships", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        qname: selectedQname,
-        year: relationshipYear,
-        href: relationshipEntrypoint,
-      }),
-      signal: controller.signal,
-    })
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}`);
+    fetchDimensionalRelationships(selectedQname, relationshipYear, relationshipEntrypoint, requestKey)
+      .then((payload) => {
+        if (activeRelationshipKeyRef.current !== requestKey) {
+          return;
         }
-        return response.json();
-      })
-      .then((payload: DimensionalRelationshipsResponse) => {
-        if (!isActive) return;
-        setPrefetchedRelationships({
+        setRelationshipsState({
           key: requestKey,
           data: payload,
           loading: false,
           error: null,
         });
       })
-      .catch((err) => {
-        if (!isActive) return;
-        if (err instanceof DOMException && err.name === "AbortError") {
+      .catch(() => {
+        if (activeRelationshipKeyRef.current !== requestKey) {
           return;
         }
-        setPrefetchedRelationships({
+        setRelationshipsState({
           key: requestKey,
           data: null,
           loading: false,
           error: "Failed to fetch data from backend.",
         });
       });
-
-    return () => {
-      isActive = false;
-      controller.abort();
-    };
-  }, [entrypoint, selectedQname, year]);
+  }, [entrypoint, fetchDimensionalRelationships, getRelationshipCacheKey, selectedQname, year]);
 
   const renderNoSelection = () => (
     <div className="p-4 text-gray-500 text-center">Please select a concept.</div>
@@ -467,25 +521,24 @@ const DetailPanelContainer: React.FC<DetailPanelProps> = ({
             </div>
           ))}
 
-        {!selectedQname ? (
-          activeTab === "Hypercube Relationships" ? renderNoSelection() : null
-        ) : (
+        {activeTab === "Hypercube Relationships" && !selectedQname ? renderNoSelection() : null}
+
+        {activeTab === "Hypercube Relationships" && selectedQname ? (
           <div
-            className={activeTab === "Hypercube Relationships" ? "block" : "hidden"}
             data-help-anchor="details-view-hypercube-relationships"
           >
             <HypercubeRelationshipsTab
               qname={selectedQname}
               language={language}
-              year={year ?? ""}
-              href={entrypoint ?? ""}
-              prefetchedState={prefetchedRelationships}
+              data={relationshipsState?.key === activeRelationshipKeyRef.current ? relationshipsState.data : null}
+              loading={relationshipsState?.key === activeRelationshipKeyRef.current ? relationshipsState.loading : true}
+              error={relationshipsState?.key === activeRelationshipKeyRef.current ? relationshipsState.error : null}
               onNavigateToNode={(qname) =>
                 onNavigateToNode?.(qname, { preserveDetails: true })
               }
             />
           </div>
-        )}
+        ) : null}
 
         {activeTab === "Tree Locations" &&
           (!selectedNode || !concept ? (
