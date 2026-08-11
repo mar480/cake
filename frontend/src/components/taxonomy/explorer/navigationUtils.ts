@@ -41,7 +41,7 @@ export function collectTreeLocations(
       fullType?: string;
       substitutionGroup?: string;
     }[],
-    numericPart?: number
+    numericPart?: number | null
   ) => {
     const currentLabel = node.name ?? node.qname ?? "Unnamed";
     const nextPathNodes = [

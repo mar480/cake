@@ -302,10 +302,14 @@ def load_dimensional_relationship_index(taxonomy_base_dir: str, year: str, href:
                 if dimension_qname:
                     dimension_qnames.append(dimension_qname)
 
+            group_elr_id = group.get("numeric_part")
+            if group_elr_id is None:
+                group_elr_id = metadata.get("elr_id")
+
             add_hypercube_occurrence(
                 hypercube_qname=hypercube_qname,
                 elr=elr,
-                elr_id=group.get("numeric_part") or metadata.get("elr_id"),
+                elr_id=group_elr_id,
                 definition=group.get("definition") or metadata.get("role_definition") or metadata.get("definition"),
                 dimension_qnames=dimension_qnames,
                 primary_roots=primary_roots or metadata.get("primary_items") or [],

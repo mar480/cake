@@ -13,15 +13,14 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 import os
+import re
 import tempfile
 import zipfile
-from typing import Iterable
-
-from lxml import etree
+from typing import Any, Iterable
 
 TAXONOMY_PACKAGE_NS = {"tp": "http://xbrl.org/2016/taxonomy-package"}
 LLOYDS_HINTS = ("lloyds", "lloyd's")
-STANDARD_HINTS = ("frc", "xbrl.frc.org.uk")
+STANDARD_HINTS = ("frc", "xbrl.frc.org.uk", "xbrl.org/2024/iso3166")
 REFERENCE_ROLE_URI_TO_LABEL = {
     "http://xbrl.frc.org.uk/general/ref/roles/AuditRegs": "Audit Regulations",
     "http://xbrl.frc.org.uk/general/ref/roles/Cic34": "CIC 34",
@@ -35,6 +34,40 @@ REFERENCE_ROLE_URI_TO_LABEL = {
     "http://xbrl.frc.org.uk/general/ref/roles/Standard": "Standard",
     "http://xbrl.frc.org.uk/general/ref/roles/fullFRS101": "Full / FRS 101",
 }
+
+
+def extract_elr_numeric_part(definition: str | None) -> int | None:
+    """Return the first number in an ELR definition, if it has one."""
+
+    match = re.search(r"(\d+)", definition or "")
+    return int(match.group(1)) if match else None
+
+
+def elr_sort_key(elr_data: dict[str, Any]) -> tuple[bool, int, str, str]:
+    """Sort numbered ELRs first, followed by unnumbered ELRs alphabetically."""
+
+    numeric_part = elr_data.get("numeric_part")
+    if numeric_part is None:
+        numeric_part = elr_data.get("elr_id")
+    return (
+        numeric_part is None,
+        numeric_part if numeric_part is not None else 0,
+        str(elr_data.get("definition") or "").casefold(),
+        str(elr_data.get("elr") or "").casefold(),
+    )
+
+
+def find_sibling_frc_packages(zip_path: str) -> list[str]:
+    """Find base FRC taxonomy ZIPs needed by sibling extension packages."""
+
+    source = Path(zip_path).resolve()
+    if source.name.lower().startswith("frc-"):
+        return []
+    return [
+        str(candidate)
+        for candidate in sorted(source.parent.glob("FRC-*.zip"))
+        if candidate.resolve() != source
+    ]
 
 
 @dataclass(frozen=True)
@@ -76,6 +109,8 @@ def find_taxonomy_package_xml(root_dir: str) -> str:
 
 
 def get_entrypoints_from_package(package_xml_path: str) -> list[tuple[str, str]]:
+    from lxml import etree
+
     tree = etree.parse(package_xml_path)
     package_dir = Path(package_xml_path).parent
     entrypoints = tree.xpath("//tp:entryPoint", namespaces=TAXONOMY_PACKAGE_NS)

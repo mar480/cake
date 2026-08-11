@@ -12,6 +12,7 @@ export interface TreeNode {
     definition?: string;
     uuid?: string;
     treeId?: string;
+    numeric_part?: number | null;
   };
   children?: TreeNode[];
 }
@@ -49,7 +50,7 @@ interface RawConceptNode {
 interface RawElrGroup {
   elr?: string;
   definition?: string;
-  numeric_part?: number;
+  numeric_part?: number | null;
   uuid?: string;
   root_tree?: RawConceptNode[];
 }
@@ -65,18 +66,21 @@ export function getTreeNodeVisualSpec(nodeData?: TreeNode["data"]): TreeNodeVisu
   const isHypercube = substitutionGroup === "xbrldt:hypercubeItem";
   const isDomainMember = fullType === "nonnum:domainItemType";
   const isElrGroup = Boolean(nodeData?.definition || nodeData?.elr) && !nodeData?.qname;
+  const isCountry = nodeData.qname?.startsWith("country:");
 
   const fullTypeIcons: Record<string, { cls: string; glyph: string; color: string; label: string }> = {
     "types:guidanceItemType": { cls: "pi pi-exclamation-triangle text-red-500", glyph: "!", color: "#ef4444", label: "Guidance item" },
     "types:headingItemType": { cls: "pi pi-folder text-black-500", glyph: "\uD83D\uDCC1", color: "#1f2937", label: "Heading item" },
     "types:xrefItemType": { cls: "pi pi-arrow-right-arrow-left text-red-400", glyph: "\u2194", color: "#f87171", label: "Cross-reference item" },
     "nonnum:domainItemType": { cls: "pi pi-globe text-pink-500", glyph: "\u25CE", color: "#ec4899", label: "Domain member" },
-    "Q2:domainItemType": { cls: "pi pi-globe text-pink-500", glyph: "\u25CE", color: "#ec4899", label: "Domain member" },
+    "Q2:domainItemType": { cls: "pi pi-bars text-pink-500", glyph: "\u25CE", color: "#ec4899", label: "Domain member" },
     "num:energyItemType": { cls: "pi pi-sun text-orange-500", glyph: "\u2600", color: "#f97316", label: "Energy item" },
     "num:massItemType": { cls: "pi pi-gauge text-green-500", glyph: "\u25D4", color: "#22c55e", label: "Mass item" },
     "num:percentItemType": { cls: "pi pi-percentage text-teal-500", glyph: "%", color: "#14b8a6", label: "Percent item" },
     "types:fixedItemType": { cls: "pi pi-align-left text-cyan-500", glyph: "\u2261", color: "#06b6d4", label: "Fixed item" },
     "types:syndicateNumberItemType": { cls: "pi pi-hashtag text-green-500", glyph: "#", color: "#22c55e", label: "Syndicate number item" },
+    "types:nonNegativeDecimalItemType": { cls: "pi pi-sort-numeric-up red-500", glyph: "1", color: "#ef4444", label: "Non-negative decimal item" },
+
     "dtr2022:ghgEmissionsItemType": { cls: "pi pi-gauge text-green-500", glyph: "\u2601", color: "#22c55e", label: "GHG emissions item" },
   };
 
@@ -96,6 +100,15 @@ export function getTreeNodeVisualSpec(nodeData?: TreeNode["data"]): TreeNodeVisu
       iconGlyph: "\uD83D\uDCC1",
       iconColor: "#334155",
       nodeTypeLabel: "ELR group",
+    };
+  }
+
+  if (isCountry) {
+    return {
+      iconClass: "pi pi-globe text-teal-500",
+      iconGlyph: "\uD83C\uDF0D",
+      iconColor: "#22c55e",
+      nodeTypeLabel: "Country",
     };
   }
 

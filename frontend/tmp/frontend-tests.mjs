@@ -128,9 +128,133 @@ describe("getDefinitionElrLabelsForOccurrences", () => {
   });
 });
 
-// src/components/help/helpSystem.test.ts
+// src/components/taxonomy/explorer/unnumberedElr.test.ts
 import assert2 from "node:assert/strict";
 import { describe as describe2, it as it2 } from "node:test";
+
+// src/components/taxonomy/explorer/navigationUtils.ts
+function collectTreeLocations(rawTreeData, qname) {
+  if (!qname) return [];
+  const results = [];
+  const walk = (networkKey, elr, elrDefinition, node, pathNodes, numericPart) => {
+    const currentLabel = node.name ?? node.qname ?? "Unnamed";
+    const nextPathNodes = [
+      ...pathNodes,
+      {
+        label: currentLabel,
+        xbrlType: node.xbrl_type,
+        fullType: node.full_type,
+        substitutionGroup: node.substitution_group
+      }
+    ];
+    if (node.qname === qname) {
+      results.push({
+        network: networkKey,
+        elr,
+        elrDefinition,
+        numericPart,
+        qname,
+        uuid: node.uuid,
+        label: currentLabel,
+        treeId: node.tree_id,
+        pathNodes: nextPathNodes
+      });
+    }
+    for (const child of node.children ?? []) {
+      walk(networkKey, elr, elrDefinition, child, nextPathNodes, numericPart);
+    }
+  };
+  for (const [networkKey, groups] of Object.entries(rawTreeData)) {
+    if (!Array.isArray(groups)) continue;
+    for (const group of groups) {
+      const elr = group.elr ?? "";
+      const elrDefinition = group.definition ?? elr;
+      const numericPart = group.numeric_part;
+      for (const root of group.root_tree ?? []) {
+        walk(networkKey, elr, elrDefinition, root, [], numericPart);
+      }
+    }
+  }
+  return results;
+}
+
+// src/components/taxonomy/explorer/tree_utils.ts
+var mapConceptNode = (n, pathKey, elrKey, language) => ({
+  key: String(
+    n.uuid ? `${elrKey}::${n.uuid}` : `${elrKey}::${n.tree_id ?? "no-tree-id"}::${pathKey}:${n.qname ?? n.concept_id ?? "node"}`
+  ),
+  label: language === "cy" ? n.label_cy ?? n.label ?? n.name ?? "Unnamed Node" : n.label ?? n.name ?? n.label_cy ?? "Unnamed Node",
+  data: {
+    qname: n.qname ?? n.concept_id,
+    xbrl_type: n.xbrl_type,
+    full_type: n.full_type,
+    substitution_group: n.substitution_group,
+    abstract: n.abstract === true,
+    treeId: n.tree_id,
+    uuid: n.uuid,
+    label_cy: n.label_cy
+  },
+  children: Array.isArray(n.children) ? n.children.map(
+    (c, idx) => mapConceptNode(c, `${pathKey}.${idx}`, elrKey, language)
+  ) : []
+});
+var mapElrGroupedTreeToTreeNodes = (groups, language = "en") => {
+  if (!Array.isArray(groups)) return [];
+  return groups.map((g, gIdx) => ({
+    key: String(g.elr ?? `elr-${gIdx}`),
+    label: g.definition ?? "Unnamed Node",
+    data: {
+      elr: g.elr,
+      definition: g.definition,
+      numeric_part: g.numeric_part,
+      uuid: g.uuid
+    },
+    children: Array.isArray(g.root_tree) ? g.root_tree.map(
+      (n, rootIdx) => mapConceptNode(
+        n,
+        `${g.elr ?? "elr"}:${gIdx}.${rootIdx}`,
+        String(g.elr ?? `elr-${gIdx}`),
+        language
+      )
+    ) : []
+  }));
+};
+
+// src/components/taxonomy/explorer/unnumberedElr.test.ts
+describe2("unnumbered ELRs", () => {
+  const countryList = {
+    elr: "http://example.com/role/country-list",
+    definition: "Country List",
+    numeric_part: null,
+    root_tree: [
+      {
+        qname: "core:CountryDomain",
+        children: [{ qname: "core:UnitedKingdomMember", uuid: "uk-member" }]
+      }
+    ]
+  };
+  it2("maps the ELR using its URI and definition when it has no number", () => {
+    const [node] = mapElrGroupedTreeToTreeNodes([countryList]);
+    assert2.equal(node.key, countryList.elr);
+    assert2.equal(node.label, "Country List");
+    assert2.equal(node.data?.numeric_part, null);
+    assert2.equal(node.children?.length, 1);
+  });
+  it2("retains null numeric metadata in tree-location navigation", () => {
+    const [location] = collectTreeLocations(
+      { definition_dommem: [countryList] },
+      "core:UnitedKingdomMember"
+    );
+    assert2.equal(location.elr, countryList.elr);
+    assert2.equal(location.elrDefinition, "Country List");
+    assert2.equal(location.numericPart, null);
+    assert2.equal(location.uuid, "uk-member");
+  });
+});
+
+// src/components/help/helpSystem.test.ts
+import assert3 from "node:assert/strict";
+import { describe as describe3, it as it3 } from "node:test";
 
 // src/components/help/helpContent.ts
 var helpContent = {
@@ -687,106 +811,106 @@ async function prepareTourStep({
 }
 
 // src/components/help/helpSystem.test.ts
-describe2("helpContent", () => {
-  it2("keeps help ids unique and aligned with their map keys", () => {
+describe3("helpContent", () => {
+  it3("keeps help ids unique and aligned with their map keys", () => {
     const ids = helpContentList.map((entry) => entry.id);
-    assert2.equal(new Set(ids).size, ids.length);
+    assert3.equal(new Set(ids).size, ids.length);
     for (const [key, entry] of Object.entries(helpContent)) {
-      assert2.equal(entry.id, key);
-      assert2.ok(entry.title.trim().length > 0);
-      assert2.ok(entry.shortText.trim().length > 0);
+      assert3.equal(entry.id, key);
+      assert3.ok(entry.title.trim().length > 0);
+      assert3.ok(entry.shortText.trim().length > 0);
     }
   });
-  it2("only references related help ids that exist", () => {
+  it3("only references related help ids that exist", () => {
     const knownIds = new Set(Object.keys(helpContent));
     for (const entry of helpContentList) {
       for (const relatedId of entry.relatedHelpIds ?? []) {
-        assert2.equal(knownIds.has(relatedId), true, `${entry.id} references missing id ${relatedId}`);
+        assert3.equal(knownIds.has(relatedId), true, `${entry.id} references missing id ${relatedId}`);
       }
     }
   });
-  it2("returns help entries by id", () => {
+  it3("returns help entries by id", () => {
     const entry = getHelpContent("concept.periodType");
-    assert2.equal(entry.title, "Period type");
+    assert3.equal(entry.title, "Period type");
   });
-  it2("filters glossary entries by representative search terms", () => {
-    assert2.equal(filterHelpContent("entrypoint").some((entry) => entry.id === "app.entrypoint"), true);
-    assert2.equal(filterHelpContent("credit").some((entry) => entry.id === "concept.balance"), true);
-    assert2.equal(filterHelpContent("hypercube").some((entry) => entry.id === "details.tab.hypercubeRelationships"), true);
+  it3("filters glossary entries by representative search terms", () => {
+    assert3.equal(filterHelpContent("entrypoint").some((entry) => entry.id === "app.entrypoint"), true);
+    assert3.equal(filterHelpContent("credit").some((entry) => entry.id === "concept.balance"), true);
+    assert3.equal(filterHelpContent("hypercube").some((entry) => entry.id === "details.tab.hypercubeRelationships"), true);
   });
-  it2("uses concept glossary entries for duplicated concept terms", () => {
+  it3("uses concept glossary entries for duplicated concept terms", () => {
     const entries = getGlossaryEntries("balance");
-    assert2.equal(entries.some((entry) => entry.id === "concept.balance"), true);
+    assert3.equal(entries.some((entry) => entry.id === "concept.balance"), true);
   });
-  it2("groups glossary entries under the expected headings", () => {
+  it3("groups glossary entries under the expected headings", () => {
     const grouped = groupGlossaryEntries(getGlossaryEntries(""));
-    assert2.equal(grouped.App.some((entry) => entry.id === "app.entrypoint"), true);
-    assert2.equal(grouped["Details tab"].some((entry) => entry.id === "details.tab.treeLocations"), true);
-    assert2.equal(grouped.Concept.some((entry) => entry.id === "concept.balance"), true);
-    assert2.equal(grouped["Advanced Search"].some((entry) => entry.id === "advancedSearch.keyword"), true);
+    assert3.equal(grouped.App.some((entry) => entry.id === "app.entrypoint"), true);
+    assert3.equal(grouped["Details tab"].some((entry) => entry.id === "details.tab.treeLocations"), true);
+    assert3.equal(grouped.Concept.some((entry) => entry.id === "concept.balance"), true);
+    assert3.equal(grouped["Advanced Search"].some((entry) => entry.id === "advancedSearch.keyword"), true);
   });
 });
-describe2("tours", () => {
-  it2("exposes the beginner overview tour with stable step metadata", () => {
+describe3("tours", () => {
+  it3("exposes the beginner overview tour with stable step metadata", () => {
     const tour = getTour("beginner-overview");
-    assert2.ok(tour);
-    assert2.equal(tour?.id, "beginner-overview");
-    assert2.equal(tour?.steps.length, 9);
+    assert3.ok(tour);
+    assert3.equal(tour?.id, "beginner-overview");
+    assert3.equal(tour?.steps.length, 9);
     for (const step of tour?.steps ?? []) {
-      assert2.ok(step.id.trim().length > 0);
-      assert2.ok(step.targetAnchor.trim().length > 0);
-      assert2.ok(step.title.trim().length > 0);
-      assert2.ok(step.body.trim().length > 0);
+      assert3.ok(step.id.trim().length > 0);
+      assert3.ok(step.targetAnchor.trim().length > 0);
+      assert3.ok(step.title.trim().length > 0);
+      assert3.ok(step.body.trim().length > 0);
     }
   });
-  it2("includes demo-capable steps with beforeStep and waitFor hooks", () => {
+  it3("includes demo-capable steps with beforeStep and waitFor hooks", () => {
     const tour = getTour("beginner-overview");
     const filterStep = tour?.steps.find((step) => step.id === "filter-tree");
     const hypercubeStep = tour?.steps.find((step) => step.id === "hypercube-relationships-tab");
     const treeLocationsStep = tour?.steps.find((step) => step.id === "tree-locations-tab");
     const advancedSearchStep = tour?.steps.find((step) => step.id === "advanced-search-tab");
-    assert2.equal(typeof filterStep?.beforeStep, "function");
-    assert2.equal(typeof filterStep?.waitFor, "function");
-    assert2.equal(typeof hypercubeStep?.beforeStep, "function");
-    assert2.equal(typeof hypercubeStep?.waitFor, "function");
-    assert2.equal(typeof treeLocationsStep?.beforeStep, "function");
-    assert2.equal(typeof treeLocationsStep?.waitFor, "function");
-    assert2.equal(typeof advancedSearchStep?.beforeStep, "function");
-    assert2.equal(typeof advancedSearchStep?.waitFor, "function");
+    assert3.equal(typeof filterStep?.beforeStep, "function");
+    assert3.equal(typeof filterStep?.waitFor, "function");
+    assert3.equal(typeof hypercubeStep?.beforeStep, "function");
+    assert3.equal(typeof hypercubeStep?.waitFor, "function");
+    assert3.equal(typeof treeLocationsStep?.beforeStep, "function");
+    assert3.equal(typeof treeLocationsStep?.waitFor, "function");
+    assert3.equal(typeof advancedSearchStep?.beforeStep, "function");
+    assert3.equal(typeof advancedSearchStep?.waitFor, "function");
   });
-  it2("prefers an FRS 102 entrypoint for the beginner demo when available", () => {
+  it3("prefers an FRS 102 entrypoint for the beginner demo when available", () => {
     const href = pickBeginnerDemoEntrypoint([
       { name: "FRS 101", href: "/frs-101" },
       { name: "FRS 102", href: "/frs-102" }
     ]);
-    assert2.equal(href, "/frs-102");
+    assert3.equal(href, "/frs-102");
   });
-  it2("returns null for unknown tours", () => {
-    assert2.equal(getTour("missing-tour"), null);
+  it3("returns null for unknown tours", () => {
+    assert3.equal(getTour("missing-tour"), null);
   });
-  it2("keeps exported tour ids aligned with their object keys", () => {
+  it3("keeps exported tour ids aligned with their object keys", () => {
     for (const [key, tour] of Object.entries(tours)) {
-      assert2.equal(tour.id, key);
+      assert3.equal(tour.id, key);
     }
   });
 });
-describe2("tourRuntime", () => {
-  it2("builds a stable execution key per active step", () => {
-    assert2.equal(
+describe3("tourRuntime", () => {
+  it3("builds a stable execution key per active step", () => {
+    assert3.equal(
       buildTourStepExecutionKey("beginner-overview", 2, "browse-tree"),
       "beginner-overview:2:browse-tree"
     );
-    assert2.equal(buildTourStepExecutionKey(null, 2, "browse-tree"), null);
-    assert2.equal(buildTourStepExecutionKey("beginner-overview", 2, null), null);
+    assert3.equal(buildTourStepExecutionKey(null, 2, "browse-tree"), null);
+    assert3.equal(buildTourStepExecutionKey("beginner-overview", 2, null), null);
   });
-  it2("opens help home by clearing the active tour state", () => {
-    assert2.deepEqual(getHelpHomeOpenState(), {
+  it3("opens help home by clearing the active tour state", () => {
+    assert3.deepEqual(getHelpHomeOpenState(), {
       activeTourId: null,
       activeStepIndex: 0,
       helpHomeOpen: true
     });
   });
-  it2("runs beforeStep once per preparation and resolves when the step becomes ready", async () => {
+  it3("runs beforeStep once per preparation and resolves when the step becomes ready", async () => {
     let beforeStepCalls = 0;
     let ready = false;
     const result = await prepareTourStep({
@@ -805,10 +929,10 @@ describe2("tourRuntime", () => {
       getRuntime: () => ({ explorer: { actions: null, state: null } }),
       sleep: async () => void 0
     });
-    assert2.equal(result, "ready");
-    assert2.equal(beforeStepCalls, 1);
+    assert3.equal(result, "ready");
+    assert3.equal(beforeStepCalls, 1);
   });
-  it2("times out cleanly when the wait condition never becomes true", async () => {
+  it3("times out cleanly when the wait condition never becomes true", async () => {
     let nowValue = 0;
     const result = await prepareTourStep({
       step: {
@@ -826,6 +950,6 @@ describe2("tourRuntime", () => {
       },
       sleep: async () => void 0
     });
-    assert2.equal(result, "timed_out");
+    assert3.equal(result, "timed_out");
   });
 });

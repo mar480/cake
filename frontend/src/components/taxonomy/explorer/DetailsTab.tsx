@@ -395,21 +395,21 @@ const DetailsTab: React.FC<Props> = ({
                           key={idx}
                           className={idx % 2 === 0 ? "bg-white" : "bg-gray-50"}
                         >
-                          <td className="py-1 px-2 border align-top text-sm w-1/4 whitespace-nowrap">
+                          <td className="w-1/4 border px-2 py-1 align-top text-sm whitespace-normal break-words">
                             {getReferenceRoleDisplayName(ref)}
                           </td>
-                          <td className="py-1 px-2 border text-sm align-top">
+                          <td className="min-w-0 border px-2 py-1 align-top text-sm">
                             {
-                            <div className="grid grid-cols-[120px_1fr] gap-y-1">
+                            <div className="grid grid-cols-[minmax(0,150px)_minmax(0,1fr)] gap-y-1">
                               {displayEntries.length === 0 ? (
                                 <div className="text-sm text-gray-500 col-span-2">—</div>
                               ) : (
                                 displayEntries.map(({ label, value }) => (
                                   <React.Fragment key={String(label)}>
-                                    <div className="text-sm font-medium text-gray-700">
+                                    <div className="min-w-0 text-sm font-medium text-gray-700 [overflow-wrap:anywhere]">
                                       {label.charAt(0).toUpperCase() + label.slice(1)}
                                     </div>
-                                    <div className="text-sm">{String(value)}</div>
+                                    <div className="min-w-0 break-words text-sm">{String(value)}</div>
                                   </React.Fragment>
                                 ))
                               )}

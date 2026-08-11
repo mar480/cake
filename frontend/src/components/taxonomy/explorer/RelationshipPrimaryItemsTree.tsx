@@ -70,6 +70,7 @@ const RelationshipPrimaryItemsTree: React.FC<RelationshipPrimaryItemsTreeProps> 
           "num:massItemType": "pi pi-gauge text-green-500",
           "num:percentItemType": "pi pi-percentage text-teal-500",
           "types:fixedItemType": "pi pi-align-left text-cyan-500",
+          "types:nonNegativeDecimalItemType": "pi pi-sort-numeric-up text-red-500",
           "types:syndicateNumberItemType": "pi pi-hashtag text-green-500",
         };
 

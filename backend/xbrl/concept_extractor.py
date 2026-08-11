@@ -17,6 +17,8 @@ FRC_REFERENCE_ROLE_LABELS = {
     "http://xbrl.frc.org.uk/general/ref/roles/Standard": "Standard",
 }
 
+STANDARD_NAMESPACE_HINTS = ("frc", "xbrl.frc.org.uk", "xbrl.org/2024/iso3166")
+
 
 class SimpleHypercubeFinder:
     """
@@ -91,10 +93,23 @@ class ConceptDetailsExtractor:
         """
         Removes XBRL specific concepts (e.g. xl:documentation).
         """
-        ns = concept.qname.namespaceURI
-        return "frc" in ns and (
+        ns = (concept.qname.namespaceURI or "").lower()
+        return any(hint in ns for hint in STANDARD_NAMESPACE_HINTS) and (
             concept.isItem or concept.isDimensionItem or concept.isDomainMember
         )
+
+    def _role_label(self, role_uri: str, known_roles: dict[str, str]) -> str:
+        known_label = known_roles.get(role_uri)
+        if known_label:
+            return known_label
+
+        role_types = self.model_taxonomy.roleTypes.get(role_uri) or []
+        if role_types:
+            definition = (getattr(role_types[0], "definition", None) or "").strip()
+            if definition:
+                return definition
+
+        return role_uri
 
     def get_concept_json(self, concept_ns: str, concept_name: str):
         # Find the concept
@@ -130,7 +145,7 @@ class ConceptDetailsExtractor:
         ).toModelObject(concept):
             if getattr(presRel, "preferredLabel", None):
                 role_uri = presRel.preferredLabel
-                preferred_label_role = LABEL_ROLE_TO_TYPE.get(role_uri, role_uri)
+                preferred_label_role = self._role_label(role_uri, LABEL_ROLE_TO_TYPE)
                 break
 
         # Labels
@@ -141,7 +156,7 @@ class ConceptDetailsExtractor:
             label_resource = labRel.toModelObject
             if label_resource is not None:
                 role = label_resource.role
-                label_type = LABEL_ROLE_TO_TYPE.get(role, role)
+                label_type = self._role_label(role, LABEL_ROLE_TO_TYPE)
                 labels.append(
                     {
                         "lang": label_resource.xmlLang,
@@ -158,30 +173,30 @@ class ConceptDetailsExtractor:
         for ref_rel in ref_rels:
             ref_resource = ref_rel.toModelObject
             if ref_resource is not None:
-                ref_data = {}
+                ref_data = {"reference_role_uri": ref_resource.role}
                 for child in ref_resource.iterchildren():
                     local_tag = (
                         child.tag.split("}")[1] if "}" in child.tag else child.tag
                     )
-                    ref_data[local_tag.lower()] = (
-                        child.text
-                    )  # use lowercase keys for uniformity
+                    ref_data[local_tag] = child.text
 
                 role_uri = ref_resource.role
-                role_label = FRC_REFERENCE_ROLE_LABELS.get(role_uri, role_uri)
+                role_label = self._role_label(role_uri, FRC_REFERENCE_ROLE_LABELS)
+                lower_ref_data = {key.lower(): value for key, value in ref_data.items()}
 
                 references.append(
                     {
+                        "reference_key_values": ref_data,
                         "reference_role_uri": role_uri,
                         "reference_role": role_label,
-                        "name": ref_data.get("name"),
-                        "number": ref_data.get("number"),
-                        "year": ref_data.get("year"),
-                        "schedule": ref_data.get("schedule"),
-                        "part": ref_data.get("part"),
-                        "section": ref_data.get("section"),
-                        "paragraph": ref_data.get("paragraph"),
-                        "report": ref_data.get("report"),
+                        "name": lower_ref_data.get("name"),
+                        "number": lower_ref_data.get("number"),
+                        "year": lower_ref_data.get("year"),
+                        "schedule": lower_ref_data.get("schedule"),
+                        "part": lower_ref_data.get("part"),
+                        "section": lower_ref_data.get("section"),
+                        "paragraph": lower_ref_data.get("paragraph"),
+                        "report": lower_ref_data.get("report"),
                     }
                 )
 
@@ -203,8 +218,9 @@ class ConceptDetailsExtractor:
                     crossref_arcrole, linkrole=elr
                 ).modelRelationships
                 for rel in crossref_rels:
-                    if rel.fromModelObject == concept:
-                        crossref_sources.append(str(rel.toModelObject.qname))
+                    target = rel.toModelObject
+                    if rel.fromModelObject == concept and target is not None:
+                        crossref_sources.append(str(target.qname))
         cross_ref_destination = crossref_sources if crossref_sources else None
 
         # Cash flow classification: inflow/outflow if this concept is a target

@@ -14,7 +14,7 @@ export type RawTreeNode = {
 export type RawElrGroup = {
   elr: string;
   definition?: string;
-  numeric_part?: number;
+  numeric_part?: number | null;
   root_tree?: RawTreeNode[];
 };
 
