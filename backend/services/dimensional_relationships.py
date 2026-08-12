@@ -25,8 +25,7 @@ def _standard_labels_from_entry(entry: dict) -> tuple[str, str]:
             english = text
         elif lang == "cy" and not welsh:
             welsh = text
-    fallback = entry.get("concept", {}).get("local_name") or ""
-    return english or fallback, welsh or english or fallback
+    return english, welsh
 
 
 def _build_member_tree(member_node: dict, concepts: dict) -> dict:
@@ -52,12 +51,15 @@ def _enrich_primary_item_tree(node: dict, concepts: dict) -> dict:
     concept = concept_entry.get("concept", {}) if isinstance(concept_entry, dict) else {}
     label, label_cy = _standard_labels_from_entry(concept_entry or {})
 
+    resolved_label = label or node.get("label") or qname
+    resolved_label_cy = label_cy or node.get("label_cy") or label or node.get("label") or qname
+
     return {
         "qname": qname,
         "concept_id": qname,
-        "label": node.get("label") or label or qname,
-        "name": node.get("label") or label or qname,
-        "label_cy": node.get("label_cy") or label_cy or label or qname,
+        "label": resolved_label,
+        "name": resolved_label,
+        "label_cy": resolved_label_cy,
         "xbrl_type": concept.get("xbrl_type"),
         "full_type": concept.get("full_type"),
         "substitution_group": concept.get("substitution_group"),

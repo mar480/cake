@@ -123,7 +123,10 @@ def _make_client(tmp_path):
                     "abstract": True,
                 },
                 "hypercubes": [],
-                "labels": [{"type": "Standard Label", "lang": "en", "label_text": "Primary root A"}],
+                "labels": [
+                    {"type": "Standard Label", "lang": "en", "label_text": "Primary root A"},
+                    {"type": "Standard Label", "lang": "cy", "label_text": "Prif wraidd A"},
+                ],
             },
             "core:RepeatedPrimaryRoot": {
                 "concept": {
@@ -241,7 +244,7 @@ def _make_client(tmp_path):
                 "primary_items_tree": [
                     {
                         "qname": "core:PrimaryRootA",
-                        "label": "Primary root A",
+                        "label": "Prif label coeden sydd wedi dyddio",
                         "children": [
                             {
                                 "qname": "core:Revenue",
@@ -486,6 +489,9 @@ def test_resolve_dimensional_relationships_unions_concept_and_primary_membership
     assert [item["hypercubeName"] for item in payload["hypercubes"]] == ["core:HypercubeForA"]
     assert payload["hypercubes"][0]["dimensions"][0]["dimensionName"] == "core:ScenarioDimension"
     assert payload["hypercubes"][0]["primaryItemsTree"][0]["qname"] == "core:PrimaryRootA"
+    primary_root = payload["hypercubes"][0]["primaryItemsTree"][0]
+    assert primary_root["label"] == "Primary root A"
+    assert primary_root["label_cy"] == "Prif wraidd A"
 
 
 def test_resolve_dimensional_relationships_includes_concepts_only_membership(tmp_path):
