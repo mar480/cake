@@ -187,3 +187,56 @@ def default_output_root(source: GeneratorSource) -> str:
     source_name = Path(source.source_path).name
     label = "lloyds" if source.is_lloyds_taxonomy else "standard"
     return os.path.join(Path(source.source_path).parent, f"trees_{source_name}_{label}")
+
+
+def get_label_in_language(concept, lang_code: str = "cy") -> str | None:
+    """Return a concept label in exactly the requested language, if present."""
+
+    relationships = concept.modelXbrl.relationshipSet(
+        "http://www.xbrl.org/2003/arcrole/concept-label"
+    ).fromModelObject(concept)
+    for relationship in relationships:
+        label_resource = relationship.toModelObject
+        if (
+            label_resource is not None
+            and getattr(label_resource, "xmlLang", None) == lang_code
+        ):
+            return label_resource.text
+    return None
+
+
+def build_primary_items_tree(element, rel_set, visited, level=0, skip_visited=False):
+    """Build a primary-items subtree with locale-independent labels."""
+
+    if not skip_visited and element in visited:
+        return None
+    visited.add(element)
+
+    substitution_group = getattr(element, "substitutionGroupQname", None)
+    is_hypercube = (
+        substitution_group is not None
+        and getattr(substitution_group, "localName", "").lower() == "hypercubeitem"
+    )
+    if (
+        is_hypercube
+        or getattr(element, "isDimensionItem", False)
+        or getattr(element, "isTypedDimension", False)
+    ):
+        return None
+
+    qname = str(element.qname)
+    node = {
+        "qname": qname,
+        "label": get_label_in_language(element, "en") or qname,
+        "label_cy": get_label_in_language(element, "cy"),
+        "children": [],
+    }
+    for relationship in rel_set.fromModelObject(element):
+        child = relationship.toModelObject
+        if child is not None:
+            child_node = build_primary_items_tree(
+                child, rel_set, visited, level + 1, skip_visited=skip_visited
+            )
+            if child_node:
+                node["children"].append(child_node)
+    return node
