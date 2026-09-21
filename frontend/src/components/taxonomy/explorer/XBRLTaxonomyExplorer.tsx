@@ -354,6 +354,7 @@ const XBRLTaxonomyExplorer: React.FC<Props> = ({
             onSelectNode={onSelectNode}
             onExpandedKeysChange={onExpandedKeysChange}
             language={language}
+            onCopyLink={onCopyLink}
           />
         </div>
       </Split>
