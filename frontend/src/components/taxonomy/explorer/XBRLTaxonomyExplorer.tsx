@@ -359,8 +359,12 @@ const XBRLTaxonomyExplorer: React.FC<Props> = ({
       </Split>
     </div>
       </ContextMenuTrigger>
-      <ContextMenuContent>
-        <ContextMenuItem onSelect={onCopyLink} disabled={!loadedYear || !loadedEntrypoint || !detailNode?.data?.qname}>
+      <ContextMenuContent className="border-blue-200 bg-blue-50 text-blue-950 opacity-100 shadow-xl">
+        <ContextMenuItem
+          className="cursor-pointer focus:bg-blue-100 focus:text-blue-950"
+          onSelect={onCopyLink}
+          disabled={!loadedYear || !loadedEntrypoint || !detailNode?.data?.qname}
+        >
           Copy link
         </ContextMenuItem>
       </ContextMenuContent>
