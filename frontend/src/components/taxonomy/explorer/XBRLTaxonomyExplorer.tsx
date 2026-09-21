@@ -30,12 +30,7 @@ import {
   ContextMenuItem,
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
-import {
-  ContextMenu,
-  ContextMenuContent,
-  ContextMenuItem,
-  ContextMenuTrigger,
-} from "@/components/ui/context-menu";
+
 
 const ENTRYPOINT_GROUP_ORDER = [
   "UK Accounting Standards",
@@ -157,8 +152,6 @@ const XBRLTaxonomyExplorer: React.FC<Props> = ({
   const ungroupedEntrypoints = entrypoints.filter((entrypointOption) => !entrypointOption.group);
 
   return (
-    <ContextMenu>
-      <ContextMenuTrigger asChild>
     <ContextMenu>
       <ContextMenuTrigger asChild>
     <div className="flex flex-col h-screen bg-white">
