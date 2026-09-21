@@ -22,6 +22,7 @@ interface UseTreeNavigationArgs {
   setSelectedNode: (next: TreeNode | null) => void;
   setDetailNode: (next: TreeNode | null) => void;
   onNavigationFailure?: (pendingNavigation: PendingNavigation) => void;
+  onNavigationResolved?: (node: TreeNode, pendingNavigation: PendingNavigation) => void;
 }
 
 export function useTreeNavigation({
@@ -36,6 +37,7 @@ export function useTreeNavigation({
   setSelectedNode,
   setDetailNode,
   onNavigationFailure,
+  onNavigationResolved,
 }: UseTreeNavigationArgs) {
   const [pendingNavigation, setPendingNavigation] = useState<PendingNavigation | null>(null);
   const highlightTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -90,8 +92,14 @@ export function useTreeNavigation({
       if (!options?.preserveDetails) {
         setDetailNode(target);
       }
+      onNavigationResolved?.(target, {
+        network,
+        qname: targetQName,
+        updateDetails: !options?.preserveDetails,
+        persistentHighlight: options?.persistentHighlight,
+      });
     },
-    [applyHighlight, currentTreeNodes, setDetailNode, setExpandedKeys, setSelectedNode]
+    [applyHighlight, currentTreeNodes, network, onNavigationResolved, setDetailNode, setExpandedKeys, setSelectedNode]
   );
 
   const navigateToLocation = useCallback(
@@ -191,6 +199,7 @@ export function useTreeNavigation({
       setDetailNode(targetNode);
     }
     applyHighlight(targetNode.key, pendingNavigation.persistentHighlight);
+    onNavigationResolved?.(targetNode, pendingNavigation);
 
     console.debug(`${NAV_LOG_PREFIX} resolved`, {
       using: matchStrategy,
@@ -210,6 +219,7 @@ export function useTreeNavigation({
     setExpandedKeys,
     setSelectedNode,
     onNavigationFailure,
+    onNavigationResolved,
     applyHighlight,
   ]);
 
