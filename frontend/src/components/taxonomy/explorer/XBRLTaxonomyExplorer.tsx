@@ -30,6 +30,12 @@ import {
   ContextMenuItem,
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuTrigger,
+} from "@/components/ui/context-menu";
 
 const ENTRYPOINT_GROUP_ORDER = [
   "UK Accounting Standards",
@@ -93,6 +99,7 @@ interface Props {
   resultPresentationElrs: Record<string, string[]>;
   rawTreeData: Record<string, RawElrGroup[]>;
   onCopyLink: () => void;
+  onCopyLink: () => void;
 }
 
 const XBRLTaxonomyExplorer: React.FC<Props> = ({
@@ -137,6 +144,7 @@ const XBRLTaxonomyExplorer: React.FC<Props> = ({
   resultPresentationElrs,
   rawTreeData,
   onCopyLink,
+  onCopyLink,
 }) => {
   const { helpModeEnabled, setHelpModeEnabled } = useHelp();
   const viewingLabel = loadedYear
@@ -151,6 +159,8 @@ const XBRLTaxonomyExplorer: React.FC<Props> = ({
   const ungroupedEntrypoints = entrypoints.filter((entrypointOption) => !entrypointOption.group);
 
   return (
+    <ContextMenu>
+      <ContextMenuTrigger asChild>
     <ContextMenu>
       <ContextMenuTrigger asChild>
     <div className="flex flex-col h-screen bg-white">
