@@ -19,6 +19,12 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuTrigger,
+} from "@/components/ui/context-menu";
 import { TreeNode, getTreeNodeVisualSpec } from "./tree_utils";
 import {
   buildTreeExportSnapshot,
@@ -48,6 +54,7 @@ interface TaxonomyTreeViewProps {
   entrypoint: string | null;
   treeFilter: string;
   onTreeFilterChange: (value: string) => void;
+  onCopyLink: () => void;
 }
 
 function buildFullyExpandedKeys(nodes: TreeNode[]): { [key: string]: boolean } {
@@ -79,6 +86,7 @@ const TaxonomyTreeView = ({
   entrypoint,
   treeFilter,
   onTreeFilterChange,
+  onCopyLink,
 }: TaxonomyTreeViewProps) => {
   const nodeRefs = useRef<{ [key: string]: HTMLSpanElement | null }>({});
   const { helpModeEnabled } = useHelp();
@@ -199,7 +207,7 @@ const TaxonomyTreeView = ({
           const isHighlighted = node.key === highlightedKey;
           const visual = getTreeNodeVisualSpec(node.data);
 
-          return (
+          const content = (
             <span
               id={`tree-node-${String(node.key)}`}
               ref={(el) => {
@@ -225,6 +233,24 @@ const TaxonomyTreeView = ({
               </span>
               {visual.secondaryIconClass ? <i className={visual.secondaryIconClass} /> : null}
             </span>
+          );
+
+          if (!node.data?.qname) {
+            return content;
+          }
+
+          return (
+            <ContextMenu>
+              <ContextMenuTrigger asChild>{content}</ContextMenuTrigger>
+              <ContextMenuContent className="border-blue-200 bg-blue-50 text-blue-950 opacity-100 shadow-xl">
+                <ContextMenuItem
+                  className="cursor-pointer focus:bg-blue-100 focus:text-blue-950"
+                  onSelect={onCopyLink}
+                >
+                  Copy link
+                </ContextMenuItem>
+              </ContextMenuContent>
+            </ContextMenu>
           );
         }}
         filter
