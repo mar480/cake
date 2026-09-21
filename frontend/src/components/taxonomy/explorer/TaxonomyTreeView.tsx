@@ -48,6 +48,7 @@ interface TaxonomyTreeViewProps {
   entrypoint: string | null;
   treeFilter: string;
   onTreeFilterChange: (value: string) => void;
+  onCopyLink: (node: TreeNode) => void;
 }
 
 function buildFullyExpandedKeys(nodes: TreeNode[]): { [key: string]: boolean } {
@@ -79,11 +80,17 @@ const TaxonomyTreeView = ({
   entrypoint,
   treeFilter,
   onTreeFilterChange,
+  onCopyLink,
 }: TaxonomyTreeViewProps) => {
   const nodeRefs = useRef<{ [key: string]: HTMLSpanElement | null }>({});
   const { helpModeEnabled } = useHelp();
   const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
   const [treeExportLoading, setTreeExportLoading] = useState<"json" | "csv" | "html" | "png" | null>(null);
+  const [conceptMenu, setConceptMenu] = useState<{
+    node: TreeNode;
+    x: number;
+    y: number;
+  } | null>(null);
   const deferredTreeFilter = useDeferredValue(treeFilter);
   const appliedTreeFilter = treeFilter.trim().length === 0 ? "" : deferredTreeFilter;
 
@@ -95,6 +102,25 @@ const TaxonomyTreeView = ({
   useEffect(() => {
     onTreeFilterChange("");
   }, [network, onTreeFilterChange]);
+
+  useEffect(() => {
+    if (!conceptMenu) return;
+
+    const closeMenu = () => setConceptMenu(null);
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") closeMenu();
+    };
+    window.addEventListener("pointerdown", closeMenu);
+    window.addEventListener("contextmenu", closeMenu, true);
+    window.addEventListener("scroll", closeMenu, true);
+    window.addEventListener("keydown", closeOnEscape);
+    return () => {
+      window.removeEventListener("pointerdown", closeMenu);
+      window.removeEventListener("contextmenu", closeMenu, true);
+      window.removeEventListener("scroll", closeMenu, true);
+      window.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [conceptMenu]);
 
   const hasActiveTreeFilter = appliedTreeFilter.trim().length > 0;
   const visibleTreeNodes = useMemo(
@@ -199,7 +225,7 @@ const TaxonomyTreeView = ({
           const isHighlighted = node.key === highlightedKey;
           const visual = getTreeNodeVisualSpec(node.data);
 
-          return (
+          const content = (
             <span
               id={`tree-node-${String(node.key)}`}
               ref={(el) => {
@@ -207,6 +233,18 @@ const TaxonomyTreeView = ({
               }}
               data-help-anchor={isHighlighted ? "highlighted-tree-node" : undefined}
               title={node.data?.qname || node.label}
+              onContextMenu={(event) => {
+                if (node.data?.qname) {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  onSelectNode(node as TreeNode);
+                  setConceptMenu({
+                    node: node as TreeNode,
+                    x: event.clientX,
+                    y: event.clientY,
+                  });
+                }
+              }}
               className={`flex items-center gap-2 transition duration-500 ${isHighlighted ? "bg-yellow-200 animate-pulse rounded" : ""}`}
             >
               <span className="flex items-center gap-[4px] mr-1">
@@ -221,6 +259,8 @@ const TaxonomyTreeView = ({
               {visual.secondaryIconClass ? <i className={visual.secondaryIconClass} /> : null}
             </span>
           );
+
+          return content;
         }}
         filter
         filterTemplate={() => (
@@ -308,6 +348,29 @@ const TaxonomyTreeView = ({
         showHeader={true}
         className="w-full taxonomy-tree"
       />
+
+      {conceptMenu ? (
+        <div
+          role="menu"
+          aria-label="Concept actions"
+          className="fixed z-[100] min-w-32 rounded-md border border-blue-200 bg-blue-50 p-1 text-blue-950 opacity-100 shadow-xl"
+          style={{ left: conceptMenu.x, top: conceptMenu.y }}
+          onPointerDown={(event) => event.stopPropagation()}
+        >
+          <button
+            type="button"
+            role="menuitem"
+            className="w-full cursor-pointer rounded-sm px-2 py-1.5 text-left text-sm hover:bg-blue-100 focus:bg-blue-100 focus:outline-none"
+            onClick={() => {
+              const { node } = conceptMenu;
+              setConceptMenu(null);
+              onCopyLink(node);
+            }}
+          >
+            Copy link
+          </button>
+        </div>
+      ) : null}
 
       <Dialog open={isExportDialogOpen} onOpenChange={setIsExportDialogOpen}>
         <DialogContent className="max-w-xl bg-white">

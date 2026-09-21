@@ -86,6 +86,7 @@ interface Props {
   resultNetworks: Record<string, string[]>;
   resultPresentationElrs: Record<string, string[]>;
   rawTreeData: Record<string, RawElrGroup[]>;
+  onCopyLink: (node: TreeNode) => void;
 }
 
 const XBRLTaxonomyExplorer: React.FC<Props> = ({
@@ -129,6 +130,7 @@ const XBRLTaxonomyExplorer: React.FC<Props> = ({
   resultNetworks,
   resultPresentationElrs,
   rawTreeData,
+  onCopyLink,
 }) => {
   const { helpModeEnabled, setHelpModeEnabled } = useHelp();
   const viewingLabel = loadedYear
@@ -344,6 +346,7 @@ const XBRLTaxonomyExplorer: React.FC<Props> = ({
             onSelectNode={onSelectNode}
             onExpandedKeysChange={onExpandedKeysChange}
             language={language}
+            onCopyLink={onCopyLink}
           />
         </div>
       </Split>
