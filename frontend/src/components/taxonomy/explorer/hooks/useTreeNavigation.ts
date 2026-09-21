@@ -22,6 +22,7 @@ interface UseTreeNavigationArgs {
   setSelectedNode: (next: TreeNode | null) => void;
   setDetailNode: (next: TreeNode | null) => void;
   onNavigationFailure?: (pendingNavigation: PendingNavigation) => void;
+  onNavigationResolved?: (pendingNavigation: PendingNavigation, node: TreeNode) => void;
 }
 
 export function useTreeNavigation({
@@ -36,6 +37,7 @@ export function useTreeNavigation({
   setSelectedNode,
   setDetailNode,
   onNavigationFailure,
+  onNavigationResolved,
 }: UseTreeNavigationArgs) {
   const [pendingNavigation, setPendingNavigation] = useState<PendingNavigation | null>(null);
   const highlightTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -191,6 +193,7 @@ export function useTreeNavigation({
       setDetailNode(targetNode);
     }
     applyHighlight(targetNode.key, pendingNavigation.persistentHighlight);
+    onNavigationResolved?.(pendingNavigation, targetNode);
 
     console.debug(`${NAV_LOG_PREFIX} resolved`, {
       using: matchStrategy,
@@ -211,6 +214,7 @@ export function useTreeNavigation({
     setSelectedNode,
     onNavigationFailure,
     applyHighlight,
+    onNavigationResolved,
   ]);
 
   return {
