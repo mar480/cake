@@ -207,6 +207,11 @@ const TaxonomyTreeView = ({
               }}
               data-help-anchor={isHighlighted ? "highlighted-tree-node" : undefined}
               title={node.data?.qname || node.label}
+              onContextMenu={() => {
+                if (node.data?.qname) {
+                  onSelectNode(node as TreeNode);
+                }
+              }}
               className={`flex items-center gap-2 transition duration-500 ${isHighlighted ? "bg-yellow-200 animate-pulse rounded" : ""}`}
             >
               <span className="flex items-center gap-[4px] mr-1">
