@@ -24,6 +24,12 @@ import {
 import { EntrypointOption } from "./services/explorerApi";
 import type { RawElrGroup } from "./explorerTypes";
 import type { DetailsTabName } from "./explorerHelpTypes";
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuTrigger,
+} from "@/components/ui/context-menu";
 
 const ENTRYPOINT_GROUP_ORDER = [
   "UK Accounting Standards",
@@ -86,6 +92,7 @@ interface Props {
   resultNetworks: Record<string, string[]>;
   resultPresentationElrs: Record<string, string[]>;
   rawTreeData: Record<string, RawElrGroup[]>;
+  onCopyLink: () => void;
 }
 
 const XBRLTaxonomyExplorer: React.FC<Props> = ({
@@ -129,6 +136,7 @@ const XBRLTaxonomyExplorer: React.FC<Props> = ({
   resultNetworks,
   resultPresentationElrs,
   rawTreeData,
+  onCopyLink,
 }) => {
   const { helpModeEnabled, setHelpModeEnabled } = useHelp();
   const viewingLabel = loadedYear
@@ -143,6 +151,8 @@ const XBRLTaxonomyExplorer: React.FC<Props> = ({
   const ungroupedEntrypoints = entrypoints.filter((entrypointOption) => !entrypointOption.group);
 
   return (
+    <ContextMenu>
+      <ContextMenuTrigger asChild>
     <div className="flex flex-col h-screen bg-white">
       <header
         className="flex flex-wrap items-center justify-between gap-3 bg-blue-800 p-2 text-white"
@@ -348,6 +358,13 @@ const XBRLTaxonomyExplorer: React.FC<Props> = ({
         </div>
       </Split>
     </div>
+      </ContextMenuTrigger>
+      <ContextMenuContent>
+        <ContextMenuItem onSelect={onCopyLink} disabled={!loadedYear || !loadedEntrypoint || !detailNode?.data?.qname}>
+          Copy link
+        </ContextMenuItem>
+      </ContextMenuContent>
+    </ContextMenu>
   );
 };
 

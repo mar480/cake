@@ -177,6 +177,52 @@ function collectTreeLocations(rawTreeData, qname) {
   }
   return results;
 }
+function chooseNavigationMatcher(currentTreeNodes, pendingNavigation) {
+  const uuidMatches = [];
+  const elrQNameMatches = [];
+  const qnameMatches = [];
+  const collectMatches = (nodes2) => {
+    for (const node of nodes2) {
+      if (pendingNavigation.uuid && node.data?.uuid === pendingNavigation.uuid) {
+        uuidMatches.push(node);
+      }
+      const nodeElr = node.key.includes("::") ? node.key.split("::")[0] : void 0;
+      if (pendingNavigation.elr && nodeElr === pendingNavigation.elr && node.data?.qname === pendingNavigation.qname) {
+        elrQNameMatches.push(node);
+      }
+      if (node.data?.qname === pendingNavigation.qname) {
+        qnameMatches.push(node);
+      }
+      if (node.children?.length) collectMatches(node.children);
+    }
+  };
+  collectMatches(currentTreeNodes);
+  if (pendingNavigation.uuid && uuidMatches.length > 0) {
+    return {
+      matcher: (node) => node.data?.uuid === pendingNavigation.uuid,
+      matchStrategy: "uuid",
+      uuidMatches,
+      elrQNameMatches,
+      qnameMatches
+    };
+  }
+  if (elrQNameMatches.length > 0) {
+    return {
+      matcher: (node) => node.key.startsWith(`${pendingNavigation.elr}::`) && node.data?.qname === pendingNavigation.qname,
+      matchStrategy: "elr+qname",
+      uuidMatches,
+      elrQNameMatches,
+      qnameMatches
+    };
+  }
+  return {
+    matcher: (node) => node.data?.qname === pendingNavigation.qname,
+    matchStrategy: "qname",
+    uuidMatches,
+    elrQNameMatches,
+    qnameMatches
+  };
+}
 
 // src/components/taxonomy/explorer/tree_utils.ts
 var mapConceptNode = (n, pathKey, elrKey, language) => ({
@@ -535,8 +581,8 @@ async function waitForAvailableEntrypoint(context, timeoutMs = 5e3) {
 async function waitForExplorerCondition(context, predicate, timeoutMs = 4e3) {
   const startedAt = Date.now();
   while (Date.now() - startedAt < timeoutMs) {
-    const state = context.explorer.getState?.() ?? context.explorer.state ?? null;
-    if (predicate(state)) {
+    const state2 = context.explorer.getState?.() ?? context.explorer.state ?? null;
+    if (predicate(state2)) {
       return true;
     }
     await new Promise((resolve) => setTimeout(resolve, 120));
@@ -622,7 +668,7 @@ var tours = {
             explorer.actions?.setTreeFilter("property, plant and equipment");
             const filterReady = await waitForExplorerCondition(
               { explorer },
-              (state) => state?.treeFilter === "property, plant and equipment",
+              (state2) => state2?.treeFilter === "property, plant and equipment",
               2500
             );
             if (!filterReady) {
@@ -952,4 +998,92 @@ describe3("tourRuntime", () => {
     });
     assert3.equal(result, "timed_out");
   });
+});
+
+// src/components/taxonomy/explorer/urlState.test.ts
+import assert4 from "node:assert/strict";
+import test from "node:test";
+
+// src/components/taxonomy/explorer/urlState.ts
+var REQUIRED_KEYS = ["year", "entrypoint", "network", "qname"];
+var SUPPORTED_KEYS = /* @__PURE__ */ new Set([...REQUIRED_KEYS, "elr", "occurrence"]);
+function parseExplorerUrlState(search) {
+  const params = typeof search === "string" ? new URLSearchParams(search) : search;
+  if ([...params.keys()].some((key) => !SUPPORTED_KEYS.has(key))) return null;
+  if ([...SUPPORTED_KEYS].some((key) => params.getAll(key).length > 1)) return null;
+  const values = Object.fromEntries(REQUIRED_KEYS.map((key) => [key, params.get(key)?.trim()]));
+  if (REQUIRED_KEYS.some((key) => !values[key])) return null;
+  const elr = params.get("elr")?.trim();
+  const occurrence = params.get("occurrence")?.trim();
+  if (params.has("elr") && !elr) return null;
+  if (params.has("occurrence") && !occurrence) return null;
+  return {
+    year: values.year,
+    entrypoint: values.entrypoint,
+    network: values.network,
+    qname: values.qname,
+    ...elr ? { elr } : {},
+    ...occurrence ? { occurrence } : {}
+  };
+}
+function serializeExplorerUrlState(state2) {
+  const params = new URLSearchParams();
+  for (const key of REQUIRED_KEYS) {
+    if (!state2[key]?.trim()) throw new Error(`Missing explorer URL parameter: ${key}`);
+    params.set(key, state2[key]);
+  }
+  if (state2.elr) params.set("elr", state2.elr);
+  if (state2.occurrence) params.set("occurrence", state2.occurrence);
+  return params;
+}
+function explorerUrl(state2, location) {
+  return `${location.origin}${location.pathname}?${serializeExplorerUrlState(state2).toString()}`;
+}
+
+// src/components/taxonomy/explorer/urlState.test.ts
+var state = {
+  year: "2026",
+  entrypoint: "https://example.test/accounts?type=full&lang=en",
+  network: "presentation",
+  qname: "uk-gaap:Profit & loss",
+  elr: "https://example.test/role/a b",
+  occurrence: "node/one+two"
+};
+test("explorer URL state round-trips percent-encoded values", () => {
+  const serialized = serializeExplorerUrlState(state);
+  assert4.deepEqual(parseExplorerUrlState(serialized), state);
+  assert4.match(serialized.toString(), /entrypoint=https%3A%2F%2Fexample\.test%2Faccounts%3Ftype%3Dfull%26lang%3Den/);
+  assert4.match(serialized.toString(), /qname=uk-gaap%3AProfit\+%26\+loss/);
+  assert4.equal(explorerUrl(state, { origin: "https://host.test", pathname: "/explorer" }), `https://host.test/explorer?${serialized}`);
+});
+test("rejects partial, repeated, empty and unsupported combinations", () => {
+  assert4.equal(parseExplorerUrlState("?year=2026&entrypoint=x&network=presentation"), null);
+  assert4.equal(parseExplorerUrlState("?year=2026&entrypoint=x&network=presentation&qname=x&elr="), null);
+  assert4.equal(parseExplorerUrlState("?year=2026&entrypoint=x&network=presentation&qname=x&qname=y"), null);
+  assert4.equal(parseExplorerUrlState("?year=2026&entrypoint=x&network=presentation&qname=x&uuid=y"), null);
+});
+
+// src/components/taxonomy/explorer/navigationUtils.test.ts
+import assert5 from "node:assert/strict";
+import test2 from "node:test";
+var nodes = [
+  { key: "role-one", label: "role one", children: [
+    { key: "role-one::first", label: "first", data: { qname: "ex:Duplicate", uuid: "first" } }
+  ] },
+  { key: "role-two", label: "role two", children: [
+    { key: "role-two::second", label: "second", data: { qname: "ex:Duplicate", uuid: "second" } }
+  ] }
+];
+test2("occurrence wins when duplicate QNames exist", () => {
+  const result = chooseNavigationMatcher(nodes, { network: "presentation", qname: "ex:Duplicate", elr: "role-one", uuid: "second" });
+  assert5.equal(result.matchStrategy, "uuid");
+  assert5.equal(result.uuidMatches[0].data?.uuid, "second");
+});
+test2("navigation falls back from a missing occurrence to ELR plus QName, then QName", () => {
+  const elr = chooseNavigationMatcher(nodes, { network: "presentation", qname: "ex:Duplicate", elr: "role-two", uuid: "gone" });
+  assert5.equal(elr.matchStrategy, "elr+qname");
+  assert5.equal(elr.elrQNameMatches[0].data?.uuid, "second");
+  const qname = chooseNavigationMatcher(nodes, { network: "presentation", qname: "ex:Duplicate", elr: "gone", uuid: "gone" });
+  assert5.equal(qname.matchStrategy, "qname");
+  assert5.equal(qname.qnameMatches.length, 2);
 });
