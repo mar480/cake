@@ -39,10 +39,6 @@ const explanationPages = [
     title: "Who is this app for?",
     body: "The app is for anyone who needs to interact with the UK Taxonomy Suite. Preparers can use it to explore the taxonomy and understand how to report their data. Developers can use it to understand the modelling decisions in the taxonomy and how to implement them in their tools. Data users can use it to better inform how they process and interact with digitally reported data. \n\n Beginners are supported with a guided tour, UI hints and glossary definitions, while more advanced users can use the app to quickly understand the dimensional modelling available for specific concepts and export search results to support their work.",
   },
-  {
-    title: "What do I do if I have questions or comments about the app?",
-    body: "This app is maintained by an individual developer (me!) and is not an official product of the Financial Reporting Council. \n\n If you have any questions, comments, or suggestions, please feel free to reach out to me directly at robjmarks@gmail.com. I welcome any feedback that can help make the app more useful for the community.",
-  },
 ] as const;
 
 const glossarySectionTitles: Record<HelpContentCategory, string> = {
