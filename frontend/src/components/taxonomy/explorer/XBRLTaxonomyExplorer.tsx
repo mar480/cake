@@ -24,6 +24,7 @@ import {
 import { EntrypointOption } from "./services/explorerApi";
 import type { RawElrGroup } from "./explorerTypes";
 import type { DetailsTabName } from "./explorerHelpTypes";
+import { TAXONOMY_YEARS } from "./urlState";
 
 const ENTRYPOINT_GROUP_ORDER = [
   "UK Accounting Standards",
@@ -86,6 +87,7 @@ interface Props {
   resultNetworks: Record<string, string[]>;
   resultPresentationElrs: Record<string, string[]>;
   rawTreeData: Record<string, RawElrGroup[]>;
+  onCopyLink: (node: TreeNode) => void;
 }
 
 const XBRLTaxonomyExplorer: React.FC<Props> = ({
@@ -129,6 +131,7 @@ const XBRLTaxonomyExplorer: React.FC<Props> = ({
   resultNetworks,
   resultPresentationElrs,
   rawTreeData,
+  onCopyLink,
 }) => {
   const { helpModeEnabled, setHelpModeEnabled } = useHelp();
   const viewingLabel = loadedYear
@@ -162,12 +165,7 @@ const XBRLTaxonomyExplorer: React.FC<Props> = ({
               onChange={(e) => onYearChange(e.target.value)}
             >
               <option value="">Select year</option>
-              <option value="lloyds-2025">Lloyds</option>
-              <option value="2027">2027 - draft</option>
-              <option value="2026">2026</option>
-              <option value="2025">2025</option>
-              <option value="2024">2024</option>
-              <option value="2023">2023</option>
+              {TAXONOMY_YEARS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
             </select>
           </div>
 
@@ -344,6 +342,7 @@ const XBRLTaxonomyExplorer: React.FC<Props> = ({
             onSelectNode={onSelectNode}
             onExpandedKeysChange={onExpandedKeysChange}
             language={language}
+            onCopyLink={onCopyLink}
           />
         </div>
       </Split>

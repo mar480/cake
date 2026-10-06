@@ -20,6 +20,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { TreeNode, getTreeNodeVisualSpec } from "./tree_utils";
+import { contextMenuForRightClick, type ConceptContextMenu } from "./contextMenuUtils";
 import {
   buildTreeExportSnapshot,
   buildTreeSnapshotCsv,
@@ -48,6 +49,7 @@ interface TaxonomyTreeViewProps {
   entrypoint: string | null;
   treeFilter: string;
   onTreeFilterChange: (value: string) => void;
+  onCopyLink: (node: TreeNode) => void;
 }
 
 function buildFullyExpandedKeys(nodes: TreeNode[]): { [key: string]: boolean } {
@@ -79,18 +81,37 @@ const TaxonomyTreeView = ({
   entrypoint,
   treeFilter,
   onTreeFilterChange,
+  onCopyLink,
 }: TaxonomyTreeViewProps) => {
   const nodeRefs = useRef<{ [key: string]: HTMLSpanElement | null }>({});
   const { helpModeEnabled } = useHelp();
   const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
   const [treeExportLoading, setTreeExportLoading] = useState<"json" | "csv" | "html" | "png" | null>(null);
+  const [contextMenu, setContextMenu] = useState<ConceptContextMenu | null>(null);
   const deferredTreeFilter = useDeferredValue(treeFilter);
   const appliedTreeFilter = treeFilter.trim().length === 0 ? "" : deferredTreeFilter;
 
   // Clear refs on dataset change to avoid stale elements
   useEffect(() => {
     nodeRefs.current = {};
+    setContextMenu(null);
   }, [network, treeNodes]);
+
+  useEffect(() => {
+    if (!contextMenu) return;
+    const close = () => setContextMenu(null);
+    const escape = (event: KeyboardEvent) => { if (event.key === "Escape") close(); };
+    window.addEventListener("pointerdown", close);
+    window.addEventListener("contextmenu", close);
+    window.addEventListener("scroll", close, true);
+    window.addEventListener("keydown", escape);
+    return () => {
+      window.removeEventListener("pointerdown", close);
+      window.removeEventListener("contextmenu", close);
+      window.removeEventListener("scroll", close, true);
+      window.removeEventListener("keydown", escape);
+    };
+  }, [contextMenu]);
 
   useEffect(() => {
     onTreeFilterChange("");
@@ -174,7 +195,7 @@ const TaxonomyTreeView = ({
   };
 
   return (
-    <div className="p-2" data-help-anchor="taxonomy-tree">
+    <div className="p-2" data-help-anchor="taxonomy-tree" onContextMenu={() => setContextMenu(null)}>
       <Tree
         key={network} // stable per dataset; don't remount on highlight
         value={visibleTreeNodes}
@@ -208,6 +229,16 @@ const TaxonomyTreeView = ({
               data-help-anchor={isHighlighted ? "highlighted-tree-node" : undefined}
               title={node.data?.qname || node.label}
               className={`flex items-center gap-2 transition duration-500 ${isHighlighted ? "bg-yellow-200 animate-pulse rounded" : ""}`}
+              onContextMenu={(event) => {
+                const nextMenu = contextMenuForRightClick(node, event.clientX, event.clientY);
+                if (!nextMenu) {
+                  setContextMenu(null);
+                  return;
+                }
+                event.preventDefault();
+                event.stopPropagation();
+                setContextMenu(nextMenu);
+              }}
             >
               <span className="flex items-center gap-[4px] mr-1">
                 <i className={visual.iconClass} />
@@ -308,6 +339,22 @@ const TaxonomyTreeView = ({
         showHeader={true}
         className="w-full taxonomy-tree"
       />
+
+      {contextMenu ? (
+        <div
+          role="menu"
+          aria-label="Concept actions"
+          className="fixed z-[100] rounded border border-blue-300 bg-blue-100 p-1 opacity-100 shadow-lg"
+          style={{ left: contextMenu.x, top: contextMenu.y }}
+          onPointerDown={(event) => event.stopPropagation()}
+        >
+          <button type="button" role="menuitem" className="rounded px-3 py-1.5 text-sm font-medium text-blue-900 hover:bg-blue-200" onClick={() => {
+            const node = contextMenu.node;
+            setContextMenu(null);
+            onCopyLink(node);
+          }}>Copy link</button>
+        </div>
+      ) : null}
 
       <Dialog open={isExportDialogOpen} onOpenChange={setIsExportDialogOpen}>
         <DialogContent className="max-w-xl bg-white">

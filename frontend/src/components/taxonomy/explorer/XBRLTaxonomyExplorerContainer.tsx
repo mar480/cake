@@ -17,6 +17,7 @@ import { useAdvancedSearch } from "./hooks/useAdvancedSearch";
 import { useEntrypointData } from "./hooks/useEntrypointData";
 import { findFirstVisibleConceptQname } from "./treeSearchUtils";
 import { useTreeNavigation } from "./hooks/useTreeNavigation";
+import { createLocationRestorationHandler, taxonomyAbsoluteUrl, taxonomySearch, TAXONOMY_YEARS, treeNodeElr, type ParsedTaxonomyUrl, type TaxonomyUrlState } from "./urlState";
 
 const NETWORK_TAB_ORDER = [
   "presentation",
@@ -73,6 +74,32 @@ const XBRLTaxonomyExplorerContainer: React.FC = () => {
     uuid?: string;
   } | null>(null);
   const pendingTreeFilterNavigationRef = useRef<(() => void) | null>(null);
+  const [restoration, setRestoration] = useState<{ id: number; target: TaxonomyUrlState; loadRequested: boolean; navigationRequested: boolean } | null>(null);
+  const restorationIdRef = useRef(0);
+
+  const reportRestoreFailure = useCallback((description: string) => {
+    setRestoration(null);
+    toast({ title: "Unable to open taxonomy link", description, variant: "destructive" });
+  }, []);
+
+  const acceptLocation = useCallback((parsed: ParsedTaxonomyUrl) => {
+    if (parsed.kind === "empty") {
+      setRestoration(null);
+      return;
+    }
+    if (parsed.kind === "invalid") {
+      reportRestoreFailure(parsed.reason);
+      return;
+    }
+    setRestoration({ id: ++restorationIdRef.current, target: parsed.state, loadRequested: false, navigationRequested: false });
+  }, [reportRestoreFailure]);
+
+  useEffect(() => {
+    const restoreLocation = createLocationRestorationHandler(() => window.location.search, acceptLocation);
+    restoreLocation();
+    window.addEventListener("popstate", restoreLocation);
+    return () => window.removeEventListener("popstate", restoreLocation);
+  }, [acceptLocation]);
 
   const {
     advancedSearchState,
@@ -158,6 +185,33 @@ const XBRLTaxonomyExplorerContainer: React.FC = () => {
     return mapElrGroupedTreeToTreeNodes(raw);
   }, [rawTreeData, network]);
 
+  const synchronizeNodeUrl = useCallback((node: TreeNode, selectedNetwork: string) => {
+    if (!loadedYear || !loadedEntrypoint || !node.data?.qname) return;
+    const state: TaxonomyUrlState = {
+      year: loadedYear,
+      entrypoint: loadedEntrypoint,
+      network: selectedNetwork,
+      qname: node.data.qname,
+      ...(treeNodeElr(node.key) ? { elr: treeNodeElr(node.key) } : {}),
+      ...(node.data.uuid ? { occurrence: node.data.uuid } : {}),
+    };
+    // All current explorer navigation is routine browsing, so it replaces rather than grows history.
+    window.history.replaceState(window.history.state, "", `${window.location.pathname}${taxonomySearch(state)}`);
+  }, [loadedEntrypoint, loadedYear]);
+
+  const handleNavigationResolved = useCallback((node: TreeNode, pending: { network: string }) => {
+    synchronizeNodeUrl(node, pending.network);
+    setRestoration((current) => current ? null : current);
+  }, [synchronizeNodeUrl]);
+
+  const handleNavigationFailure = useCallback(() => {
+    if (restoration) {
+      reportRestoreFailure("The requested concept could not be resolved in this network.");
+      return;
+    }
+    toast({ title: "Navigation failed", description: "The target concept could not be found in the current tree.", variant: "destructive" });
+  }, [reportRestoreFailure, restoration]);
+
   const { treeLocations, expandPathToQName, clearPendingNavigation, clearHighlight, navigateToLocation, navigateToQNameInNetwork } = useTreeNavigation({
     currentTreeNodes,
     rawTreeData,
@@ -169,17 +223,41 @@ const XBRLTaxonomyExplorerContainer: React.FC = () => {
     setHighlightedKey,
     setSelectedNode,
     setDetailNode,
-    onNavigationFailure: (pendingNavigation) => {
-      toast({
-        title: "Navigation failed",
-        description:
-          pendingNavigation.targetEntrypoint && pendingNavigation.targetEntrypoint !== loadedEntrypoint
-            ? "The target concept could not be found in the selected entrypoint."
-            : "The target concept could not be found in the current tree.",
-        variant: "destructive",
-      });
-    },
+    onNavigationFailure: handleNavigationFailure,
+    onNavigationResolved: handleNavigationResolved,
   });
+
+  useEffect(() => {
+    if (!restoration) return;
+    const target = restoration.target;
+    if (!TAXONOMY_YEARS.some((option) => option.value === target.year)) {
+      reportRestoreFailure("The requested taxonomy version is unavailable.");
+      return;
+    }
+    if (year !== target.year) {
+      setYear(target.year);
+      setEntrypoint(null);
+      return;
+    }
+    if (entrypointsYear !== target.year) return;
+    if (!entrypoints.some((option) => option.href === target.entrypoint)) {
+      reportRestoreFailure("The requested entrypoint is unavailable for this taxonomy version.");
+      return;
+    }
+    if (!restoration.loadRequested) {
+      requestEntrypointLoad(target.entrypoint);
+      setRestoration((current) => current?.id === restoration.id ? { ...current, loadRequested: true } : current);
+      return;
+    }
+    if (!entrypointLoaded || loadedYear !== target.year || loadedEntrypoint !== target.entrypoint) return;
+    if (!rawTreeData[target.network]) {
+      reportRestoreFailure("The requested network is unavailable in this entrypoint.");
+      return;
+    }
+    if (restoration.navigationRequested) return;
+    navigateToQNameInNetwork(target.qname, target.network, target.elr, { targetEntrypoint: target.entrypoint, uuid: target.occurrence });
+    setRestoration((current) => current?.id === restoration.id ? { ...current, navigationRequested: true } : current);
+  }, [entrypointLoaded, entrypoints, entrypointsYear, loadedEntrypoint, loadedYear, navigateToQNameInNetwork, rawTreeData, reportRestoreFailure, requestEntrypointLoad, restoration, year]);
 
   const resultNetworks = useMemo(() => {
     const mapped = buildConceptNetworksMap(rawTreeData);
@@ -460,6 +538,7 @@ const XBRLTaxonomyExplorerContainer: React.FC = () => {
           }
           setSelectedNode(node);
           setDetailNode(node);
+          synchronizeNodeUrl(node, network);
         }}
         onExpandedKeysChange={setExpandedKeys}
         onLanguageChange={setLanguage}
@@ -506,6 +585,21 @@ const XBRLTaxonomyExplorerContainer: React.FC = () => {
         resultNetworks={resultNetworks}
         resultPresentationElrs={resultPresentationElrs}
         rawTreeData={rawTreeData}
+        onCopyLink={(node) => {
+          if (!loadedYear || !loadedEntrypoint || !node.data?.qname) return;
+          const url = taxonomyAbsoluteUrl({
+            year: loadedYear,
+            entrypoint: loadedEntrypoint,
+            network,
+            qname: node.data.qname,
+            ...(treeNodeElr(node.key) ? { elr: treeNodeElr(node.key) } : {}),
+            ...(node.data.uuid ? { occurrence: node.data.uuid } : {}),
+          }, window.location);
+          void navigator.clipboard.writeText(url).then(
+            () => toast({ title: "Link copied", description: "A link to this taxonomy concept was copied." }),
+            () => toast({ title: "Copy failed", description: "The concept link could not be copied.", variant: "destructive" })
+          );
+        }}
       />
     </>
   );

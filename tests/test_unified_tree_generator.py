@@ -12,11 +12,41 @@ if str(BACKEND_DIR) not in sys.path:
 
 from backend.search.index_builder import build_search_index
 from backend.taxonomies.unified_tree_generator import (
+    build_primary_items_tree,
     concept_namespace_allowed,
     elr_sort_key,
     extract_elr_numeric_part,
     find_sibling_frc_packages,
 )
+
+
+class _LabelResource:
+    def __init__(self, language, text):
+        self.xmlLang = language
+        self.text = text
+
+
+class _Relationship:
+    def __init__(self, target):
+        self.toModelObject = target
+
+
+class _RelationshipSet:
+    def __init__(self, relationships):
+        self.relationships = relationships
+
+    def fromModelObject(self, concept):
+        return self.relationships.get(concept, [])
+
+
+class _Concept:
+    def __init__(self, qname, labels):
+        self.qname = qname
+        self.modelXbrl = type(
+            "ModelXbrl",
+            (),
+            {"relationshipSet": lambda _self, _arcrole: _RelationshipSet({self: labels})},
+        )()
 
 
 def test_extract_elr_numeric_part_returns_first_number():
@@ -65,6 +95,32 @@ def test_standard_namespace_filter_admits_iso_countries_only():
 
 def test_lloyds_namespace_filter_does_not_admit_iso_countries():
     assert not concept_namespace_allowed("https://xbrl.org/2024/iso3166", True)
+
+
+def test_primary_item_labels_are_language_specific_regardless_of_resource_order():
+    expected = {"label": "English label", "label_cy": "Label Cymraeg"}
+    resources = [
+        _Relationship(_LabelResource("cy", "Label Cymraeg")),
+        _Relationship(_LabelResource("en", "English label")),
+    ]
+
+    for ordered_resources in (resources, list(reversed(resources))):
+        concept = _Concept("core:Example", ordered_resources)
+        tree = build_primary_items_tree(concept, _RelationshipSet({}), set())
+
+        assert {key: tree[key] for key in expected} == expected
+
+
+def test_primary_item_english_label_falls_back_to_qname():
+    concept = _Concept(
+        "core:NoEnglishLabel",
+        [_Relationship(_LabelResource("cy", "Label Cymraeg"))],
+    )
+
+    tree = build_primary_items_tree(concept, _RelationshipSet({}), set())
+
+    assert tree["label"] == "core:NoEnglishLabel"
+    assert tree["label_cy"] == "Label Cymraeg"
 
 
 def test_country_codes_and_names_are_included_in_search_index():
