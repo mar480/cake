@@ -11,6 +11,31 @@ import { ConceptDetailsResponse, ConceptReference } from "./apiTypes";
 import { TreeNode } from "./tree_utils";
 import HelpLabel from "@/components/help/HelpLabel";
 import { HelpContentId } from "@/components/help/helpContent";
+import { toast } from "@/components/ui/use-toast";
+
+
+const CopyTextButton: React.FC<{ text: string; description: string }> = ({ text, description }) => {
+  if (!text.trim()) return null;
+
+  return (
+    <button
+      type="button"
+      title={description}
+      aria-label={description}
+      className="ml-auto inline-flex h-7 w-7 shrink-0 items-center justify-center rounded text-gray-500 hover:bg-gray-100 hover:text-blue-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1"
+      onClick={async () => {
+        try {
+          await navigator.clipboard.writeText(text);
+          toast({ title: "Copied", description: "Text copied to the clipboard." });
+        } catch {
+          toast({ title: "Copy failed", description: "Please select the text and copy it manually.", variant: "destructive" });
+        }
+      }}
+    >
+      <i className="pi pi-copy text-sm" aria-hidden="true" />
+    </button>
+  );
+};
 
 
 const LABEL_ROLE_DISPLAY_NAMES: Record<string, string> = {
@@ -221,20 +246,24 @@ const DetailsTab: React.FC<Props> = ({
                               )}
                             </div>
                           ) : row.label === "Name" ? (
-                            <button
-                              className="text-blue-600 underline hover:text-blue-800  text-left break-words whitespace-normal max-w-sm"
-                              onClick={() => {
-                                console.log(
-                                  "Navigating to node:",
-                                  selectedNode.data.qname
-                                );
-                                onNavigateToNode?.(
-                                  `${selectedNode.data.qname}`
-                                );
-                              }}
-                            >
-                              {String(row.value)}
-                            </button>
+                            <div className="flex items-start gap-2">
+                              <button
+                                type="button"
+                                className="min-w-0 text-blue-600 underline hover:text-blue-800 text-left whitespace-normal [overflow-wrap:anywhere] max-w-sm"
+                                onClick={() => {
+                                  console.log(
+                                    "Navigating to node:",
+                                    selectedNode.data.qname
+                                  );
+                                  onNavigateToNode?.(
+                                    `${selectedNode.data.qname}`
+                                  );
+                                }}
+                              >
+                                {String(row.value)}
+                              </button>
+                              <CopyTextButton text={String(row.value)} description="Copy concept name" />
+                            </div>
                           ) : (
                             row.value ?? "–"
                           )}
@@ -312,7 +341,15 @@ const DetailsTab: React.FC<Props> = ({
                           {label.lang}
                         </td>
                         <td className="py-1 px-2 border text-sm">
-                          {label.label_text}
+                          <div className="flex items-start gap-2">
+                            <span className="min-w-0 whitespace-pre-wrap [overflow-wrap:anywhere]">
+                              {label.label_text}
+                            </span>
+                            <CopyTextButton
+                              text={label.label_text}
+                              description={`Copy ${getLabelRoleDisplayName(label.type)} text (${label.lang})`}
+                            />
+                          </div>
                         </td>
                       </tr>
                     ));
