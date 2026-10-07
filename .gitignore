@@ -34,6 +34,10 @@ backend/static/assetscls/
 # Taxonomy backup/output folders
 # ------------------------------
 backend/taxonomies/backup/
+backend/taxonomies/releases/
+backend/taxonomies/catalog.json
+backend/taxonomies/.install.lock
+backend/taxonomies/.catalog-*
 old_app_before_refactor/
 t
 
@@ -63,3 +67,6 @@ Thumbs.db
 .idea/
 # Optional archive scratch workspace (not for versioning)
 archive/.tmp/
+
+# Original taxonomy source packages remain local reproducibility inputs.
+/local/

@@ -2,6 +2,12 @@ import { AdvancedSearchFilters } from "@/types/advancedSearch";
 
 import { RawElrGroup, SearchConceptApiResult } from "../explorerTypes";
 
+export interface TaxonomySuite {
+  value: string;
+  label: string;
+  revision: string;
+}
+
 export interface EntrypointOption {
   name: string;
   label?: string;
@@ -11,6 +17,8 @@ export interface EntrypointOption {
 }
 
 export interface LoadEntrypointResponse {
+  revision: string;
+  filterOptions?: SearchFilterOptionsResponse;
   status?: string;
   error?: string;
   trees?: Record<string, RawElrGroup[] | unknown>;
@@ -33,6 +41,7 @@ export interface SearchFilterOptionsResponse {
 interface SearchConceptRequest {
   year: string;
   href: string;
+  revision?: string | null;
   q: string;
   filters: AdvancedSearchFilters;
   limit: number;
@@ -50,6 +59,7 @@ export interface SearchConceptsResponse {
 export interface SearchConceptExportRequest {
   year: string;
   href: string;
+  revision?: string | null;
   q: string;
   filters: AdvancedSearchFilters;
   format: "csv" | "json";
@@ -83,19 +93,25 @@ async function parseJsonResponse<T>(response: Response): Promise<T> {
   return payload as T;
 }
 
-export async function fetchEntrypoints(year: string): Promise<EntrypointOption[]> {
-  const response = await fetch(`/api/entrypoints?year=${encodeURIComponent(year)}`);
+export async function fetchTaxonomies(signal?: AbortSignal): Promise<TaxonomySuite[]> {
+  const response = await fetch("/api/taxonomies", { signal });
+  const payload = await parseJsonResponse<{ suites: TaxonomySuite[] }>(response);
+  return payload.suites;
+}
+
+export async function fetchEntrypoints(year: string, signal?: AbortSignal): Promise<EntrypointOption[]> {
+  const response = await fetch(`/api/entrypoints?year=${encodeURIComponent(year)}`, { signal });
   const payload = await parseJsonResponse<{ entrypoints?: EntrypointOption[] }>(response);
   return payload.entrypoints ?? [];
 }
 
-export async function loadEntrypoint(year: string, href: string): Promise<LoadEntrypointResponse> {
-  const response = await fetch("/api/load-entrypoint", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ year, href }),
-  });
-  return parseJsonResponse<LoadEntrypointResponse>(response);
+export async function loadEntrypoint(year: string, href: string, signal?: AbortSignal): Promise<LoadEntrypointResponse> {
+  const query = new URLSearchParams({ year, href });
+  const manifestResponse = await fetch(`/api/entrypoint-manifest?${query}`, { signal });
+  const manifest = await parseJsonResponse<{ revision: string; bundleUrl: string }>(manifestResponse);
+  const response = await fetch(manifest.bundleUrl, { signal });
+  const payload = await parseJsonResponse<Omit<LoadEntrypointResponse, "revision">>(response);
+  return { ...payload, revision: manifest.revision };
 }
 
 export async function fetchSearchFilterOptions(
@@ -152,12 +168,14 @@ export async function exportSearchConcepts(
 export async function fetchPresentationEntrypointLocations(
   year: string,
   qname: string,
-  excludeHref?: string | null
+  excludeHref?: string | null,
+  revision?: string | null
 ): Promise<PresentationEntrypointLocationMatch[]> {
   const url =
     `/api/presentation-entrypoint-locations?year=${encodeURIComponent(year)}` +
     `&qname=${encodeURIComponent(qname)}` +
-    (excludeHref ? `&excludeHref=${encodeURIComponent(excludeHref)}` : "");
+    (excludeHref ? `&excludeHref=${encodeURIComponent(excludeHref)}` : "") +
+    (revision ? `&revision=${encodeURIComponent(revision)}` : "");
   const response = await fetch(url);
   const payload = await parseJsonResponse<PresentationEntrypointLocationsResponse>(response);
   return payload.matches ?? [];

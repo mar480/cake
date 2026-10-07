@@ -130,6 +130,7 @@ interface SearchResultsTabProps {
   rawTreeData?: Record<string, RawElrGroup[]>;
   year?: string | null;
   currentEntrypoint?: string | null;
+  revision?: string | null;
 }
 
 const SearchResultsTab: React.FC<SearchResultsTabProps> = ({
@@ -146,6 +147,7 @@ const SearchResultsTab: React.FC<SearchResultsTabProps> = ({
   rawTreeData = {},
   year,
   currentEntrypoint,
+  revision,
 }) => {
   const exportFieldOptions = [
     { id: "qname", label: "QName" },
@@ -263,7 +265,7 @@ const SearchResultsTab: React.FC<SearchResultsTabProps> = ({
     setPresentationFallbacksByKey({});
     setPresentationFallbackLoadingByKey({});
     setPresentationFallbackErrorByKey({});
-  }, [year, currentEntrypoint, state?.lastRunAt]);
+  }, [year, currentEntrypoint, revision, state?.lastRunAt]);
 
   type ResultMenuOccurrence = {
     network: string;
@@ -406,7 +408,7 @@ const SearchResultsTab: React.FC<SearchResultsTabProps> = ({
       return next;
     });
 
-    fetchPresentationEntrypointLocations(year, qname, currentEntrypoint)
+    fetchPresentationEntrypointLocations(year, qname, currentEntrypoint, revision)
       .then((matches) => {
         setPresentationFallbacksByKey((prev) => ({
           ...prev,

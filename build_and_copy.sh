@@ -28,3 +28,11 @@ mkdir -p "$BACKEND_DIR/static/assets"
 cp -rv "$FRONTEND_DIR/dist/assets/." "$BACKEND_DIR/static/assets/"
 
 echo "=== Copy complete. ==="
+
+# Package installed source outputs for deployments that do not use Docker.
+TAXONOMY_PYTHON="${TAXONOMY_PYTHON:-$BACKEND_DIR/.viewer/bin/python}"
+if [[ ! -x "$TAXONOMY_PYTHON" ]]; then
+  TAXONOMY_PYTHON=python3
+fi
+cd "$BACKEND_DIR"
+"$TAXONOMY_PYTHON" -m taxonomy_pipeline prepare-all

@@ -4,7 +4,6 @@ from urllib.parse import unquote, urlparse
 
 from lxml import etree
 
-from xbrl.loader import TaxonomyContext
 
 TAXONOMY_PACKAGE_NS = {"tp": "http://xbrl.org/2016/taxonomy-package"}
 ENTRYPOINT_GROUP_ORDER = {
@@ -53,6 +52,8 @@ def iter_taxonomy_package_paths(taxonomy_base_dir: str, year: str) -> list[tuple
         ("irish", os.path.join(year_root, "irish", "META-INF", "taxonomyPackage.xml")),
     ]
     for package_type, package_path in candidates:
+        if not os.path.exists(package_path):
+            package_path = package_path.replace("META-INF", "META_INF")
         if os.path.exists(package_path):
             package_paths.append((package_type, package_path))
 
@@ -164,6 +165,7 @@ def load_taxonomy_with_lloyds_fallback(taxonomy_base_dir: str, year: str, href: 
     Fallback (Lloyds only): if remote load appears empty/forbidden, resolve local file and reload.
     """
     print(f"[taxonomy-load] Attempt primary load: {href}")
+    from xbrl.loader import TaxonomyContext
     primary = TaxonomyContext(href)
     primary_count = len(getattr(primary.model, "qnameConcepts", {}))
     print(f"[taxonomy-load] Primary qnameConcepts count={primary_count}")
@@ -198,7 +200,13 @@ def load_taxonomy_with_lloyds_fallback(taxonomy_base_dir: str, year: str, href: 
     return primary
 
 
-def get_entrypoints_for_year(taxonomy_base_dir: str, year: str):
+def get_entrypoints_for_year(taxonomy_base_dir: str, year: str, legacy=False):
+    if not legacy:
+        from services.taxonomy_releases import release
+        resolved = release(taxonomy_base_dir, year)
+        if resolved:
+            keys = ("name", "label", "href", "group", "package")
+            return sort_entrypoints([{key: ep.get(key) for key in keys} for ep in resolved[1]["entrypoints"]])
     result = []
     for package_type, package_path in iter_taxonomy_package_paths(taxonomy_base_dir, year):
         tree = etree.parse(package_path)
@@ -222,6 +230,10 @@ def get_entrypoints_for_year(taxonomy_base_dir: str, year: str):
                 }
             )
 
+    return sort_entrypoints(result)
+
+
+def sort_entrypoints(result):
     result.sort(
         key=lambda entry: (
             ENTRYPOINT_GROUP_ORDER.get(entry.get("group") or "", 999),

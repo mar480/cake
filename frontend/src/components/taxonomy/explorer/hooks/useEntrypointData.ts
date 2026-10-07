@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 
+import { toast } from "@/components/ui/use-toast";
 import { AdvancedSearchFilterOptions } from "@/types/advancedSearch";
 
 import {
@@ -14,7 +15,6 @@ import {
 import {
   EntrypointOption,
   fetchEntrypoints,
-  fetchSearchFilterOptions,
   LoadEntrypointResponse,
   loadEntrypoint,
 } from "../services/explorerApi";
@@ -23,6 +23,7 @@ interface EntrypointLoadRequest {
   year: string;
   entrypoint: string;
   entrypointName?: string | null;
+  revision?: string;
 }
 
 interface EntrypointDataState {
@@ -61,8 +62,9 @@ export function useEntrypointData(
     }
 
     let cancelled = false;
+    const controller = new AbortController();
 
-    fetchEntrypoints(year)
+    fetchEntrypoints(year, controller.signal)
       .then((nextEntrypoints) => {
         if (cancelled) {
           return;
@@ -75,12 +77,14 @@ export function useEntrypointData(
           return;
         }
         console.error("Failed to fetch entrypoints", err);
+        toast({ title: "Unable to load entry points", description: err instanceof Error ? err.message : "Please select the taxonomy year again to retry.", variant: "destructive" });
         setEntrypoints([]);
         setEntrypointsYear(year);
       });
 
     return () => {
       cancelled = true;
+      controller.abort();
     };
   }, [year]);
 
@@ -89,18 +93,18 @@ export function useEntrypointData(
 
     const { year: loadYear, entrypoint: loadEntrypointHref } = activeLoadRequest;
     let cancelled = false;
+    const controller = new AbortController();
 
     setEntrypointLoaded(false);
     setLoadingEntrypoint(true);
 
-    loadEntrypoint(loadYear, loadEntrypointHref)
+    loadEntrypoint(loadYear, loadEntrypointHref, controller.signal)
       .then((data: LoadEntrypointResponse) => {
         if (cancelled) {
           return;
         }
         if (data.status !== "loaded") {
-          console.error("Load error:", data.error);
-          return;
+          throw new Error(data.error || "The taxonomy bundle could not be loaded.");
         }
 
         const mappedTreeData = mapTreesPayloadToNetworkMap(data.trees || {}, EXCLUDED_TREE_KEYS);
@@ -110,31 +114,19 @@ export function useEntrypointData(
         setReferenceParagraphsBySource({});
         setRawTreeData(mappedTreeData);
 
-        fetchSearchFilterOptions(loadYear, loadEntrypointHref)
-          .then((opts) => {
-            if (cancelled) {
-              return;
-            }
-            setAdvancedSearchFilterOptions(mapSearchOptionsPayload(opts));
-            setReferenceParagraphsBySource(opts.referenceParagraphsBySource ?? {});
-          })
-          .catch((err) => {
-            if (cancelled) {
-              return;
-            }
-            console.error("Failed to load search filter options", err);
-            setAdvancedSearchFilterOptions(EMPTY_ADVANCED_FILTER_OPTIONS);
-            setReferenceParagraphsBySource({});
-          });
+        const opts = data.filterOptions ?? {};
+        setAdvancedSearchFilterOptions(mapSearchOptionsPayload(opts));
+        setReferenceParagraphsBySource(opts.referenceParagraphsBySource ?? {});
 
         setEntrypointLoaded(true);
-        onEntrypointLoadSuccess?.(activeLoadRequest);
+        onEntrypointLoadSuccess?.({ ...activeLoadRequest, revision: data.revision });
       })
       .catch((err) => {
         if (cancelled) {
           return;
         }
         console.error("Failed to load entrypoint", err);
+        toast({ title: "Unable to load taxonomy", description: err instanceof Error ? err.message : "Please select the entry point again to retry.", variant: "destructive" });
       })
       .finally(() => {
         if (cancelled) {
@@ -145,6 +137,7 @@ export function useEntrypointData(
 
     return () => {
       cancelled = true;
+      controller.abort();
     };
   }, [activeLoadRequest, clearTreeUiState, onEntrypointLoadSuccess, resetAdvancedSearch]);
 

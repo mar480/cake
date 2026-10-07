@@ -7,7 +7,7 @@ from io import StringIO
 
 from flask import g, jsonify, make_response, request
 
-from search.cache import get_search_index, set_search_index
+from search.cache import get_or_build_search_index
 from search.index_builder import build_search_index
 from search.query_engine import search_index
 from services.dimensional_relationships import resolve_dimensional_relationships
@@ -23,6 +23,8 @@ from services.taxonomy_service import (
     get_entrypoints_for_year,
     safe_close_taxonomy,
 )
+from services.taxonomy_releases import register_release_routes, entrypoint
+from taxonomy_pipeline.artifacts import json_exists, read_json
 from state import (
     presentation_locations_cache,
     search_filter_options_cache,
@@ -31,6 +33,7 @@ from state import (
 
 
 def register_api_routes(app, taxonomy_base_dir: str):
+    register_release_routes(app, taxonomy_base_dir)
     @app.route("/api/health", methods=["GET"])
     def health_check():
         return jsonify({"status": "ok"})
@@ -101,12 +104,11 @@ def register_api_routes(app, taxonomy_base_dir: str):
         if qname_to_elrs is None:
             tree_dir = resolve_tree_dir_for_entrypoint(taxonomy_base_dir, year, href)
             presentation_path = os.path.join(tree_dir, "presentation_tree.json")
-            if not os.path.exists(presentation_path):
+            if not json_exists(presentation_path):
                 presentation_locations_cache[cache_key] = {}
                 return set()
 
-            with open(presentation_path, "r", encoding="utf-8") as handle:
-                presentation_tree = json.load(handle)
+            presentation_tree = read_json(presentation_path)
 
             qname_to_elrs = collect_presentation_elrs_by_qname(presentation_tree)
             presentation_locations_cache[cache_key] = qname_to_elrs
@@ -349,10 +351,10 @@ def register_api_routes(app, taxonomy_base_dir: str):
 
             trees = {}
             for file in os.listdir(tree_files):
-                if file.endswith(".json"):
-                    with open(os.path.join(tree_files, file), "r", encoding="utf-8") as f:
-                        tree_name = file.replace(".json", "")
-                        trees[tree_name] = json.load(f)
+                if file.endswith((".json", ".json.gz")):
+                    tree_name = file.removesuffix(".gz").removesuffix(".json")
+                    if tree_name != "filters":
+                        trees[tree_name] = read_json(os.path.join(tree_files, file))
 
             print("[Flask] Returning tree keys:", list(trees.keys()))
 
@@ -363,8 +365,7 @@ def register_api_routes(app, taxonomy_base_dir: str):
                 search_filter_options_cache[cache_key] = (
                     build_search_filter_options_from_concepts(concepts_payload)
                 )
-                # Prewarm the search index under the same entrypoint-specific key used by search routes.
-                set_search_index(cache_key, build_search_index(concepts_payload))
+
                 print(f"[load-entrypoint] cached search filter options key={cache_key}")
 
             print("[load-entrypoint] ===== END OK =====\n")
@@ -401,12 +402,11 @@ def register_api_routes(app, taxonomy_base_dir: str):
                 if qname_to_elrs is None:
                     tree_dir = resolve_tree_dir_for_entrypoint(taxonomy_base_dir, year, href)
                     presentation_path = os.path.join(tree_dir, "presentation_tree.json")
-                    if not os.path.exists(presentation_path):
+                    if not json_exists(presentation_path):
                         presentation_locations_cache[cache_key] = {}
                         continue
 
-                    with open(presentation_path, "r", encoding="utf-8") as handle:
-                        presentation_tree = json.load(handle)
+                    presentation_tree = read_json(presentation_path)
                     qname_to_elrs = collect_presentation_elrs_by_qname(presentation_tree)
                     presentation_locations_cache[cache_key] = qname_to_elrs
 
@@ -443,6 +443,13 @@ def register_api_routes(app, taxonomy_base_dir: str):
         if not year or not href:
             return jsonify({"error": "Missing year or href"}), 400
 
+        try:
+            resolved = entrypoint(taxonomy_base_dir, year, href)
+            if resolved:
+                return jsonify(read_json(resolved[0] / resolved[2]["filters"]))
+        except FileNotFoundError as exc:
+            return jsonify({"error": str(exc)}), 404
+
         # User-facing search filter options are entrypoint-scoped. Do not fall back
         # to a process-global "active" key; concurrent users may load different entrypoints.
         cache_key = entrypoint_cache_key(year, href)
@@ -462,6 +469,14 @@ def register_api_routes(app, taxonomy_base_dir: str):
         payload = build_search_filter_options_from_concepts(concepts_payload)
         search_filter_options_cache[cache_key] = payload
         return jsonify(payload)
+
+    def _search_index_for_entrypoint(year, href):
+        def build():
+            concepts = load_cached_concepts_json_for_entrypoint(taxonomy_base_dir, year, href)
+            if not concepts:
+                raise FileNotFoundError("concepts.json not found or empty for entrypoint")
+            return build_search_index(concepts)
+        return get_or_build_search_index(entrypoint_cache_key(year, href), build)
 
     @app.route("/api/search-concepts", methods=["POST"])
     def search_concepts():
@@ -491,20 +506,10 @@ def register_api_routes(app, taxonomy_base_dir: str):
         if offset < 0:
             return jsonify({"error": "offset must be >= 0"}), 400
 
-        cache_key = entrypoint_cache_key(year, href)
-        index = get_search_index(cache_key)
-
-        if index is None:
-            print(f"[search-concepts] cache miss entrypoint_key={cache_key}; loading entrypoint concepts.json only")
-            concepts_payload = load_concepts_json_for_entrypoint(taxonomy_base_dir, year, href)
-            if not concepts_payload:
-                return (
-                    jsonify({"error": "concepts.json not found or empty for entrypoint"}),
-                    404,
-                )
-            index = build_search_index(concepts_payload)
-            # Search indexes must remain entrypoint-keyed so separate users/entrypoints never share results.
-            set_search_index(cache_key, index)
+        try:
+            index = _search_index_for_entrypoint(year, href)
+        except FileNotFoundError as exc:
+            return jsonify({"error": str(exc)}), 404
 
         payload = _run_search_payload(index, year, href, q, filters, limit, offset)
 
@@ -544,20 +549,10 @@ def register_api_routes(app, taxonomy_base_dir: str):
         if fields is None or len(fields) == 0:
             return jsonify({"error": "fields must be a non-empty list of allowed field names"}), 400
 
-        cache_key = entrypoint_cache_key(year, href)
-        index = get_search_index(cache_key)
-
-        if index is None:
-            print(f"[search-concepts/export] cache miss entrypoint_key={cache_key}; loading entrypoint concepts.json only")
-            concepts_payload = load_concepts_json_for_entrypoint(taxonomy_base_dir, year, href)
-            if not concepts_payload:
-                return (
-                    jsonify({"error": "concepts.json not found or empty for entrypoint"}),
-                    404,
-                )
-            index = build_search_index(concepts_payload)
-            # Search indexes must remain entrypoint-keyed so separate users/entrypoints never share exports.
-            set_search_index(cache_key, index)
+        try:
+            index = _search_index_for_entrypoint(year, href)
+        except FileNotFoundError as exc:
+            return jsonify({"error": str(exc)}), 404
 
         total_matches = _run_search_payload(index, year, href, q, filters, 1, 0).get("total", 0)
 

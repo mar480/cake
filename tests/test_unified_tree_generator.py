@@ -11,19 +11,21 @@ if str(BACKEND_DIR) not in sys.path:
     sys.path.insert(0, str(BACKEND_DIR))
 
 from backend.search.index_builder import build_search_index
-from backend.taxonomies.unified_tree_generator import (
-    build_primary_items_tree,
+from taxonomy_pipeline.helpers import (
     concept_namespace_allowed,
     elr_sort_key,
     extract_elr_numeric_part,
-    find_sibling_frc_packages,
 )
 
 
+from taxonomy_pipeline.extraction import build_primary_items_tree
+
+
 class _LabelResource:
-    def __init__(self, language, text):
+    def __init__(self, language, text, role='http://www.xbrl.org/2003/role/label'):
         self.xmlLang = language
         self.text = text
+        self.role = role
 
 
 class _Relationship:
@@ -123,6 +125,15 @@ def test_primary_item_english_label_falls_back_to_qname():
     assert tree["label_cy"] == "Label Cymraeg"
 
 
+def test_primary_item_standard_label_takes_precedence_over_documentation():
+    concept = _Concept('core:Example', [
+        _Relationship(_LabelResource('en', 'Long documentation', 'http://www.xbrl.org/2003/role/documentation')),
+        _Relationship(_LabelResource('en', 'Standard label')),
+    ])
+    tree = build_primary_items_tree(concept, _RelationshipSet({}), set())
+    assert tree['label'] == 'Standard label'
+
+
 def test_country_codes_and_names_are_included_in_search_index():
     index = build_search_index(
         {
@@ -151,13 +162,3 @@ def test_country_codes_and_names_are_included_in_search_index():
     assert index.token_index["kingdom"] == {"country:GB"}
     assert index.token_index["gbr"] == {"country:GB"}
     assert index.token_index["826"] == {"country:GB"}
-
-
-def test_extension_package_discovers_sibling_frc_dependency(tmp_path):
-    frc_zip = tmp_path / "FRC-2027-Taxonomy-v0.1.0.zip"
-    frc_zip.touch()
-    extension_zip = tmp_path / "Charities-2027-Taxonomy-v0.1.0.zip"
-    extension_zip.touch()
-
-    assert find_sibling_frc_packages(str(extension_zip)) == [str(frc_zip)]
-    assert find_sibling_frc_packages(str(frc_zip)) == []

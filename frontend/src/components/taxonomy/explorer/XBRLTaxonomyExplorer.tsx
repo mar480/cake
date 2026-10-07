@@ -21,10 +21,9 @@ import {
   AdvancedSearchFilters,
   AdvancedSearchState,
 } from "@/types/advancedSearch";
-import { EntrypointOption } from "./services/explorerApi";
+import { EntrypointOption, TaxonomySuite } from "./services/explorerApi";
 import type { RawElrGroup } from "./explorerTypes";
 import type { DetailsTabName } from "./explorerHelpTypes";
-import { TAXONOMY_YEARS } from "./urlState";
 
 const ENTRYPOINT_GROUP_ORDER = [
   "UK Accounting Standards",
@@ -58,6 +57,8 @@ interface Props {
   onNetworkChange: (network: string) => void;
   year: string | null;
   entrypoint: string | null;
+  taxonomySuites: TaxonomySuite[];
+  loadedRevision: string | null;
   loadedYear: string | null;
   loadedEntrypoint: string | null;
   loadedEntrypointName: string | null;
@@ -106,6 +107,8 @@ const XBRLTaxonomyExplorer: React.FC<Props> = ({
   onLanguageChange,
   year,
   entrypoint,
+  taxonomySuites,
+  loadedRevision,
   loadedYear,
   loadedEntrypoint,
   loadedEntrypointName,
@@ -165,7 +168,7 @@ const XBRLTaxonomyExplorer: React.FC<Props> = ({
               onChange={(e) => onYearChange(e.target.value)}
             >
               <option value="">Select year</option>
-              {TAXONOMY_YEARS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+              {taxonomySuites.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
             </select>
           </div>
 
@@ -299,6 +302,7 @@ const XBRLTaxonomyExplorer: React.FC<Props> = ({
             selectedNode={detailNode}
             onNavigateToNode={onNavigateToNode}
             onNavigateToSearchNode={onNavigateToSearchNode}
+            revision={loadedRevision}
             year={activeViewYear}
             entrypoint={activeViewEntrypoint}
             onNavigateToCrossReference={(qname) => onNavigateToNode(qname, { preserveDetails: true })}

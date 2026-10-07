@@ -31,7 +31,8 @@ interface UseAdvancedSearchResult {
 
 export function useAdvancedSearch(
   year: string | null,
-  entrypoint: string | null
+  entrypoint: string | null,
+  revision?: string | null
 ): UseAdvancedSearchResult {
   const [advancedSearchQuery, setAdvancedSearchQuery] = useState("");
   const [advancedSearchFilters, setAdvancedSearchFilters] =
@@ -53,8 +54,10 @@ export function useAdvancedSearch(
   const latestAdvancedQueryRef = useRef("");
   const latestAdvancedFiltersRef = useRef<AdvancedSearchFilters>(EMPTY_ADVANCED_FILTERS);
   const lastRunCriteriaKeyRef = useRef<string | null>(null);
+  const searchSequenceRef = useRef(0);
 
   const resetAdvancedSearch = useCallback(() => {
+    searchSequenceRef.current += 1;
     setAdvancedSearchQuery("");
     setAdvancedSearchFilters(EMPTY_ADVANCED_FILTERS);
     latestAdvancedQueryRef.current = "";
@@ -89,6 +92,7 @@ export function useAdvancedSearch(
         return;
       }
 
+      const sequence = ++searchSequenceRef.current;
       const trimmedQuery = latestAdvancedQueryRef.current.trim();
       const criteriaKey = JSON.stringify({
         q: trimmedQuery,
@@ -111,12 +115,14 @@ export function useAdvancedSearch(
         const payload = await searchConcepts({
           year,
           href: entrypoint,
+          revision,
           q: trimmedQuery,
           filters: latestAdvancedFiltersRef.current,
           limit: advancedSearchPagination.limit,
           offset: requestedOffset,
         });
 
+        if (sequence !== searchSequenceRef.current) return;
         const results = mapSearchResultsPayload(payload.results || [], requestedOffset);
         const totalResults = payload.total ?? results.length;
 
@@ -132,13 +138,14 @@ export function useAdvancedSearch(
         setAdvancedSearchLastRunAt(new Date().toISOString());
         lastRunCriteriaKeyRef.current = criteriaKey;
       } catch (error) {
+        if (sequence !== searchSequenceRef.current) return;
         console.error("Advanced search failed", error);
         setAdvancedSearchError("Advanced search failed. Please try again.");
       } finally {
-        setAdvancedSearchLoading(false);
+        if (sequence === searchSequenceRef.current) setAdvancedSearchLoading(false);
       }
     },
-    [advancedSearchPagination.limit, advancedSearchPagination.offset, entrypoint, year]
+    [advancedSearchPagination.limit, advancedSearchPagination.offset, entrypoint, revision, year]
   );
 
   const runAdvancedSearchExport = useCallback(
@@ -157,6 +164,7 @@ export function useAdvancedSearch(
         const { blob, filename } = await exportSearchConcepts({
           year,
           href: entrypoint,
+          revision,
           q: trimmedQuery,
           filters: exportFilters,
           format,
@@ -180,7 +188,7 @@ export function useAdvancedSearch(
         setAdvancedSearchExportLoading(false);
       }
     },
-    [entrypoint, year]
+    [entrypoint, revision, year]
   );
 
   const advancedSearchState = useMemo<AdvancedSearchState>(

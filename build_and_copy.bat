@@ -36,4 +36,11 @@ echo --- Copy complete. Written files listed above. ===
 
 del "%logfile%" >nul 2>&1
 
+REM Package taxonomies for direct checkout deployments.
+cd /d "%BACKEND%"
+if not defined TAXONOMY_PYTHON set "TAXONOMY_PYTHON=%BACKEND%\.viewer\Scripts\python.exe"
+if not exist "%TAXONOMY_PYTHON%" set "TAXONOMY_PYTHON=python"
+"%TAXONOMY_PYTHON%" -m taxonomy_pipeline prepare-all
+IF %ERRORLEVEL% NEQ 0 exit /b %ERRORLEVEL%
+
 endlocal

@@ -553,7 +553,12 @@ def test_resolve_dimensional_relationships_dimension_member_selection_does_not_u
     )
 
     assert payload["selection"]["concept_type"] == "dimension member"
-    assert [item["hypercubeName"] for item in payload["hypercubes"]] == ["core:HypercubeForA"]
+    # Membership comes from the dimension tree, including both repeated ELR occurrences.
+    assert [(item["hypercubeName"], item["hypercubeELR"]) for item in payload["hypercubes"]] == [
+        ("core:RepeatedHypercube", "http://example.com/roles/Hypercube-Repeated"),
+        ("core:HypercubeForA", "http://example.com/roles/Hypercube-A"),
+        ("core:RepeatedHypercube", "http://example.com/roles/Hypercube-Repeated-Grouping2"),
+    ]
     assert payload["hypercubes"][0]["dimensions"][0]["containsSelectedMember"] is True
 
 

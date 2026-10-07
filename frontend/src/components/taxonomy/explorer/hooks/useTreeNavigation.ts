@@ -137,7 +137,7 @@ export function useTreeNavigation({
       targetQName: string,
       targetNetwork: string,
       targetElr?: string,
-      options?: { preserveDetails?: boolean; targetEntrypoint?: string; uuid?: string }
+      options?: { preserveDetails?: boolean; targetEntrypoint?: string; uuid?: string; persistentHighlight?: boolean }
     ) => {
       if (!targetQName || !targetNetwork) return;
       if (!rawTreeData[targetNetwork]) return;

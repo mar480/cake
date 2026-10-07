@@ -5,3 +5,4 @@ import "./components/taxonomy/explorer/restorationController.test";
 import "./components/taxonomy/explorer/navigationUtils.test";
 import "./components/taxonomy/explorer/contextMenu.test";
 import "./components/help/helpSystem.test";
+import "./components/taxonomy/explorer/services/explorerApi.test";

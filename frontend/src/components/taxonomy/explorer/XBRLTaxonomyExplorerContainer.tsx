@@ -14,10 +14,11 @@ import {
 } from "./explorerDataUtils";
 import type { DetailsTabName, ExplorerDemoActions, ExplorerDemoState } from "./explorerHelpTypes";
 import { useAdvancedSearch } from "./hooks/useAdvancedSearch";
+import { fetchTaxonomies, type TaxonomySuite } from "./services/explorerApi";
 import { useEntrypointData } from "./hooks/useEntrypointData";
 import { findFirstVisibleConceptQname } from "./treeSearchUtils";
 import { useTreeNavigation } from "./hooks/useTreeNavigation";
-import { createLocationRestorationHandler, taxonomyAbsoluteUrl, taxonomySearch, TAXONOMY_YEARS, treeNodeElr, type ParsedTaxonomyUrl, type TaxonomyUrlState } from "./urlState";
+import { createLocationRestorationHandler, taxonomyAbsoluteUrl, taxonomySearch, treeNodeElr, type ParsedTaxonomyUrl, type TaxonomyUrlState } from "./urlState";
 
 const NETWORK_TAB_ORDER = [
   "presentation",
@@ -56,6 +57,9 @@ const XBRLTaxonomyExplorerContainer: React.FC = () => {
   const [activeDetailsTab, setActiveDetailsTab] = useState<DetailsTabName>("Details");
 
   // Taxonomy selection state
+  const [taxonomySuites, setTaxonomySuites] = useState<TaxonomySuite[]>([]);
+  const [catalogLoaded, setCatalogLoaded] = useState(false);
+  const [loadedRevision, setLoadedRevision] = useState<string | null>(null);
   const [year, setYear] = useState<string | null>(null);
   const [entrypoint, setEntrypoint] = useState<string | null>(null);
   const [activeLoadRequest, setActiveLoadRequest] = useState<{
@@ -101,6 +105,19 @@ const XBRLTaxonomyExplorerContainer: React.FC = () => {
     return () => window.removeEventListener("popstate", restoreLocation);
   }, [acceptLocation]);
 
+  useEffect(() => {
+    const controller = new AbortController();
+    fetchTaxonomies(controller.signal).then((suites) => {
+      setTaxonomySuites(suites);
+      setCatalogLoaded(true);
+    }).catch((error) => {
+      if (controller.signal.aborted) return;
+      setCatalogLoaded(true);
+      toast({ title: "Unable to load taxonomy list", description: error instanceof Error ? error.message : "Please reload the application.", variant: "destructive" });
+    });
+    return () => controller.abort();
+  }, []);
+
   const {
     advancedSearchState,
     resetAdvancedSearch,
@@ -108,7 +125,7 @@ const XBRLTaxonomyExplorerContainer: React.FC = () => {
     updateAdvancedSearchFilters,
     runAdvancedSearch,
     runAdvancedSearchExport,
-  } = useAdvancedSearch(loadedYear, loadedEntrypoint);
+  } = useAdvancedSearch(loadedYear, loadedEntrypoint, loadedRevision);
 
   const clearTreeUiState = useCallback(() => {
     setNetwork("");
@@ -125,12 +142,15 @@ const XBRLTaxonomyExplorerContainer: React.FC = () => {
       year: nextLoadedYear,
       entrypoint: nextLoadedEntrypoint,
       entrypointName,
+      revision,
     }: {
       year: string;
       entrypoint: string;
       entrypointName?: string | null;
+      revision?: string;
     }
   ) => {
+    setLoadedRevision(revision ?? null);
     setLoadedYear(nextLoadedYear);
     setLoadedEntrypoint(nextLoadedEntrypoint);
     setLoadedEntrypointName(entrypointName ?? nextLoadedEntrypoint);
@@ -230,7 +250,8 @@ const XBRLTaxonomyExplorerContainer: React.FC = () => {
   useEffect(() => {
     if (!restoration) return;
     const target = restoration.target;
-    if (!TAXONOMY_YEARS.some((option) => option.value === target.year)) {
+    if (!catalogLoaded) return;
+    if (!taxonomySuites.some((option) => option.value === target.year)) {
       reportRestoreFailure("The requested taxonomy version is unavailable.");
       return;
     }
@@ -257,7 +278,7 @@ const XBRLTaxonomyExplorerContainer: React.FC = () => {
     if (restoration.navigationRequested) return;
     navigateToQNameInNetwork(target.qname, target.network, target.elr, { targetEntrypoint: target.entrypoint, uuid: target.occurrence });
     setRestoration((current) => current?.id === restoration.id ? { ...current, navigationRequested: true } : current);
-  }, [entrypointLoaded, entrypoints, entrypointsYear, loadedEntrypoint, loadedYear, navigateToQNameInNetwork, rawTreeData, reportRestoreFailure, requestEntrypointLoad, restoration, year]);
+  }, [catalogLoaded, taxonomySuites, entrypointLoaded, entrypoints, entrypointsYear, loadedEntrypoint, loadedYear, navigateToQNameInNetwork, rawTreeData, reportRestoreFailure, requestEntrypointLoad, restoration, year]);
 
   const resultNetworks = useMemo(() => {
     const mapped = buildConceptNetworksMap(rawTreeData);
@@ -524,6 +545,8 @@ const XBRLTaxonomyExplorerContainer: React.FC = () => {
         network={network}
         year={year}
         entrypoint={entrypoint}
+        taxonomySuites={taxonomySuites}
+        loadedRevision={loadedRevision}
         loadedYear={loadedYear}
         loadedEntrypoint={loadedEntrypoint}
         loadedEntrypointName={loadedEntrypointName}

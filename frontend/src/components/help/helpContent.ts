@@ -265,7 +265,7 @@ export const helpContent = {
 
 export type HelpContentId = keyof typeof helpContent;
 
-export const helpContentList = Object.values(helpContent);
+export const helpContentList: HelpContentEntry[] = Object.values(helpContent);
 
 export const glossaryCategoryOrder: HelpContentCategory[] = [
   "App",

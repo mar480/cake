@@ -6,10 +6,8 @@ from services.search_filters import classify_concept_type, resolve_tree_dir_for_
 
 
 def _read_json(path: str):
-    if not os.path.exists(path):
-        return None
-    with open(path, "r", encoding="utf-8") as handle:
-        return json.load(handle)
+    from taxonomy_pipeline.artifacts import json_exists, read_json
+    return read_json(path) if json_exists(path) else None
 
 
 def _standard_labels_from_entry(entry: dict) -> tuple[str, str]:
@@ -126,9 +124,12 @@ def _dimension_info_from_tree_node(node: dict, dimension_by_qname: dict) -> dict
     }
 
 
-@lru_cache(maxsize=32)
 def load_dimensional_relationship_index(taxonomy_base_dir: str, year: str, href: str) -> dict:
-    tree_dir = resolve_tree_dir_for_entrypoint(taxonomy_base_dir, year, href)
+    return _cached_dimensional_relationship_index(resolve_tree_dir_for_entrypoint(taxonomy_base_dir, year, href), year, href)
+
+
+@lru_cache(maxsize=8)
+def _cached_dimensional_relationship_index(tree_dir: str, year: str, href: str) -> dict:
     if not os.path.isdir(tree_dir):
         raise FileNotFoundError(f"Tree directory not found: {tree_dir}")
 
@@ -397,6 +398,9 @@ def load_dimensional_relationship_index(taxonomy_base_dir: str, year: str, href:
         },
         "member_to_dimension_paths": member_to_dimension_paths,
     }
+
+
+load_dimensional_relationship_index.cache_clear = _cached_dimensional_relationship_index.cache_clear
 
 
 def resolve_dimensional_relationships(taxonomy_base_dir: str, year: str, href: str, qname: str) -> dict:

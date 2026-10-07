@@ -40,6 +40,7 @@ interface DetailPanelProps {
   language: "en" | "cy";
   network: string;
   year: string | null;
+  revision?: string | null;
   entrypoint?: string | null;
   entrypointLoaded: boolean;
   activeTab?: DetailsTabName;
@@ -79,6 +80,7 @@ const DetailPanelContainer: React.FC<DetailPanelProps> = ({
   language,
   network,
   year,
+  revision,
   entrypoint,
   entrypointLoaded,
   activeTab: controlledActiveTab,
@@ -167,14 +169,14 @@ const DetailPanelContainer: React.FC<DetailPanelProps> = ({
 
   const getConceptCacheKey = useCallback(
     (conceptYear: string, conceptEntrypoint: string, qname: string) =>
-      `${conceptYear}::${conceptEntrypoint}::${qname}`,
-    []
+      `${revision ?? "legacy"}::${conceptYear}::${conceptEntrypoint}::${qname}`,
+    [revision]
   );
 
   const getRelationshipCacheKey = useCallback(
     (relationshipYear: string, relationshipEntrypoint: string, qname: string) =>
-      `${relationshipYear}::${relationshipEntrypoint}::${qname}`,
-    []
+      `${revision ?? "legacy"}::${relationshipYear}::${relationshipEntrypoint}::${qname}`,
+    [revision]
   );
 
   const fetchDimensionalRelationships = useCallback(
@@ -201,6 +203,7 @@ const DetailPanelContainer: React.FC<DetailPanelProps> = ({
           qname,
           year: relationshipYear,
           href: relationshipEntrypoint,
+          revision,
         }),
       }).then((response) => {
         if (!response.ok) {
@@ -222,7 +225,7 @@ const DetailPanelContainer: React.FC<DetailPanelProps> = ({
 
       return request;
     },
-    []
+    [revision]
   );
 
   const fetchConceptDetailsWithRetry = useCallback(
@@ -240,7 +243,8 @@ const DetailPanelContainer: React.FC<DetailPanelProps> = ({
           const response = await fetch(
             `/api/concept-details?year=${encodeURIComponent(conceptYear)}` +
               `&href=${encodeURIComponent(conceptEntrypoint)}` +
-              `&qname=${encodeURIComponent(qname)}`,
+              `&qname=${encodeURIComponent(qname)}` +
+              (revision ? `&revision=${encodeURIComponent(revision)}` : ""),
             { signal }
           );
 
@@ -282,7 +286,7 @@ const DetailPanelContainer: React.FC<DetailPanelProps> = ({
 
       throw lastError ?? new Error("Failed to load concept");
     },
-    []
+    [revision]
   );
 
   useEffect(() => {
@@ -503,6 +507,7 @@ const DetailPanelContainer: React.FC<DetailPanelProps> = ({
               rawTreeData={rawTreeData}
               year={year}
               currentEntrypoint={entrypoint}
+              revision={revision}
             />
           </div>
         )}

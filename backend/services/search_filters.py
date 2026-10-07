@@ -3,6 +3,9 @@ import os
 import re
 from functools import lru_cache
 
+from taxonomy_pipeline.artifacts import read_json
+from services.taxonomy_releases import entrypoint
+
 from reference_utils import derive_reference_source
 from services.taxonomy_service import get_entrypoints_for_year
 
@@ -13,7 +16,10 @@ def entrypoint_name_from_href(href: str) -> str:
 
 
 def entrypoint_cache_key(year: str, href: str) -> str:
-    return f"{year}::{href}"
+    from services.taxonomy_releases import requested_revision
+    from flask import g, has_request_context
+    base_id = getattr(g, "taxonomy_base_id", "") if has_request_context() else ""
+    return f"{base_id}::{requested_revision() or 'legacy'}::{year}::{href}"
 
 
 def normalize_bool(value):
@@ -70,7 +76,7 @@ def natural_sort_key(value: str):
             key.append((0, int(part)))
         else:
             key.append((1, part))
-    return key
+    return key, value or ""
 
 
 def paragraph_sort_key(value: str):
@@ -111,23 +117,24 @@ def paragraph_sort_key(value: str):
             else:
                 key.append((2, sp))  # plain alpha bucket
 
-    return key
+    return key, value or ""
 
 
 def load_concepts_json_for_entrypoint(taxonomy_base_dir: str, year: str, href: str) -> dict:
     tree_dir = resolve_tree_dir_for_entrypoint(taxonomy_base_dir, year, href)
-    concepts_path = os.path.join(tree_dir, "concepts.json")
-    if not os.path.exists(concepts_path):
-        return {}
-    with open(concepts_path, "r", encoding="utf-8") as f:
-        return json.load(f)
+    return read_json(os.path.join(tree_dir, "concepts.json"))
 
 
-@lru_cache(maxsize=32)
-def load_cached_concepts_json_for_entrypoint(
-    taxonomy_base_dir: str, year: str, href: str
-) -> dict:
-    return load_concepts_json_for_entrypoint(taxonomy_base_dir, year, href)
+@lru_cache(maxsize=8)
+def _cached_concepts(tree_dir: str) -> dict:
+    return read_json(os.path.join(tree_dir, "concepts.json"))
+
+
+def load_cached_concepts_json_for_entrypoint(taxonomy_base_dir: str, year: str, href: str) -> dict:
+    return _cached_concepts(resolve_tree_dir_for_entrypoint(taxonomy_base_dir, year, href))
+
+
+load_cached_concepts_json_for_entrypoint.cache_clear = _cached_concepts.cache_clear
 
 
 def normalize_tree_key(value: str) -> str:
@@ -135,7 +142,28 @@ def normalize_tree_key(value: str) -> str:
 
 
 def resolve_tree_dir_for_entrypoint(taxonomy_base_dir: str, year: str, href: str) -> str:
+    resolved = entrypoint(taxonomy_base_dir, year, href)
+    if resolved:
+        from taxonomy_pipeline.artifacts import contained_path
+        return str(contained_path(resolved[0], resolved[2]["data_path"]))
+    return resolve_legacy_tree_dir(taxonomy_base_dir, year, href)
+
+
+def resolve_legacy_tree_dir(taxonomy_base_dir: str, year: str, href: str) -> str:
+    from taxonomy_pipeline.artifacts import identifier
+    identifier(year)
     trees_root = os.path.join(taxonomy_base_dir, year, "trees")
+    mapping_path = os.path.join(taxonomy_base_dir, year, "tree-mapping.json")
+    if os.path.isfile(mapping_path):
+        from taxonomy_pipeline.artifacts import contained_path
+        from pathlib import Path
+        mapping = read_json(mapping_path)
+        if href not in mapping:
+            raise FileNotFoundError("Entry point has no exported tree mapping")
+        mapped = contained_path(Path(trees_root), mapping[href])
+        if not mapped.is_dir():
+            raise FileNotFoundError(f"Exported trees are missing: {mapped}")
+        return str(mapped)
     if not os.path.isdir(trees_root):
         raise FileNotFoundError(f"Tree directory not found: {trees_root}")
 
@@ -145,7 +173,7 @@ def resolve_tree_dir_for_entrypoint(taxonomy_base_dir: str, year: str, href: str
     if not tree_dirs:
         raise FileNotFoundError(f"No entrypoint tree directories found for year {year}")
 
-    entrypoints = get_entrypoints_for_year(taxonomy_base_dir, year)
+    entrypoints = get_entrypoints_for_year(taxonomy_base_dir, year, legacy=True)
     display_name = next(
         (entrypoint.get("name", "") for entrypoint in entrypoints if entrypoint.get("href") == href),
         "",

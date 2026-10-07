@@ -230,7 +230,7 @@ const TaxonomyTreeView = ({
               title={node.data?.qname || node.label}
               className={`flex items-center gap-2 transition duration-500 ${isHighlighted ? "bg-yellow-200 animate-pulse rounded" : ""}`}
               onContextMenu={(event) => {
-                const nextMenu = contextMenuForRightClick(node, event.clientX, event.clientY);
+                const nextMenu = contextMenuForRightClick(node as TreeNode, event.clientX, event.clientY);
                 if (!nextMenu) {
                   setContextMenu(null);
                   return;
