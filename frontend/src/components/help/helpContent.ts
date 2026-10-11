@@ -107,7 +107,7 @@ export const helpContent = {
     shortText:
       "This tab shows how aspects of a concept can be further broken down using the dimensions available. Applying dimensions is common when tagging the Notes to the Accounts.",
     longText:
-      "Concepts belong to hypercubes (tables). A hypercube (table) is a data structure made up of reportable concepts (rows) and available dimensions (columns). The UK taxonomies use closed hypercubes. This means that every line item concept belongs to at least one hypercube, and users cannot create their own taxonomy concepts.\n\n\ This tab shows the available dimensions (columns) as dropdown selectors. \n\n The contents of those dropdowns are the dimension's domain members. All of the other reportable concepts (rows) available in this hypercube are listed under \"Primary Items\". \n\n Hypercube tabs can be popped out to make it easier to compare the dimensional structure of different concepts.",
+      "Concepts belong to hypercubes (tables). A hypercube (table) is a data structure made up of reportable concepts (rows) and available dimensions (columns). The UK taxonomies use closed hypercubes. This means that every line item concept belongs to at least one hypercube, and users cannot create their own taxonomy concepts.\n\n This tab shows the available dimensions (columns) as dropdown selectors. \n\n The contents of those dropdowns are the dimension's domain members. All of the other reportable concepts (rows) available in this hypercube are listed under \"Primary Items\". \n\n Hypercube tabs can be popped out to make it easier to compare the dimensional structure of different concepts.",
   },
   "details.tab.treeLocations": {
     id: "details.tab.treeLocations",
