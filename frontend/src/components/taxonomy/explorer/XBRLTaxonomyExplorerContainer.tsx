@@ -78,7 +78,7 @@ const XBRLTaxonomyExplorerContainer: React.FC = () => {
     uuid?: string;
   } | null>(null);
   const pendingTreeFilterNavigationRef = useRef<(() => void) | null>(null);
-  const [restoration, setRestoration] = useState<{ id: number; target: TaxonomyUrlState; loadRequested: boolean; navigationRequested: boolean } | null>(null);
+  const [restoration, setRestoration] = useState<{ id: number; target: TaxonomyUrlState; loadRequested: boolean; loadCompleted: boolean; navigationRequested: boolean } | null>(null);
   const restorationIdRef = useRef(0);
 
   const reportRestoreFailure = useCallback((description: string) => {
@@ -95,7 +95,7 @@ const XBRLTaxonomyExplorerContainer: React.FC = () => {
       reportRestoreFailure(parsed.reason);
       return;
     }
-    setRestoration({ id: ++restorationIdRef.current, target: parsed.state, loadRequested: false, navigationRequested: false });
+    setRestoration({ id: ++restorationIdRef.current, target: parsed.state, loadRequested: false, loadCompleted: false, navigationRequested: false });
   }, [reportRestoreFailure]);
 
   useEffect(() => {
@@ -154,6 +154,11 @@ const XBRLTaxonomyExplorerContainer: React.FC = () => {
     setLoadedYear(nextLoadedYear);
     setLoadedEntrypoint(nextLoadedEntrypoint);
     setLoadedEntrypointName(entrypointName ?? nextLoadedEntrypoint);
+    setRestoration((current) => current?.loadRequested
+      && current.target.year === nextLoadedYear
+      && current.target.entrypoint === nextLoadedEntrypoint
+      ? { ...current, loadCompleted: true }
+      : current);
   }, []);
 
   const {
@@ -270,7 +275,9 @@ const XBRLTaxonomyExplorerContainer: React.FC = () => {
       setRestoration((current) => current?.id === restoration.id ? { ...current, loadRequested: true } : current);
       return;
     }
-    if (!entrypointLoaded || loadedYear !== target.year || loadedEntrypoint !== target.entrypoint) return;
+    // A same-entrypoint restore can still see the previous loaded tree while
+    // its new request is starting. Navigate only after that request completes.
+    if (!restoration.loadCompleted || !entrypointLoaded || loadedYear !== target.year || loadedEntrypoint !== target.entrypoint) return;
     if (!rawTreeData[target.network]) {
       reportRestoreFailure("The requested network is unavailable in this entrypoint.");
       return;

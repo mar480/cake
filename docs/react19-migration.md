@@ -69,12 +69,83 @@ The live representative concepts are `core:PropertyPlantEquipment` for 2026 FRS 
 
 ## Dependency changes
 
-Planned exact targets: React/React DOM and their type packages 19.3.0; DayPicker 8.10.2; Lucide 0.469.0; next-themes 0.4.6; Vaul 1.1.2. Existing compatible locked versions are retained, particularly PrimeReact 10.9.7 and Recharts 2.15.4. Recharts receives a scoped `react-is` 19.3.0 override per [maintainer guidance](https://github.com/recharts/recharts/releases/tag/v2.15.0).
+| Package | React 18 baseline | Migrated version |
+| --- | --- | --- |
+| `react`, `react-dom` | 18.3.1 | 19.3.0 |
+| `@types/react` | 18.3.28 | 19.3.0 |
+| `@types/react-dom` | 18.3.7 | 19.3.0 |
+| `react-day-picker` | 8.10.1 | 8.10.2 |
+| `lucide-react` | 0.462.0 | 0.469.0 |
+| `next-themes` | 0.3.0 | 0.4.6 |
+| `vaul` | 0.9.9 | 1.1.2 |
+
+These changed direct dependencies are pinned exactly. Existing compatible locked versions are retained, including every Radix package, PrimeReact 10.9.7, Recharts 2.15.4, React Query, React Router and React Split. Recharts receives a scoped `react-is` 19.3.0 override per [maintainer guidance](https://github.com/recharts/recharts/releases/tag/v2.15.0). A runtime assertion verifies that Recharts resolves this version and recognizes an actual React 19 element. Other consumers retain their required `react-is` versions.
+
+Unrelated npm lockfile refreshes were removed. The remaining transitive changes are React DOM's scheduler 0.28.0, removal of React 18's unused `@types/prop-types`, and relocation of the overridden `react-is`. Fresh `npm ci --strict-peer-deps` and `npm ls --all` validate the resulting graph; neither force nor legacy peer resolution is enabled.
 
 Existing JSX transform, `createRoot`, `forwardRef`, compiler strictness and state-management architecture are retained. No new React features, backend interfaces or deployments are included.
+
+## Compatibility correction
+
+The unchanged browser history test exposed an intermittent restoration race on React 19: while starting a same-entrypoint reload, navigation could resolve against the previous tree before the bundle completed. The completed load then cleared that selection. The focused check reproduced this before the correction (one failure in three runs).
+
+URL restoration now records completion of its requested load before scheduling navigation. It retains the existing reload, revision context and history policy. This is the only application behaviour correction in the migration; ref callbacks, JSX annotations and shared UI wrappers needed no compatibility edits. The existing browser test covers deep-link startup, reload and both history directions.
+
+After the correction, this scenario passes in both browsers and both fixture modes, plus five consecutive additional Chromium production runs (`CAKE_E2E_PREVIEW=1 npm run test:e2e -- --grep 'restores precise' --project chromium --repeat-each 5`). No test retry or snapshot update was used.
 
 ## Final verification
 
 React 18 baseline is established: all 18 fixture checks pass against the production bundle and the original Chromium screenshots; all four real-data smoke checks pass against Vite/Flask in Chromium and Firefox. Development fixture checks also passed across the main run and targeted harness corrections. No application behaviour was changed while developing the harness.
 
-React 19 migration and equivalent post-upgrade checks are pending.
+React 19 passes the following checks after the compatibility correction:
+
+| Command / check | Result |
+| --- | --- |
+| `npm ci --strict-peer-deps` | Clean install passes without peer overrides or bypass flags |
+| `npm ls react react-dom react-is --all`; `npm ls --all` | Valid graph; one React and React DOM version, both 19.3.0 |
+| `npm run typecheck` | Application and browser-test TypeScript pass |
+| `npm run lint` | Zero errors; the same seven Fast Refresh warnings |
+| `npm test`; direct execution of its generated bundle | All 38 tests pass |
+| `backend/.viewer/bin/python -m pytest -q tests` (repository root) | All 42 tests pass; same Arelle deprecation warning |
+| `npm run test:e2e` | 18 pass: 14 Chromium checks and four Firefox smoke checks |
+| `npm run test:e2e:preview` | Production build passes; the same 18 browser checks pass |
+| `npm run test:e2e:live` | Four pass: both pinned releases in both browsers |
+| `CAKE_E2E_PREVIEW=1 npm run test:e2e:live` | Four pass against the production bundle and real backend |
+
+This gives 44 passing browser checks across development, production preview and real-data modes. Both committed React 18 Chromium images pass unchanged in development and production: [details](../frontend/e2e/explorer.spec.ts-snapshots/explorer-details-chromium-linux.png) and [dimensions](../frontend/e2e/explorer.spec.ts-snapshots/explorer-dimensions-chromium-linux.png). No snapshot was refreshed after the upgrade. The warning allowlist also remains unchanged; there are no unexplained new application-console messages.
+
+Node's test runner in this workspace sometimes summarizes the bundled test file as one passing file. Directly executing that same generated file additionally verifies its full 38-test TAP count.
+
+### Production assets
+
+| Asset | React 18 | React 19 |
+| --- | --- | --- |
+| JavaScript | 678.80 kB / 206.13 kB gzip | 759.25 kB / 229.66 kB gzip |
+| CSS | 277.47 kB / 36.24 kB gzip | 277.47 kB / 36.24 kB gzip |
+
+The dependency upgrade increases the compressed JavaScript payload by 23.53 kB (about 11.4%). The CSS asset hash is identical (`index-CF5iADib.css`). Existing chunk-size and Browserslist warnings remain. Bundle splitting and dependency cleanup are outside this migration.
+
+### Real-data responsiveness comparison
+
+The initial development observations were slower on React 19. To check the deployed code path, the committed React 18 baseline (`99c6f25`) was independently installed and built under `/tmp/cake-react18-comparison`, then tested against the same backend and pinned releases. All four additional React 18 production smoke checks pass. No working-branch files or installed taxonomy outputs were replaced for this comparison.
+
+| Mode / browser / release | React 18 load / navigation (ms) | React 19 load / navigation (ms) |
+| --- | --- | --- |
+| Development / Chromium / 2026 | 533 / 2041 | 1163 / 3367 |
+| Development / Chromium / 2025 | 557 / 973 | 1056 / 1513 |
+| Development / Firefox / 2026 | 2522 / 2514 | 2597 / 3336 |
+| Development / Firefox / 2025 | 2556 / 1006 | 2620 / 1515 |
+| Production / Chromium / 2026 | 504 / 1798 | 515 / 1708 |
+| Production / Chromium / 2025 | 492 / 837 | 516 / 779 |
+| Production / Firefox / 2026 | 2573 / 1923 | 2699 / 1952 |
+| Production / Firefox / 2025 | 2617 / 767 | 2683 / 864 |
+
+The production observations are similar and do not show the larger development increase. These are single local smoke-test measurements, including Playwright interaction/wait overhead, rather than a controlled performance benchmark. Both versions load the full installed taxonomies and complete selection, dimensional/tree-location views, network switching and real search.
+
+## Review scope and remaining limitations
+
+Preparatory commits are `7f601e2` (identical help strings, lint correction) and `99c6f25` (React 18 browser baseline, fixtures, screenshots, scripts and ignored test outputs). The final migration contains the exact dependency changes, the URL-restoration completion check and this report.
+
+Coverage is strongest for the active explorer workflows. Firefox runs the four explorer smoke scenarios and both real releases; Chromium runs the full fixture suite. The two reference screenshots cover details and dimensions rather than every possible display state. Shared UI wrappers remain installed and type checked, including unused calendar, chart and drawer components, but their unused surfaces are not added to Cake for browser testing.
+
+Existing Fast Refresh, Router, Select and build warnings remain documented above. Live smoke tests deliberately pin the installed taxonomy revisions; a future release change requires an explicit test-input update. Browser binaries and the ignored Python environment are local prerequisites. No backend runtime requirements, production configuration, backend assets, taxonomy outputs, merge or deployment changes are included.
