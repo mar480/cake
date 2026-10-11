@@ -24,9 +24,12 @@ npm test
 npm run test:e2e
 npm run test:e2e:preview
 npm run test:e2e:live
+npm run test:e2e:packaged
 ```
 
 `test:e2e` runs the full Chromium fixture suite and a smaller Firefox smoke suite against Vite. `test:e2e:preview` builds and runs the same tests against the production bundle. `test:e2e:live` starts the existing Flask app through Gunicorn and tests the installed releases without API mocks. Set `CAKE_E2E_PREVIEW=1` when invoking the live script to test real data against an already built production bundle.
+
+`test:e2e:packaged` starts only Gunicorn's `wsgi:app` on port 5000 and serves the copied Flask HTML/assets directly. It reuses both real-release checks in both browsers and adds asset, deep-link and pop-out verification in both browsers. Run `bash build_and_copy.sh` from the repository root before this mode; the test deliberately does not build or copy files itself. It requires `frontend/dist` and the corresponding files in `backend/templates` and `backend/static/assets`. No Vite server, proxy or API mocks are used.
 
 Live tests require the backend runtime plus Gunicorn in `backend/.viewer`; set `CAKE_PYTHON` to an alternative executable if needed. They reserve ports 5000 and 4173 and refuse to reuse existing servers. Fixture tests need only port 4173. API proxying exists solely in `vite.e2e.config.ts`; deployed Vite and Flask configuration is unchanged.
 
@@ -43,7 +46,7 @@ The application and browser-test sources are type checked. The production Vite c
 - Resizing, keyboard entry-point selection, help persistence, modal dismissal and the automated beginner tour.
 - Delayed/cancelled loads, empty results, invalid links, API failures and revision-error recovery.
 
-Fixtures are small representative data following the existing transport schemas, including the beginner tour's `core:PropertyPlantEquipment` and Turnover search. Real-data smoke checks separately exercise the unchanged backend and full taxonomies. Neither test mode runs `build_and_copy.sh` or regenerates taxonomy releases.
+Fixtures are small representative data following the existing transport schemas, including the beginner tour's `core:PropertyPlantEquipment` and Turnover search. Real-data smoke checks separately exercise the unchanged backend and full taxonomies. Browser test commands do not run `build_and_copy.sh` or regenerate taxonomy releases.
 
 Existing semantics discovered during baseline verification are preserved: active tree filters expand all matching paths, and routine concept navigation replaces browser history instead of adding entries. The Back/Forward test seeds an independent history entry to exercise the actual `popstate` restoration path.
 
@@ -148,4 +151,35 @@ Preparatory commits are `7f601e2` (identical help strings, lint correction) and 
 
 Coverage is strongest for the active explorer workflows. Firefox runs the four explorer smoke scenarios and both real releases; Chromium runs the full fixture suite. The two reference screenshots cover details and dimensions rather than every possible display state. Shared UI wrappers remain installed and type checked, including unused calendar, chart and drawer components, but their unused surfaces are not added to Cake for browser testing.
 
-Existing Fast Refresh, Router, Select and build warnings remain documented above. Live smoke tests deliberately pin the installed taxonomy revisions; a future release change requires an explicit test-input update. Browser binaries and the ignored Python environment are local prerequisites. No backend runtime requirements, production configuration, backend assets, taxonomy outputs, merge or deployment changes are included.
+Existing Fast Refresh, Router, Select and build warnings remain documented above. Live smoke tests deliberately pin the installed taxonomy revisions; a future release change requires an explicit test-input update. Browser binaries and the ignored Python environment are local prerequisites. The migration commits do not change backend runtime requirements, production configuration, backend assets or taxonomy outputs. Local release assembly and handover are recorded below.
+
+## Local release assembly and manual handover
+
+Release preparation starts from migration commit `d52e0c9`. GitHub's `vps` head was rechecked read-only and still matches `5bfaa405d75390124eb96b368a60c2b83bfedb41`. The migration diff is confined to the documented React changes, compatibility correction and verification tooling.
+
+Running the existing `bash build_and_copy.sh` locally succeeds. Flask's tracked template now references `/assets/index-CJZPa64A.js`; CSS remains `/assets/index-CF5iADib.css`. The corresponding assets are assembled under ignored `backend/static/assets`. Packaging the existing taxonomy outputs leaves the entire six-suite catalog unchanged; SHA-256 comparison also confirms that all 888 tracked taxonomy source files and suite configuration are unchanged. No taxonomy extraction or source regeneration was performed.
+
+Additional release checks:
+
+| Check | Result |
+| --- | --- |
+| `npm run typecheck` | Pass, including the new packaged test |
+| `npm run lint` | Zero errors; the same seven warnings |
+| `npm run test:e2e:preview` | Build and all 18 browser checks pass; reference images unchanged |
+| `npm run test:e2e:packaged` | All six Gunicorn checks pass: three each in Chromium and Firefox |
+
+Packaged verification checks the actual served root HTML against `frontend/dist/index.html`, and both served JavaScript and CSS byte-for-byte against the build. It also verifies restored real-data deep links and both pop-outs receiving their real payloads. Pop-out layout assertions wait for document loading to finish; the original application-warning allowlist is unchanged. The four reused real-data checks assert the same pinned 2026 FRS 102 and 2025 IFRS revisions.
+
+Logs are under `/tmp/cake-react19-release-*`; generated browser reports and traces remain ignored. This release preparation does not change backend APIs, runtime requirements, nginx configuration or dependency versions.
+
+### Publishing and deploying — performed by you
+
+The verified release is recorded in a separate preparation commit, with the local `vps` branch fast-forwarded to it and `react19` retained. Remote Git publication, server access and live rollout remain your responsibility.
+
+1. Publish the prepared local `vps` branch through your normal Git workflow. For the current fast-forward release, the command from this checkout is `git push origin vps`.
+2. Log into your server and enter the existing Cake checkout. Update its `vps` branch using your normal procedure; on a clean checkout already on `vps`, use `git pull --ff-only origin vps`. Confirm its commit matches the release hash supplied in the handover.
+3. Rebuild with the updated lockfile and copy the generated assets using your usual procedure. The repository's standard commands, from its root, are `npm --prefix frontend ci` followed by `bash build_and_copy.sh`. If your existing backend Python environment is elsewhere, set `TAXONOMY_PYTHON` to its executable as usual. Generated static assets do not travel through Git and must be built/copied as part of your rollout.
+4. Perform your normal nginx rebuild/reload and application-service reload procedure. Reloading the application ensures Flask uses the updated HTML template. Server paths and service names are intentionally left to your established commands.
+5. Check the hosted application in a fresh browser session: load 2026 FRS 102 and 2025 IFRS, select a concept and inspect details, run a search, reload a concept deep link and open both hypercube and tree-location pop-outs. Confirm the root HTML references the new JavaScript asset and that it loads successfully.
+
+No Git push, remote merge, SSH connection or live service change is performed by this local preparation.

@@ -14,6 +14,7 @@
     "typecheck": "tsc --noEmit -p tsconfig.app.json && tsc --noEmit -p tsconfig.e2e.json",
     "test:e2e": "playwright test",
     "test:e2e:live": "CAKE_E2E_LIVE=1 playwright test",
+    "test:e2e:packaged": "CAKE_E2E_PACKAGED=1 playwright test",
     "test:e2e:preview": "npm run build && CAKE_E2E_PREVIEW=1 playwright test"
   },
   "dependencies": {
