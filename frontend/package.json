@@ -10,7 +10,11 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "test:search-results": "esbuild src/all-tests.ts --bundle --platform=node --format=esm --outfile=tmp/frontend-tests.mjs && node --test tmp/frontend-tests.mjs",
-    "test": "npm run test:search-results"
+    "test": "npm run test:search-results",
+    "typecheck": "tsc --noEmit -p tsconfig.app.json && tsc --noEmit -p tsconfig.e2e.json",
+    "test:e2e": "playwright test",
+    "test:e2e:live": "CAKE_E2E_LIVE=1 playwright test",
+    "test:e2e:preview": "npm run build && CAKE_E2E_PREVIEW=1 playwright test"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
@@ -69,6 +73,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.9.0",
+    "@playwright/test": "1.64.0",
     "@tailwindcss/typography": "^0.5.15",
     "@types/node": "^22.5.5",
     "@types/react": "^18.3.3",
