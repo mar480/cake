@@ -183,3 +183,36 @@ The verified release is recorded in a separate preparation commit, with the loca
 5. Check the hosted application in a fresh browser session: load 2026 FRS 102 and 2025 IFRS, select a concept and inspect details, run a search, reload a concept deep link and open both hypercube and tree-location pop-outs. Confirm the root HTML references the new JavaScript asset and that it loads successfully.
 
 No Git push, remote merge, SSH connection or live service change is performed by this local preparation.
+
+## Server installation compatibility correction — 11 October 2026
+
+The first server installation of `2d25459` failed before the rebuild: Node 22.23.3 / npm 10.9.9 rejected the frontend lockfile with `Missing: react-is@16.13.1 from lock file`. The original release checks used Node 24.17.0 / npm 11.13.0, which accepted the incomplete lockfile and resolved the shared `prop-types` consumer to `react-is` 19.3.0. Those checks therefore missed a reproducibility gap; the server does not need a Node or npm upgrade to resolve it.
+
+The exact server versions were installed into temporary local directories and reproduced the failure. The corrected lockfile adds the missing nested `prop-types` dependency at 16.13.1 without changing any existing locked package version. The Recharts override also explicitly retains `prop-types`' required version within its dependency subtree, preventing npm 11 from applying Recharts' 19.3.0 override to that shared consumer:
+
+```json
+"overrides": {
+  "recharts": {
+    "react-is": "19.3.0",
+    "prop-types": {
+      "react-is": "16.13.1"
+    }
+  }
+}
+```
+
+Both overrides remain scoped to Recharts. No peer-dependency bypass flags, global override, application-code changes or server changes are needed. Fresh installs with both toolchains pass `npm ci --strict-peer-deps` and `npm ls --all`. Runtime resolution assertions additionally confirm `prop-types` uses 16.13.1, Recharts uses 19.3.0, and Recharts' `react-is` recognizes an actual React 19 element.
+
+The local server-version verification passes TypeScript, lint (zero errors and the same seven warnings), all 38 unit tests, `bash build_and_copy.sh`, and all 18 production-preview browser checks. The committed React 18 screenshots are unchanged. Both asset hashes remain `index-CJZPa64A.js` and `index-CF5iADib.css`; all six taxonomy revisions and all 888 tracked source/configuration file hashes are unchanged. Install/graph logs are `/tmp/cake-react19-npm10-*` and `/tmp/cake-react19-npm11-*`; application verification logs are `/tmp/cake-react19-server-*`.
+
+All six packaged Gunicorn checks also pass with the server toolchain: both pinned releases, byte-identical served HTML/JavaScript/CSS, deep-link reload and both pop-outs in Chromium and Firefox. The browser warning allowlist remains unchanged.
+
+After publishing this follow-up `vps` commit from the local checkout, run these commands yourself on the server:
+
+```bash
+cd /var/www/ada
+git pull --ff-only origin vps
+npm --prefix frontend ci && bash build_and_copy.sh
+```
+
+Keep the earlier server lockfile stash unapplied so it does not replace the corrected release lockfile. Continue with your established application/nginx procedure and live checks after the build succeeds.
